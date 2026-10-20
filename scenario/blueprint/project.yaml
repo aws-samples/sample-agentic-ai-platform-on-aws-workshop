@@ -1,0 +1,31 @@
+# AnyCompany HR assistant: project definition for the platform admin (UI "Domains and projects" or POST /projects).
+# spec.models/caps map to the POST /projects body (models[], maxBudget, budgetDuration, tpmLimit, rpmLimit); every
+# tools[].lambdaArn goes to allowedToolArns[] and every knowledge[].knowledgeBaseId to knowledgeBaseIds[].
+# "ssm:/..." placeholders are resolved from the SSM parameters the Scenario stack publishes (build-contracts.md section 1).
+apiVersion: platform/v1
+kind: Project
+metadata: {domain: people-ops, project: hr-assistant}
+spec:
+  name: HR Assistant
+  description: >-
+    Employee-facing HR assistant for AnyCompany's People Operations domain: leave balances and requests, public
+    holidays, employee directory look-ups and HR policy questions answered from the HR policy knowledge base.
+  owner: margaret.chen@anycompany.example            # VP People Operations (E1005), the domain's business owner and approver
+  models: [claude-sonnet-5-5, claude-haiku-4-5]      # approved model aliases this project may use in the model gateway
+  caps:                                              # LiteLLM team for the project
+    maxBudget: 5                                     # USD per budgetDuration
+    budgetDuration: 7d                               # LiteLLM resets at the period end in UTC: 7d keeps a one-day event clear of a reset
+    tpmLimit: 200000
+    rpmLimit: 200
+  tools:
+    hr-core:                                         # referenced by the blueprint as tool/hr-core
+      description: AnyCompany HR tools (employee profile, leave balance, leave request, public holidays)
+      gatewayTarget: hrtools                         # tool names at the gateway become hrtools___<tool>
+      lambdaArn: "ssm:/agent-platform/scenario/tools/hr-lambda-arn"
+      schema: ../tools/hr/schema.json                # inlinePayload for the Lambda target
+  knowledge:
+    hr-policies:                                     # referenced by the blueprint as kb/hr-policies
+      description: AnyCompany HR policy documents (leave, remote work, code of conduct, parental leave, learning)
+      gatewayTarget: hrkb                            # exposed as hrkb___Retrieve
+      knowledgeBaseId: "ssm:/agent-platform/scenario/kb-id"
+      filter: {equals: {key: department, value: HR}} # admin-set retrieval filter, enforced by the gateway target

@@ -1,0 +1,82 @@
+[
+  {
+    "invoice_id": "INV-1001",
+    "vendor": "Northwind Office Supplies",
+    "amount": 1840.5,
+    "currency": "USD",
+    "status": "paid",
+    "due_date": "2026-07-15"
+  },
+  {
+    "invoice_id": "INV-1002",
+    "vendor": "Cascade Cloud Compute LLC",
+    "amount": 12600.0,
+    "currency": "USD",
+    "status": "paid",
+    "due_date": "2026-08-01"
+  },
+  {
+    "invoice_id": "INV-1003",
+    "vendor": "Summit Staffing Partners",
+    "amount": 7325.0,
+    "currency": "USD",
+    "status": "pending",
+    "due_date": "2026-10-30"
+  },
+  {
+    "invoice_id": "INV-1004",
+    "vendor": "Evergreen Facilities Services",
+    "amount": 4210.75,
+    "currency": "USD",
+    "status": "overdue",
+    "due_date": "2026-09-15"
+  },
+  {
+    "invoice_id": "INV-1005",
+    "vendor": "Blue Harbor Travel",
+    "amount": 2988.2,
+    "currency": "USD",
+    "status": "paid",
+    "due_date": "2026-08-20"
+  },
+  {
+    "invoice_id": "INV-1006",
+    "vendor": "Lakeside Legal Advisors",
+    "amount": 15000.0,
+    "currency": "USD",
+    "status": "pending",
+    "due_date": "2026-11-10"
+  },
+  {
+    "invoice_id": "INV-1007",
+    "vendor": "Pioneer Learning Co",
+    "amount": 5400.0,
+    "currency": "USD",
+    "status": "paid",
+    "due_date": "2026-09-01"
+  },
+  {
+    "invoice_id": "INV-1008",
+    "vendor": "Metro Catering Group",
+    "amount": 960.0,
+    "currency": "USD",
+    "status": "overdue",
+    "due_date": "2026-09-30"
+  },
+  {
+    "invoice_id": "INV-1009",
+    "vendor": "Granite Insurance Brokers",
+    "amount": 23750.0,
+    "currency": "USD",
+    "status": "pending",
+    "due_date": "2026-11-30"
+  },
+  {
+    "invoice_id": "INV-1010",
+    "vendor": "Harbor Light Marketing Agency",
+    "amount": 8800.0,
+    "currency": "USD",
+    "status": "paid",
+    "due_date": "2026-09-25"
+  }
+]

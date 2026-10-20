@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Module 1 · Landing zone</title>
+    <link rel="stylesheet" href="course.css" />
+    <style>
+      .concept-list { margin: 6px 0 14px; padding-left: 24px; }
+      .concept-list li + li { margin-top: 5px; }
+      .copy-group + .copy-group { margin-top: 14px; }
+      .ours-box .concept-list { margin-bottom: 0; }
+      .start-now { margin: 0 0 18px; }
+      .start-now p { margin: 6px 0 0; }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-inner">
+        <h1>Module 1 · Landing zone</h1>
+        <p>Who runs the platform, and where does it live?</p>
+        <div class="meta"><span>Module 1 of 7</span><span>40 min</span><span>ownership</span><span>accounts</span><span>network</span><span>infrastructure</span></div>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <nav class="pager"><a href="index.html">←&nbsp;The path</a><a href="module-2-rev.html">Module 2 · Identity&nbsp;→</a></nav>
+      <main>
+        <aside class="hands-on start-now" aria-label="Start the deployment">
+          <strong>Start now · deployment takes about 20 minutes</strong>
+          <p>Complete <a href="index.html#start">Get started</a>, then run <code>workshop apply 1</code>. It deploys <strong>three stacks</strong> while you follow the explanation and discussion. Return to <a href="#hands-on">Hands-on</a> when it finishes.</p>
+        </aside>
+        <section id="explain">
+          <h2>Why this layer first <span class="time">Explain · 10 min</span></h2>
+          <p class="lead">An agent platform stands on <strong>three things</strong>:</p>
+          <ol class="concept-list">
+            <li><strong>AWS accounts:</strong> where the platform's resources live.</li>
+            <li><strong>Network:</strong> how those resources connect.</li>
+            <li><strong>Infrastructure code:</strong> how the foundation is provisioned.</li>
+          </ol>
+          <p>These form the <strong>landing zone</strong>. Build it first: changing accounts or networking later means moving the resources that depend on them.</p>
+
+          <p>This module covers <strong>four decisions</strong>:</p>
+          <ol class="concept-list">
+            <li><a href="#d1-1"><strong>Accounts:</strong></a> how many do you need, where do resources run, and who may administer them?</li>
+            <li><a href="#d1-2"><strong>Network:</strong></a> public access, private access with NAT, or private endpoints only?</li>
+            <li><a href="#d1-3"><strong>Infrastructure:</strong></a> who creates it, and how?</li>
+            <li><a href="#d1-4"><strong>Operating model:</strong></a> who builds, releases, supports and operates the shared services and agents?</li>
+          </ol>
+          <p class="note">Agree who runs what before finalising the layout. A federated operating model does not determine account count. Account layouts can change without changing responsibilities.</p>
+
+          <p>Keep <strong>two related questions</strong> separate from ownership and account placement:</p>
+          <ul class="concept-list">
+            <li><strong>Tenant boundaries:</strong> whose data, credentials, actions and records must stay separate, and what enforces that separation? We introduce this in 1.1 and develop it in decision 3.1. Tenants can share or span accounts; tenancy does not determine who runs the platform.</li>
+            <li><strong>Platform usage:</strong> who uses the platform, and through which business channel or interface? This workshop uses the platform's Playground and API, introduced in module 6.</li>
+          </ul>
+
+          <figure>
+            <svg viewBox="0 0 960 272" role="img" aria-labelledby="fig1-open-title">
+              <title id="fig1-open-title">The landing zone: who runs the platform, where it lives, how it is built</title>
+              <defs><marker id="fig1-open-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+              <text class="d-text d-title" x="22" y="24">WHO · 1.4 Operating model</text>
+              <rect class="d-box d-people" x="12" y="34" width="290" height="185"/>
+              <rect class="d-box" x="26" y="48" width="262" height="44"/>
+              <text class="d-text d-strong" x="157" y="66" text-anchor="middle">Platform team</text>
+              <text class="d-text d-small" x="157" y="82" text-anchor="middle">shared services · templates</text>
+              <rect class="d-box" x="26" y="100" width="262" height="44"/>
+              <text class="d-text d-strong" x="157" y="118" text-anchor="middle">Project teams</text>
+              <text class="d-text d-small" x="157" y="134" text-anchor="middle">build, release, operate their agents</text>
+              <rect class="d-box" x="26" y="152" width="262" height="44"/>
+              <text class="d-text d-strong" x="157" y="170" text-anchor="middle">Domain</text>
+              <text class="d-text d-small" x="157" y="186" text-anchor="middle">accepts a release</text>
+              <text class="d-text d-small" x="157" y="241" text-anchor="middle">federated: the platform shares, project teams build</text>
+
+              <path class="d-arrow" d="M304 120 L335 120" marker-end="url(#fig1-open-arr)"/>
+
+              <text class="d-text d-title" x="347" y="24">WHERE · 1.1 Accounts, 1.2 Network</text>
+              <rect class="d-box d-account" x="337" y="34" width="290" height="185"/>
+              <text class="d-text d-small" x="351" y="54">One AWS account · us-east-1</text>
+              <rect class="d-box d-aws" x="351" y="66" width="126" height="44"/>
+              <text class="d-text d-strong" x="414" y="84" text-anchor="middle">Dev</text>
+              <text class="d-text d-small" x="414" y="100" text-anchor="middle">by name</text>
+              <rect class="d-box d-aws" x="487" y="66" width="126" height="44"/>
+              <text class="d-text d-strong" x="550" y="84" text-anchor="middle">Prod</text>
+              <text class="d-text d-small" x="550" y="100" text-anchor="middle">by name</text>
+              <rect class="d-vpc" x="351" y="124" width="262" height="58"/>
+              <text class="d-text d-strong" x="482" y="142" text-anchor="middle">one private VPC</text>
+              <text class="d-text d-small" x="482" y="158" text-anchor="middle">model gateway · relay · agents (module 6)</text>
+              <text class="d-text d-small" x="482" y="172" text-anchor="middle">endpoints only · no internet path</text>
+              <text class="d-text d-tiny" x="482" y="203" text-anchor="middle">+ the corporate IdP's own public VPC (module 2)</text>
+              <text class="d-text d-small" x="482" y="241" text-anchor="middle">names and IAM are the walls</text>
+
+              <path class="d-arrow" d="M629 120 L660 120" marker-end="url(#fig1-open-arr)"/>
+
+              <text class="d-text d-title" x="672" y="24">HOW · 1.3 Infrastructure</text>
+              <rect class="d-box d-platform" x="662" y="34" width="290" height="185"/>
+              <rect class="d-box" x="676" y="48" width="262" height="97"/>
+              <text class="d-text d-strong" x="807" y="66" text-anchor="middle">7 platform stacks + 1 stand-in</text>
+              <text class="d-text d-small" x="807" y="81" text-anchor="middle">Network · SharedServices · ModelGateway</text>
+              <text class="d-text d-tiny" x="807" y="94" text-anchor="middle">built in this module</text>
+              <text class="d-text d-small" x="807" y="109" text-anchor="middle">Web · Auth · Platform · Scenario</text>
+              <text class="d-text d-tiny" x="807" y="122" text-anchor="middle">deployed before the day</text>
+              <text class="d-text d-tiny" x="807" y="135" text-anchor="middle">Idp · module 2 · the corporate IdP stand-in</text>
+              <rect class="d-box" x="676" y="151" width="262" height="58"/>
+              <text class="d-text d-strong" x="807" y="169" text-anchor="middle">Control plane</text>
+              <text class="d-text d-small" x="807" y="185" text-anchor="middle">per-project objects at run time:</text>
+              <text class="d-text d-small" x="807" y="199" text-anchor="middle">roles · budgets · keys · harness</text>
+              <text class="d-text d-small" x="807" y="241" text-anchor="middle">code for the foundation,</text>
+              <text class="d-text d-small" x="807" y="254" text-anchor="middle">the platform for the projects,</text>
+              <text class="d-text d-small" x="807" y="267" text-anchor="middle">the CLI for the developer</text>
+            </svg>
+            <figcaption><strong>Three questions</strong> frame the landing zone: who runs it, where it runs, and how it is built. Ownership informs the account, network and infrastructure choices.</figcaption>
+          </figure>
+        </section>
+
+        <section id="decisions">
+          <h2>Decisions <span class="time">Design · 10 min</span></h2>
+
+          <div class="card">
+            <h4 class="q" id="d1-1"><span class="id">1.1</span>How many AWS accounts?</h4>
+            <figure style="margin:0 0 10px">
+            <svg viewBox="0 0 960 250" role="img" aria-labelledby="fig1-title">
+              <title id="fig1-title">Three ways to place a platform across AWS accounts</title>
+              <defs><marker id="arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+              <rect class="d-box d-account d-ours d-glow" x="12" y="34" width="290" height="176"/>
+              <text class="d-text d-title" x="22" y="24">A · One account</text>
+              <rect x="196" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
+              <text class="d-text" x="249" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+              <text class="d-text d-small" x="26" y="58">Account</text>
+              <rect class="d-box d-platform" x="26" y="70" width="262" height="40"/>
+              <text class="d-text" x="157" y="95" text-anchor="middle">Control plane · shared services</text>
+              <rect class="d-box d-aws" x="26" y="124" width="122" height="66"/>
+              <text class="d-text d-title" x="87" y="150" text-anchor="middle">Dev</text>
+              <text class="d-text d-small" x="87" y="170" text-anchor="middle">hr-assistant-dev</text>
+              <rect class="d-box d-aws" x="166" y="124" width="122" height="66"/>
+              <text class="d-text d-title" x="227" y="150" text-anchor="middle">Prod</text>
+              <text class="d-text d-small" x="227" y="170" text-anchor="middle">hr-assistant-prod</text>
+              <text class="d-text d-small" x="157" y="232" text-anchor="middle">Names and IAM keep them apart</text>
+
+              <text class="d-text d-title" x="347" y="24">B · Platform + workload accounts</text>
+              <rect class="d-box d-account" x="337" y="34" width="290" height="68"/>
+              <text class="d-text d-small" x="351" y="52">Platform account</text>
+              <rect class="d-box d-platform" x="351" y="58" width="262" height="34"/>
+              <text class="d-text" x="482" y="80" text-anchor="middle">gateway · identity · catalogue</text>
+              <rect class="d-box d-account" x="337" y="142" width="136" height="68"/>
+              <text class="d-text d-small" x="351" y="160">Workload account</text>
+              <rect class="d-box d-aws" x="351" y="166" width="108" height="34"/>
+              <text class="d-text" x="405" y="188" text-anchor="middle">Team A agents</text>
+              <rect class="d-box d-account" x="491" y="142" width="136" height="68"/>
+              <text class="d-text d-small" x="505" y="160">Workload account</text>
+              <rect class="d-box d-aws" x="505" y="166" width="108" height="34"/>
+              <text class="d-text" x="559" y="188" text-anchor="middle">Team B agents</text>
+              <path class="d-arrow" d="M405 142 L405 108" marker-end="url(#arr1)"/>
+              <path class="d-arrow" d="M559 142 L559 108" marker-end="url(#arr1)"/>
+              <text class="d-text d-small" x="482" y="120" text-anchor="middle">cross-account trust:</text>
+              <text class="d-text d-small" x="482" y="135" text-anchor="middle">tokens or policies</text>
+              <text class="d-text d-small" x="482" y="232" text-anchor="middle">Central governance, teams own runtimes</text>
+
+              <text class="d-text d-title" x="672" y="24">C · A copy per team</text>
+              <rect x="662" y="34" width="290" height="22" rx="6" fill="#232f3e"/>
+              <text class="d-text" x="807" y="50" text-anchor="middle" style="fill:#fff;font-size:12px">Organization SCPs keep the copies alike</text>
+              <rect class="d-box d-account" x="662" y="70" width="136" height="140"/>
+              <text class="d-text d-small" x="676" y="88">Team A account</text>
+              <rect class="d-box d-platform" x="676" y="96" width="108" height="30"/><text class="d-text" x="730" y="116" text-anchor="middle">platform</text>
+              <rect class="d-box d-aws" x="676" y="136" width="108" height="30"/><text class="d-text" x="730" y="156" text-anchor="middle">agents</text>
+              <rect class="d-box d-account" x="816" y="70" width="136" height="140"/>
+              <text class="d-text d-small" x="830" y="88">Team B account</text>
+              <rect class="d-box d-platform" x="830" y="96" width="108" height="30"/><text class="d-text" x="884" y="116" text-anchor="middle">platform</text>
+              <rect class="d-box d-aws" x="830" y="136" width="108" height="30"/><text class="d-text" x="884" y="156" text-anchor="middle">agents</text>
+              <text class="d-text d-small" x="807" y="232" text-anchor="middle">Autonomy, duplicated governance</text>
+            </svg>
+            <figcaption>The figure shows <strong>three of four account layouts</strong>. The fourth, one account per environment, is A built twice: once for Dev and once for Prod. SCPs apply to B and C. This workshop uses A.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr class="ours"><td>One account, environments by name</td><td class="good">simplest, cheapest, fast promotion</td><td class="bad">names and IAM are the only walls; one mistake can affect everything</td><td class="when">a pilot, one team, a first platform</td></tr>
+                <tr><td>One account per environment</td><td class="good">Prod behind an account wall</td><td class="bad">moving to Prod crosses accounts; more plumbing</td><td class="when">compliance demands Prod isolation</td></tr>
+                <tr><td>Platform account + workload accounts</td><td class="good">central tool governance; teams own runtimes</td><td class="bad">cross-account trust to design; most moving parts</td><td class="when">many teams, central governance</td></tr>
+                <tr><td>A full copy per team</td><td class="good">autonomy; simple trust</td><td class="bad">duplicated governance; copies drift</td><td class="when">teams must not depend on each other</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <div class="copy-group">
+                <p><strong>This workshop.</strong> We use <strong>one AWS account</strong> with <strong>two environments</strong>, Dev and Prod. Names and IAM keep them apart. Promotion stays within the account, keeping it fast and simple.</p>
+              </div>
+              <div class="copy-group also">
+                <p>We also made <strong>two location choices</strong>:</p>
+                <ul class="concept-list">
+                  <li><strong>Platform Region:</strong> us-east-1.</li>
+                  <li><strong>Model processing:</strong> cross-Region inference profiles. A request entering us-east-1 may be answered in another US Region.</li>
+                </ul>
+                <p>We revisit processing location in decision 5.4 and the organisation's SCP controls in decision 3.2.</p>
+              </div>
+              <div class="copy-group also">
+                <p>The workshop has <strong>two tenants</strong>: People Operations and Finance Operations. Project IAM roles and gateways enforce their data boundaries.</p>
+                <p>A tenant name in a prompt, URL or request body is user-supplied text, not proof of membership.</p>
+              </div>
+              <div class="copy-group prod">
+                <p><strong>Production path.</strong> Our production path uses layout B with <strong>two account types</strong>:</p>
+                <ul class="concept-list">
+                  <li><strong>Platform account:</strong> shared services.</li>
+                  <li><strong>Workload accounts:</strong> each team's agents.</li>
+                </ul>
+                <p>SCPs apply consistent organisation-wide rules across them.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h4 class="q" id="d1-2"><span class="id">1.2</span>Public or private network?</h4>
+            <figure style="margin:0 0 10px">
+              <svg viewBox="0 0 960 300" role="img" aria-labelledby="fig1-d2-title">
+                <title id="fig1-d2-title">Public, private, or endpoints only: three network shapes for the model gateway and the agents</title>
+                <defs><marker id="fig1-d2-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+                <text class="d-text d-title" x="22" y="24">A · Public</text>
+                <rect class="d-box d-account" x="12" y="34" width="290" height="236"/>
+                <rect class="d-vpc" x="26" y="50" width="262" height="142"/>
+                <rect class="d-box d-aws" x="182" y="41" width="96" height="18" style="rx:4"/>
+                <text class="d-text d-tiny" x="230" y="54" text-anchor="middle" style="fill:#16191f">Internet gateway</text>
+                <text class="d-text d-small" x="36" y="68">VPC · 2 AZs</text>
+                <rect class="d-subnet-pub" x="36" y="74" width="242" height="58"/>
+                <text class="d-text d-strong" x="157" y="92" text-anchor="middle">Public subnets</text>
+                <text class="d-text d-small" x="157" y="108" text-anchor="middle">LiteLLM proxy · internet-facing</text>
+                <text class="d-text d-small" x="157" y="122" text-anchor="middle">load balancer · public IPs</text>
+                <rect class="d-subnet-iso" x="36" y="140" width="242" height="44"/>
+                <text class="d-text d-strong" x="157" y="158" text-anchor="middle">Isolated subnets</text>
+                <text class="d-text d-small" x="157" y="174" text-anchor="middle">RDS · no route out</text>
+                <rect class="d-box d-aws" x="26" y="202" width="262" height="58"/>
+                <text class="d-text d-strong" x="157" y="220" text-anchor="middle">Agents on AgentCore's</text>
+                <text class="d-text d-strong" x="157" y="236" text-anchor="middle">managed network</text>
+                <text class="d-text d-small" x="157" y="250" text-anchor="middle">not in this VPC</text>
+                <text class="d-text d-small" x="157" y="290" text-anchor="middle">no hourly network cost · outbound not inspected</text>
+
+                <text class="d-text d-title" x="347" y="24">B · Private</text>
+                <rect class="d-box d-account" x="337" y="34" width="290" height="236"/>
+                <rect class="d-vpc" x="351" y="50" width="262" height="196"/>
+                <text class="d-text d-small" x="361" y="68">VPC</text>
+                <rect class="d-subnet-iso" x="361" y="74" width="242" height="58"/>
+                <text class="d-text d-strong" x="482" y="92" text-anchor="middle">Private subnets</text>
+                <text class="d-text d-small" x="482" y="108" text-anchor="middle">proxy · internal load balancer</text>
+                <text class="d-text d-small" x="482" y="122" text-anchor="middle">no public IPs</text>
+                <rect class="d-box d-aws" x="361" y="140" width="242" height="44"/>
+                <text class="d-text d-strong" x="482" y="158" text-anchor="middle">Agents in VPC mode</text>
+                <text class="d-text d-small" x="482" y="174" text-anchor="middle">ENIs in your subnets</text>
+                <rect class="d-box d-aws" x="361" y="192" width="116" height="44"/>
+                <text class="d-text d-strong" x="419" y="210" text-anchor="middle">NAT gateway</text>
+                <text class="d-text d-small" x="419" y="226" text-anchor="middle">one shared exit</text>
+                <rect class="d-box d-aws" x="487" y="192" width="116" height="44"/>
+                <text class="d-text d-strong" x="545" y="210" text-anchor="middle">VPC endpoints</text>
+                <text class="d-text d-small" x="545" y="226" text-anchor="middle">for AWS services</text>
+                <text class="d-text d-small" x="482" y="290" text-anchor="middle">hourly cost · some AZs only · more to debug</text>
+
+                <text class="d-text d-title" x="672" y="24">C · Endpoints only</text>
+                <rect class="d-box d-account d-ours d-glow" x="662" y="34" width="290" height="236"/>
+                <rect x="846" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
+                <text class="d-text" x="899" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+                <rect class="d-vpc" x="676" y="50" width="262" height="212"/>
+                <text class="d-text d-small" x="686" y="68">VPC · 3 AZs</text>
+                <text class="d-text d-small" x="928" y="68" text-anchor="end">no internet gateway · no NAT</text>
+                <rect class="d-subnet-iso" x="686" y="74" width="242" height="58"/>
+                <text class="d-text d-strong" x="807" y="92" text-anchor="middle">App subnets · isolated</text>
+                <text class="d-text d-small" x="807" y="108" text-anchor="middle">proxy · internal load balancer</text>
+                <text class="d-text d-small" x="807" y="122" text-anchor="middle">agents in VPC mode · relay Lambda</text>
+                <rect class="d-subnet-iso" x="686" y="138" width="242" height="28"/>
+                <text class="d-text" x="807" y="156" text-anchor="middle"><tspan class="d-strong">Data subnets</tspan> <tspan class="d-small">RDS · no route out</tspan></text>
+                <rect class="d-group" x="686" y="172" width="242" height="84"/>
+                <text class="d-text d-small" x="807" y="188" text-anchor="middle">one interface endpoint per service</text>
+                <rect class="d-box d-aws" x="692" y="196" width="112" height="22"/>
+                <text class="d-text d-tiny" x="748" y="211" text-anchor="middle" style="fill:#16191f">Bedrock</text>
+                <rect class="d-box d-aws" x="810" y="196" width="112" height="22"/>
+                <text class="d-text d-tiny" x="866" y="211" text-anchor="middle" style="fill:#16191f">AgentCore</text>
+                <rect class="d-box d-aws" x="692" y="224" width="112" height="22"/>
+                <text class="d-text d-tiny" x="748" y="239" text-anchor="middle" style="fill:#16191f">Secrets Manager</text>
+                <rect class="d-box d-aws" x="810" y="224" width="112" height="22"/>
+                <text class="d-text d-tiny" x="866" y="239" text-anchor="middle" style="fill:#16191f">CloudWatch · ECR</text>
+                <text class="d-text d-small" x="807" y="290" text-anchor="middle">tightest outbound · an endpoint for every service</text>
+              </svg>
+              <figcaption>Compare <strong>three network patterns</strong> for the model gateway and agents. This workshop uses C: private endpoints only, with no internet path. The app subnets hold the proxy and agent network interfaces; separate data subnets hold RDS.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr><td>Public: managed network for agents; proxy on public subnets, no NAT</td><td class="good">no hourly network cost; fewest failure modes</td><td class="bad">you cannot inspect outbound traffic; the proxy has a public address</td><td class="when">no private data sources yet</td></tr>
+                <tr><td>Private: your VPC with NAT and endpoints</td><td class="good">private path; outbound controlled by security groups</td><td class="bad">hourly cost; only some Availability Zones work; more to debug</td><td class="when">private data sources, or a network policy</td></tr>
+                <tr class="ours"><td>Private: interface endpoints only, no internet path</td><td class="good">tightest outbound: nothing in the VPC can reach the internet; the proxy has no public address</td><td class="bad">an endpoint for every service the agent calls, each billed by the hour (about 0.18 USD per hour here); only some Availability Zones work; a relay for every caller outside the VPC; slower cold starts</td><td class="when">regulated, mature operations; or when the platform must be safe from its first day</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <div class="copy-group">
+                <p><strong>This workshop.</strong> We choose C to prevent internet access from the VPC. <strong>One private VPC</strong> spans the <strong>three Availability Zones</strong> supported by AgentCore Runtime and has <strong>two subnet types</strong>:</p>
+                <ul class="concept-list">
+                  <li><strong>App subnets:</strong> the LiteLLM proxy and its internal load balancer, the relay Lambda, the interface endpoints and, from module 6, the network interfaces of the agent harnesses. A harness is AgentCore's configuration-driven agent, the form our agents take in module 6; <code>workshop apply 1</code> already creates the security group <code>agent-platform-harness</code> for them.</li>
+                  <li><strong>Data subnets:</strong> the database, and nothing else.</li>
+                </ul>
+                <p>Both groups are isolated subnets. Their route tables know the VPC itself and the S3 gateway endpoint, nothing more, so neither has a path to the internet. The data subnets are a separate group only so the database sits in its own address range, apart from the application components; its security group accepts PostgreSQL from the LiteLLM tasks alone and allows no outbound connection at all. The agent harnesses run in VPC mode. There is no internet gateway, NAT gateway or public IP anywhere in the VPC.</p>
+              </div>
+              <div class="copy-group">
+                <p>AWS services are reached through <strong>two kinds of endpoint</strong>:</p>
+                <ul class="concept-list">
+                  <li><strong>Nine interface endpoints</strong>, which the VPC console and the <code>workshop apply 1</code> output name by service: <code>bedrock-runtime</code> (the proxy's model calls), <code>bedrock-agentcore</code> (the AgentCore data plane: Runtime, Memory and Identity), <code>bedrock-agentcore.gateway</code>, <code>secretsmanager</code>, <code>logs</code> and <code>monitoring</code> (CloudWatch logs and metrics), <code>xray</code>, and <code>ecr.api</code> with <code>ecr.dkr</code> for image pulls. There is no endpoint for the AgentCore control plane: nothing inside the VPC creates or configures AgentCore resources; the control plane does that from outside.</li>
+                  <li><strong>One gateway endpoint:</strong> S3.</li>
+                </ul>
+                <p>Without internet access, tasks must pull the LiteLLM image from private ECR. <code>workshop apply 1</code> copies it into your account first, adding a few minutes to deployment.</p>
+              </div>
+              <div class="copy-group also">
+                <p>The quoted hourly estimates cover <strong>two components</strong>:</p>
+                <ul class="concept-list">
+                  <li><strong>Endpoints:</strong> about 0.18 USD per hour (nine endpoints in two zones).</li>
+                  <li><strong>Proxy:</strong> about 0.10 USD per hour.</li>
+                </ul>
+                <p>The database is single-AZ for the workshop.</p>
+              </div>
+              <div class="copy-group also">
+                <p><strong>Outside the VPC.</strong> The control plane's web UI, API and worker remain outside, along with Cognito and Agent Registry.</p>
+                <p>Those <strong>two services</strong> have no PrivateLink endpoints. A control plane in an isolated VPC could not manage sign-in or read the catalogue. Its AWS management calls use IAM authentication and TLS.</p>
+                <p>Module 2 adds one more thing outside this VPC: the corporate identity provider, Keycloak, which stands in for the Okta or Entra ID a company already runs. <code>workshop apply 2</code> gives it a small public VPC of its own (10.1.0.0/16: two public subnets, an internet gateway, no NAT, no endpoints), because a company's identity provider must be reachable over the public internet: AgentCore Identity and API Gateway fetch its discovery document and call its token endpoint there, exactly as they would for a SaaS provider. Keycloak itself sits behind an internal load balancer, with an API Gateway HTTP API as its HTTPS door. The two VPCs are never connected, and the landing zone you build here stays as described.</p>
+              </div>
+              <div class="copy-group also">
+                <p>The internal load balancer cannot be called directly from outside the VPC. <strong>Three callers</strong> therefore use the relay Lambda:</p>
+                <ul class="concept-list">
+                  <li><strong>The control plane:</strong> the platform API and worker Lambdas.</li>
+                  <li><strong>The <code>workshop</code> command and the doctor</strong> on your laptop (the doctor runs at the end of <code>workshop apply 1</code>).</li>
+                  <li><strong>Other code on your laptop:</strong> the agent code module 6 exports. <code>workshop export --run</code> starts a small local proxy that forwards its calls through the relay.</li>
+                </ul>
+                <p>The relay forwards HTTP requests without adding credentials. IAM controls relay invocation; the proxy also requires its master key. Module 5 revisits this flow and explains why the proxy's admin console is unavailable in a browser.</p>
+              </div>
+              <div class="copy-group prod">
+                <p><strong>Production path.</strong> Add <strong>three controls</strong> to this private network:</p>
+                <ol class="concept-list">
+                  <li><strong>Multi-AZ database:</strong> run the database across more than one Availability Zone.</li>
+                  <li><strong>Endpoint policies:</strong> restrict each interface endpoint's access and scope the S3 endpoint to the platform's buckets.</li>
+                  <li><strong>AWS WAF:</strong> protect the internet-facing web UI and API.</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h4 class="q" id="d1-3"><span class="id">1.3</span>Who creates infrastructure, and how?</h4>
+            <figure style="margin:0 0 10px">
+              <svg viewBox="0 0 960 280" role="img" aria-labelledby="fig1-d3-title">
+                <title id="fig1-d3-title">Who creates infrastructure, in three layers: CDK stacks and the control plane, a stack per project in Git, and the agentcore CLI as the developer's loop used with either</title>
+                <defs><marker id="fig1-d3-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+                <text class="d-text d-title" x="22" y="24">A · CDK + control plane</text>
+                <rect class="d-box d-account d-ours d-glow" x="12" y="34" width="290" height="200"/>
+                <rect x="196" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
+                <text class="d-text" x="249" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+                <rect class="d-box d-platform" x="26" y="48" width="262" height="44"/>
+                <text class="d-text d-strong" x="157" y="66" text-anchor="middle">7 platform stacks + 1 stand-in</text>
+                <text class="d-text d-small" x="157" y="82" text-anchor="middle">deployed once · the foundation</text>
+                <path class="d-arrow" d="M157 92 L157 106" marker-end="url(#fig1-d3-arr)"/>
+                <rect class="d-box d-platform" x="26" y="108" width="262" height="44"/>
+                <text class="d-text d-strong" x="157" y="126" text-anchor="middle">Control plane</text>
+                <text class="d-text d-small" x="157" y="142" text-anchor="middle">creates per-project objects at run time</text>
+                <path class="d-arrow" d="M55 152 L55 174" marker-end="url(#fig1-d3-arr)"/>
+                <path class="d-arrow" d="M123 152 L123 174" marker-end="url(#fig1-d3-arr)"/>
+                <path class="d-arrow" d="M191 152 L191 174" marker-end="url(#fig1-d3-arr)"/>
+                <path class="d-arrow" d="M259 152 L259 174" marker-end="url(#fig1-d3-arr)"/>
+                <rect class="d-box d-aws" x="26" y="176" width="58" height="28"/>
+                <text class="d-text d-tiny" x="55" y="194" text-anchor="middle" style="fill:#16191f">roles</text>
+                <rect class="d-box d-aws" x="94" y="176" width="58" height="28"/>
+                <text class="d-text d-tiny" x="123" y="194" text-anchor="middle" style="fill:#16191f">budget</text>
+                <rect class="d-box d-aws" x="162" y="176" width="58" height="28"/>
+                <text class="d-text d-tiny" x="191" y="194" text-anchor="middle" style="fill:#16191f">keys</text>
+                <rect class="d-box d-aws" x="230" y="176" width="58" height="28"/>
+                <text class="d-text d-tiny" x="259" y="194" text-anchor="middle" style="fill:#16191f">harness</text>
+                <text class="d-text d-small" x="157" y="222" text-anchor="middle">per project, at run time, from templates</text>
+                <text class="d-text d-small" x="157" y="254" text-anchor="middle">onboarding in minutes</text>
+                <text class="d-text d-small" x="157" y="269" text-anchor="middle">bound the control plane with IAM</text>
+
+                <text class="d-text d-title" x="347" y="24">B · A stack per project in Git</text>
+                <rect class="d-box d-account" x="337" y="34" width="290" height="200"/>
+                <rect class="d-box d-blue" x="351" y="48" width="262" height="28"/>
+                <text class="d-text d-strong" x="482" y="66" text-anchor="middle">Pull request</text>
+                <path class="d-arrow" d="M482 76 L482 90" marker-end="url(#fig1-d3-arr)"/>
+                <rect class="d-box d-people" x="351" y="92" width="262" height="44"/>
+                <text class="d-text d-strong" x="482" y="110" text-anchor="middle">Review</text>
+                <text class="d-text d-small" x="482" y="126" text-anchor="middle">the platform team in the loop</text>
+                <path class="d-arrow" d="M482 136 L482 150" marker-end="url(#fig1-d3-arr)"/>
+                <rect class="d-box d-blue" x="351" y="152" width="262" height="28"/>
+                <text class="d-text d-strong" x="482" y="170" text-anchor="middle">Pipeline</text>
+                <path class="d-arrow" d="M482 180 L482 194" marker-end="url(#fig1-d3-arr)"/>
+                <rect class="d-box d-platform" x="351" y="196" width="262" height="28"/>
+                <text class="d-text d-strong" x="482" y="214" text-anchor="middle">Stack per project</text>
+                <text class="d-text d-small" x="482" y="254" text-anchor="middle">auditable · slow onboarding</text>
+
+                <text class="d-text d-title" x="672" y="24">C · agentcore CLI: the developer's loop</text>
+                <rect class="d-box d-account" x="662" y="34" width="290" height="200"/>
+                <rect class="d-box d-platform" x="676" y="48" width="262" height="44"/>
+                <text class="d-text d-strong" x="807" y="66" text-anchor="middle">Developer laptop</text>
+                <text class="d-text d-small" x="807" y="82" text-anchor="middle" style="font-family:ui-monospace,Menlo,monospace">agentcore dev · agentcore deploy</text>
+                <path class="d-arrow" d="M807 92 L807 106" marker-end="url(#fig1-d3-arr)"/>
+                <rect class="d-box d-aws" x="676" y="108" width="262" height="44"/>
+                <text class="d-text d-strong" x="807" y="126" text-anchor="middle">One agent's own stack</text>
+                <text class="d-text d-small" x="807" y="142" text-anchor="middle">AgentCore Runtime, deployed with CDK</text>
+                <rect class="d-box d-ghost" x="676" y="160" width="262" height="44"/>
+                <text class="d-text d-strong d-ghost-text" x="807" y="178" text-anchor="middle">Shared platform: from A or B</text>
+                <text class="d-text d-small d-ghost-text" x="807" y="194" text-anchor="middle">the CLI never creates it</text>
+                <text class="d-text d-small" x="807" y="254" text-anchor="middle">deploys one agent · governs nothing shared</text>
+                <text class="d-text d-small" x="807" y="269" text-anchor="middle">used with A or B, not instead of them</text>
+              </svg>
+              <figcaption><strong>Three layers</strong>, used together rather than chosen between: code builds the foundation; the control plane (A) or a per-project pipeline (B) creates each project's objects; the <code>agentcore</code> CLI (C) runs on the developer's laptop and deploys one agent's own stack. This workshop uses A for the platform: CDK builds the shared foundation; the control plane creates project resources at run time (the role pair, the model gateway team and its keys, the agent's harness); the gateways, targets and policies of module 4 are created by the workshop command and registered with the control plane.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr class="ours"><td>CDK stacks for the foundation; the control plane creates per-project objects at run time</td><td class="good">onboarding in minutes; consistent names and tags</td><td class="bad">the control plane can create a lot; bound it with IAM</td><td class="when">many projects, a small platform team</td></tr>
+                <tr><td>A stack per project, reviewed in Git</td><td class="good">auditable, reviewable</td><td class="bad">slow onboarding; the platform team in the loop</td><td class="when">few projects, strict change control</td></tr>
+                <tr><td>The <code>agentcore</code> CLI: the developer's loop, used with A or B</td><td class="good">fastest way to run and deploy one agent; <code>agentcore deploy</code> deploys the agent's own CDK stack</td><td class="bad">governs nothing shared: it creates its own project's resources, never the platform's roles, budgets or gateways</td><td class="when">always, for local development; alone only when there is no platform yet</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <div class="copy-group">
+                <p><strong>This workshop.</strong> Workshop scripts deploy <strong>eight CDK stacks</strong>: seven for the platform and one stand-in.</p>
+                <ul class="concept-list">
+                  <li><strong>Four pre-deployed:</strong> web UI, authentication, platform API and sample data.</li>
+                  <li><strong>Three you deploy here:</strong> network, shared services and model gateway.</li>
+                  <li><strong>One more in module 2:</strong> the corporate identity provider, Keycloak, with the HR API behind it. It stands in for the Okta or Entra ID a company already runs, so it sits in a small VPC of its own outside your platform; <code>workshop apply 2</code> deploys it.</li>
+                </ul>
+              </div>
+              <div class="copy-group">
+                <p>The stacks provide the shared foundation. The control plane then creates each project's resources, including:</p>
+                <ul class="concept-list">
+                  <li><strong>IAM roles:</strong> created from templates.</li>
+                  <li><strong>Model budget:</strong> created for the project.</li>
+                  <li><strong>Model keys:</strong> the first in module 5, then those needed for each deployment and promotion.</li>
+                </ul>
+              </div>
+              <div class="copy-group">
+                <p>Real platforms use all three layers together: CDK for the foundation, the control plane or a pipeline for each project's objects, and the <code>agentcore</code> CLI on the developer's laptop to run and deploy one agent's code. In this course the laptop step is <code>workshop export --run</code> in module 6, which runs the exported agent locally through the relay.</p>
+              </div>
+              <div class="copy-group prod">
+                <p><strong>Production path.</strong> Deploy through an automated pipeline with an approval before each stack change. A person reviews every foundation change before it is applied.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h4 class="q" id="d1-4"><span class="id">1.4</span>Who builds and runs the agents?</h4>
+            <figure style="margin:0 0 10px">
+              <svg viewBox="0 0 960 300" role="img" aria-labelledby="fig1-d4-title">
+                <title id="fig1-d4-title">Centralised, federated or hybrid: who builds and runs the agents</title>
+                <defs><marker id="fig1-d4-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+                <text class="d-text d-title" x="22" y="24">A · Centralised</text>
+                <rect class="d-box d-account" x="12" y="34" width="290" height="230"/>
+                <rect class="d-box d-people" x="26" y="48" width="262" height="102"/>
+                <text class="d-text d-strong" x="157" y="66" text-anchor="middle">Platform team</text>
+                <rect class="d-box d-platform" x="36" y="76" width="242" height="28"/>
+                <text class="d-text" x="157" y="94" text-anchor="middle">shared services</text>
+                <rect class="d-box d-aws" x="36" y="112" width="242" height="28"/>
+                <text class="d-text" x="157" y="130" text-anchor="middle">every agent</text>
+                <path class="d-arrow" d="M157 188 L157 152" marker-end="url(#fig1-d4-arr)"/>
+                <rect class="d-box" x="105" y="190" width="120" height="24"/>
+                <rect class="d-box" x="101" y="196" width="120" height="24"/>
+                <rect class="d-box" x="97" y="202" width="120" height="24"/>
+                <text class="d-text d-small" x="157" y="218" text-anchor="middle" style="fill:#16191f">requests waiting</text>
+                <text class="d-text d-small" x="157" y="284" text-anchor="middle">consistent · a queue forms</text>
+
+                <text class="d-text d-title" x="347" y="24">B · Federated</text>
+                <rect class="d-box d-account d-ours d-glow" x="337" y="34" width="290" height="230"/>
+                <rect x="521" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
+                <text class="d-text" x="574" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+                <rect class="d-box d-people" x="351" y="48" width="262" height="44"/>
+                <text class="d-text d-strong" x="482" y="66" text-anchor="middle">Platform team</text>
+                <text class="d-text d-small" x="482" y="82" text-anchor="middle">shared services · templates</text>
+                <path class="d-arrow" d="M392 92 L392 126" marker-end="url(#fig1-d4-arr)"/>
+                <text class="d-text d-small" x="400" y="108">publishes</text>
+                <text class="d-text d-small" x="400" y="122">interfaces</text>
+                <path class="d-arrow d-dash" d="M600 128 L600 94" marker-end="url(#fig1-d4-arr)"/>
+                <text class="d-text d-small" x="592" y="108" text-anchor="end">escalation when a</text>
+                <text class="d-text d-small" x="592" y="122" text-anchor="end">shared service fails</text>
+                <rect class="d-group" x="351" y="128" width="262" height="78"/>
+                <rect class="d-box d-people" x="361" y="138" width="116" height="58"/>
+                <text class="d-text d-strong" x="419" y="156" text-anchor="middle">Project team</text>
+                <text class="d-text d-small" x="419" y="172" text-anchor="middle">build, release,</text>
+                <text class="d-text d-small" x="419" y="186" text-anchor="middle">operate its agent</text>
+                <rect class="d-box d-people" x="487" y="138" width="116" height="58"/>
+                <text class="d-text d-strong" x="545" y="156" text-anchor="middle">Project team</text>
+                <text class="d-text d-small" x="545" y="172" text-anchor="middle">build, release,</text>
+                <text class="d-text d-small" x="545" y="186" text-anchor="middle">operate its agent</text>
+                <path class="d-arrow" d="M482 206 L482 224" marker-end="url(#fig1-d4-arr)"/>
+                <text class="d-text d-small" x="490" y="219">submits a release</text>
+                <rect class="d-box d-people" x="351" y="226" width="262" height="28"/>
+                <text class="d-text d-strong" x="482" y="244" text-anchor="middle">Domain · accepts the release</text>
+                <text class="d-text d-small" x="482" y="284" text-anchor="middle">teams ship independently · every team needs on-call</text>
+
+                <text class="d-text d-title" x="672" y="24">C · Hybrid</text>
+                <rect class="d-box d-account" x="662" y="34" width="290" height="230"/>
+                <rect class="d-box d-people" x="676" y="48" width="126" height="72"/>
+                <text class="d-text d-strong" x="739" y="66" text-anchor="middle">Domain</text>
+                <text class="d-text d-small" x="739" y="81" text-anchor="middle">with engineers</text>
+                <text class="d-text d-small" x="739" y="95" text-anchor="middle">owns and runs</text>
+                <text class="d-text d-small" x="739" y="109" text-anchor="middle">its agent</text>
+                <rect class="d-box d-people" x="812" y="48" width="126" height="72"/>
+                <text class="d-text d-strong" x="875" y="66" text-anchor="middle">Domain</text>
+                <text class="d-text d-small" x="875" y="81" text-anchor="middle">without engineers</text>
+                <text class="d-text d-small" x="875" y="95" text-anchor="middle">the platform team</text>
+                <text class="d-text d-small" x="875" y="109" text-anchor="middle">runs its agent</text>
+                <path class="d-arrow" d="M739 154 L739 122" marker-end="url(#fig1-d4-arr)"/>
+                <path class="d-arrow" d="M875 154 L875 122" marker-end="url(#fig1-d4-arr)"/>
+                <rect class="d-box d-people" x="676" y="156" width="262" height="44"/>
+                <text class="d-text d-strong" x="807" y="174" text-anchor="middle">Platform team</text>
+                <text class="d-text d-small" x="807" y="190" text-anchor="middle">shared services · runs the rest</text>
+                <text class="d-text d-small" x="807" y="284" text-anchor="middle">fits uneven capacity · more handoffs</text>
+              </svg>
+              <figcaption>Compare <strong>three operating models</strong> for building, running and accepting agents. This workshop uses B: federated ownership, with domain approval of business behaviour.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr><td>Centralised: one platform team builds and operates the shared services and every agent</td><td class="good">consistent controls; one support boundary</td><td class="bad">delivery and incidents compete for one team's time; a queue forms</td><td class="when">a first platform; domains without engineers</td></tr>
+                <tr class="ours"><td>Federated: the platform team owns the shared services and templates; project teams build, release and operate their own agents; the domain accepts</td><td class="good">teams ship independently; the platform team stays small</td><td class="bad">every project team needs engineers and on-call; a shared change can break a consumer</td><td class="when">several domains with engineering capacity</td></tr>
+                <tr><td>Hybrid: capable domains own their agents; the platform team builds and runs the rest on a domain's behalf</td><td class="good">fits uneven capacity</td><td class="bad">more handoffs; each arrangement moves as staffing changes</td><td class="when">mixed capacity, the common case</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <div class="copy-group">
+                <p><strong>This workshop.</strong> The federated model maps to <strong>three personas</strong>:</p>
+                <ol class="concept-list">
+                  <li><span class="pill persona">Platform admin</span> represents the platform team and owns shared services and templates.</li>
+                  <li><span class="pill persona">Agent developer</span> represents the project team: writes the blueprint, evaluates the HR assistant and deploys it.</li>
+                  <li><span class="pill persona">Domain approver</span> represents the domain and accepts the agent's business behaviour.</li>
+                </ol>
+                <p>Today, Prod operations are shared, with <strong>one dashboard</strong> that everyone reads.</p>
+              </div>
+              <div class="copy-group prod">
+                <p><strong>Production path.</strong> Keep a responsibility record for each agent. It must answer <strong>four questions</strong>:</p>
+                <ol class="concept-list">
+                  <li>Who builds it?</li>
+                  <li>Who releases it?</li>
+                  <li>Who is on call?</li>
+                  <li>Who accepts its business behaviour?</li>
+                </ol>
+                <p>Define escalation from the agent owner to shared-service owners before the first incident.</p>
+              </div>
+            </div>
+            <table class="plain">
+              <thead><tr><th>Responsibility</th><th>Platform team</th><th>Project team</th><th>Domain</th></tr></thead>
+              <tbody>
+                <tr><td>Build and operate the shared services: gateways, policy engine, model gateway, catalogue</td><td>accountable</td><td>uses the published interfaces</td><td>no part</td></tr>
+                <tr><td>Maintain the blueprint format and the role templates</td><td>accountable; explains a breaking change</td><td>consumes them</td><td>no part</td></tr>
+                <tr><td>Build, test and deploy the agent</td><td>supplies the platform</td><td>accountable</td><td>supplies requirements and test cases</td></tr>
+                <tr><td>Operate the agent: first triage of a failed conversation</td><td>takes the escalation when a shared service failed</td><td>accountable; supplies the request id and the version</td><td>no part</td></tr>
+                <tr><td>Accept business behaviour; approve a release</td><td>no part</td><td>submits</td><td>accountable: the Domain approver</td></tr>
+              </tbody>
+            </table>
+            <p class="note">Choose an operating model that matches your teams' delivery and support capacity, not organisation size. Test it with <strong>two incidents</strong>:</p>
+            <ol class="concept-list">
+              <li><strong>Incorrect answer, healthy tools:</strong> the project team investigates; the domain assesses whether the answer was acceptable.</li>
+              <li><strong>Tool failures across teams after a gateway policy change:</strong> the platform team coordinates; projects supply request IDs and running versions.</li>
+            </ol>
+            <p class="note">Both cases need clear responsibilities. If ownership is unclear, the operating model needs more work.</p>
+          </div>
+
+          <h3>Your design record, module 1</h3>
+<pre class="code-dark"><code><span class="k">module_1</span>:
+  <span class="in">inputs</span>: <span class="s">none</span>                                      <span class="c"># workshop apply 1 deploys the landing zone as designed</span>
+  <span class="k">decisions</span>:
+    <span class="k">accounts</span>:        {<span class="k">workshop</span>: <span class="s">one-account</span>,         <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># Dev and Prod by name</span>
+    <span class="k">network</span>:         {<span class="k">workshop</span>: <span class="s">private-endpoints</span>,   <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># one private VPC, endpoints only: no internet path</span>
+    <span class="k">iac</span>:             {<span class="k">workshop</span>: <span class="s">cdk + control-plane</span>, <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># 7 platform stacks + the IdP stand-in (module 2); per-project objects at run time; the agentcore CLI on the developer's laptop</span>
+    <span class="k">operating_model</span>: {<span class="k">workshop</span>: <span class="s">federated</span>,           <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># the platform team shares, project teams build</span></code></pre>
+          <p class="caption">Each module has <strong>one design-record block</strong> with <strong>two parts</strong>:</p>
+          <ul class="concept-list">
+            <li><code>inputs</code> (shown in bold): values read by the apply command. Module 1 has none because its landing zone is predefined.</li>
+            <li><code>decisions</code>: <code>workshop</code> records our choice; <code>my_call</code> records your organisation's choice and why.</li>
+          </ul>
+        </section>
+
+        <section id="hands-on">
+          <h2>Hands-on <span class="time">20 min</span></h2>
+          <div class="hands-on">
+            <strong>Deploy the landing zone</strong>
+            <p class="caption">Use <a href="index.html#start">Get started</a> to fetch the code, run <code>uv sync</code> and <code>npm install</code>, then check <strong>three prerequisites</strong>:</p>
+            <ul class="concept-list">
+              <li><strong>Environment active:</strong> <code>source .venv/bin/activate</code>, or <code>.venv\Scripts\Activate.ps1</code> in PowerShell. Otherwise, use <code>uv run workshop …</code>.</li>
+              <li><strong>AWS credentials set:</strong> paste the event's credentials into your terminal.</li>
+              <li><strong>Account ready:</strong> run <code>workshop status</code>. It lists eight stacks. The four pre-deployed ones (Web, Auth, Platform, Scenario) read CREATE_COMPLETE; the three landing-zone stacks and <code>AgentPlatform-Idp</code> read not deployed. <code>AgentPlatform-Idp</code> is the corporate identity provider (Keycloak) that <code>workshop apply 2</code> deploys in module 2, so leave it for now.</li>
+            </ul>
+            <ol class="steps">
+              <li><div><span class="pill tag command">command</span>Confirm <code>workshop apply 1</code> has finished. It deploys <strong>three stacks</strong>: network, shared services (guardrail, tracing and evaluation role), and model gateway. After the deploy, its first section lists all eight stacks; <code>AgentPlatform-Idp</code> stays not deployed until module 2. Deployment takes about <strong>20 minutes</strong> while the database, proxy and relay are created and the LiteLLM image is copied.</div></li>
+              <li><div><span class="pill tag screen">screen</span>CloudFormation console: find the <strong>three new stacks</strong> beside the <strong>four pre-deployed stacks</strong> for the control plane and sample data.</div></li>
+              <li><div><span class="pill tag screen">screen</span>VPC console: find <strong>one VPC</strong> and <strong>six subnets</strong>, three named <code>appSubnet</code> and three named <code>dataSubnet</code>, with no internet gateway or NAT gateway. Both groups are isolated: each carries the tag <code>aws-cdk:subnet-type = Isolated</code>, and every route table holds only the local route and the S3 endpoint. Under Endpoints, find <strong>nine interface endpoints</strong> and <strong>one S3 gateway endpoint</strong>. Open one of them: its network interfaces sit in two of the three Availability Zones, not all three. Callers in the third zone reach the endpoints across zones, which works and saves a third of their cost: nine endpoints at about 0.01 USD per zone-hour each come to about 0.18 USD per hour instead of 0.27. The proxy, database and relay are the components here today; the agent harnesses join in module 6, and the security group <code>agent-platform-harness</code> already waits for them.</div></li>
+              <li><div><span class="pill tag command">command</span>When the stacks are complete, <code>workshop apply 1</code> looks at what appeared and prints <strong>four sections</strong> before the doctor. First, the <strong>eight stack rows</strong> with their CloudFormation status; <code>AgentPlatform-Idp</code> still reads “not deployed” with a warning, as expected before module 2. Second, the <strong>VPC</strong> with its subnets, zones and endpoint lists, and the line <em>private posture: no internet gateway, no NAT gateway, no public IP</em>. Third, a <strong>health call</strong> to the model gateway (<code>GET /health/liveliness</code>) that travels through the relay Lambda, because nothing outside the VPC can open a connection to the proxy, followed by the three approved model aliases and the guardrail bound to each. If it says the gateway “did not answer yet”, the ECS Express service needs a minute after the stack completes: wait, then run <code>workshop apply 1 --no-deploy</code> to repeat these checks and the doctor without redeploying. Fourth, the <strong>table of settings</strong> the platform published under <code>/agent-platform/</code> in SSM Parameter Store (the web UI and API URLs, the model gateway and its relay, the guardrail, the knowledge base and the HR tools Lambda); every later <code>workshop</code> command starts by reading this tree.</div></li>
+              <li><div><span class="pill tag command">command</span>Read the doctor's checks at the end of <code>workshop apply 1</code>. Personas marked “not created” are expected: you create them in module 2.</div></li>
+              <li><div><span class="pill tag record">record</span>Complete the <strong>four</strong> <code>my_call</code> entries in <code>design-record.yaml</code>. Give your choice and a short reason for each.</div></li>
+            </ol>
+            <p class="caption">If deployment fails part-way, rerun the same command. Completed stacks are kept; deployment resumes where it stopped.</p>
+            <p><strong>Before moving on, confirm four outcomes:</strong></p>
+            <ul class="concept-list">
+              <li><strong>Deployment:</strong> three landing-zone stacks complete, alongside the four pre-deployed stacks.</li>
+              <li><strong>Network:</strong> the expected private subnets and endpoints, with no internet path.</li>
+              <li><strong>Model gateway:</strong> the health call answered through the relay and the three aliases were listed.</li>
+              <li><strong>Design record:</strong> four choices with reasons.</li>
+            </ul>
+          </div>
+          <div class="remember">
+            <strong>Remember.</strong> Agree who runs what before choosing where it runs. Accounts provide the strongest boundary; this workshop uses names and IAM for Dev and Prod. A small platform can move to separate accounts as it grows.
+          </div>
+          <p class="note">Further reading: <a href="https://aws-samples.github.io/sample-agentcore-enterprise-platform/#/MULTI_ACCOUNT">account strategies</a>, <a href="https://docs.aws.amazon.com/organizations/latest/userguide/orgs_reference_limits.html">Organizations and SCP limits</a>, and an <a href="https://aws-samples.github.io/sample-agentcore-enterprise-platform/#/OPERATING_MODEL">operating model template</a>.</p>
+        </section>
+        <section id="architecture">
+          <h2>The platform after module 1</h2>
+          <p class="lead">Your account now has <strong>two layers</strong>:</p>
+          <ul class="concept-list">
+            <li><strong>Pre-deployed:</strong> the control plane (CloudFront, API Gateway, Cognito, two Lambda functions and DynamoDB) and sample data.</li>
+            <li><strong>Added here:</strong> three stacks. <strong>Network:</strong> the private VPC with three app subnets and three data subnets, all six isolated, nine interface endpoints and the S3 gateway endpoint. <strong>ModelGateway:</strong> LiteLLM on ECS Express Mode behind an internal load balancer, its PostgreSQL database, its secrets, the LiteLLM image copied into your own ECR repository, and the relay Lambda, the only way to the proxy from outside the VPC. <strong>SharedServices:</strong> three account-level pieces outside the VPC: the baseline guardrail <code>hr-baseline</code> that every approved model alias carries, CloudWatch Transaction Search, which makes the agents' traces searchable in module 7, and the IAM role AgentCore Evaluations assumes for the online evaluation that module 6 registers at promotion.</li>
+          </ul>
+          <p class="caption">The figure uses AWS service icons. Faded boxes show later modules; the control plane reaches the model gateway only through the relay.</p>
+          <figure class="arch">
+            <!-- arch-svg:start -->
+            <a href="arch/module-1.svg" target="_blank" rel="noopener"><img src="arch/module-1.svg" alt="AWS architecture after module 1: Module 1 · the landing zone" loading="lazy"/></a>
+            <!-- arch-svg:end -->
+            <figcaption><strong>Private network:</strong> no internet gateway, NAT or public IPs. Tasks pull images from ECR and reach AWS services through endpoints; the database has no outbound route. The SharedServices stack has no box of its own: its pieces appear as labels on the ECS node (3 aliases, each guardrailed), under CloudWatch (Transaction Search) and under IAM (evaluation role); the resources themselves are account-level, outside the VPC. Click the figure to open it full size.</figcaption>
+          </figure>
+          <p class="note"><strong>Services and resources shown:</strong> VPC 10.0.0.0/16; ECS Express Mode; internal ALB; relay Lambda; interface endpoints; RDS; security groups; S3 gateway endpoint; Bedrock; ECR; Secrets Manager; CloudWatch; X-Ray; IAM.</p>
+        </section>
+
+        <section id="glossary">
+          <h2>Glossary</h2>
+          <div class="glossary">
+              <dl>
+                <dt>Landing zone</dt><dd>The accounts, network and tooling a platform is built on.</dd>
+                <dt>Operating model</dt><dd>Who builds, releases, supports and operates the shared services and agents.</dd>
+                <dt>Tenant</dt><dd>A business unit or customer whose data, credentials, actions and records must stay separate.</dd>
+                <dt>Control plane</dt><dd>The platform's own web UI, API, state table and worker job.</dd>
+                <dt>Model gateway</dt><dd>The shared entry point for model requests. This workshop uses the LiteLLM proxy.</dd>
+                <dt>Harness</dt><dd>AgentCore's configuration-driven agent, the form our agents take from module 6. One is deployed per environment into the app subnets, in VPC mode, behind the security group <code>agent-platform-harness</code>.</dd>
+                <dt>Account</dt><dd>AWS's strongest isolation boundary.</dd>
+                <dt>IAM</dt><dd>AWS permissions: which role may call what.</dd>
+                <dt>SCP</dt><dd>An organisation-wide rule that a member account cannot override.</dd>
+                <dt>NAT, endpoint</dt><dd>NAT provides an internet exit; an endpoint provides private access to an AWS service. This VPC uses endpoints only.</dd>
+                <dt>PrivateLink</dt><dd>The feature behind interface endpoints: a network interface in your subnet answers the service's normal name, keeping the call on the AWS network.</dd>
+                <dt>CDK</dt><dd>Infrastructure written as code and deployed as stacks.</dd>
+              </dl>
+            </div>
+        </section>
+
+      </main>
+      <nav class="pager"><a href="index.html">←&nbsp;The path</a><a href="module-2-rev.html">Module 2 · Identity&nbsp;→</a></nav>
+
+      <details class="toc-disclosure" id="course-contents">
+        <summary class="toc-toggle" aria-label="Table of contents" title="Table of contents" aria-controls="contents-navigation">
+          <svg class="toc-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h11M4 12h11M4 19h11m3-10 3 3-3 3" /></svg>
+          <svg class="toc-collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </summary>
+        <nav class="toc" id="contents-navigation" aria-label="Table of contents">
+          <strong>Contents</strong>
+          <a href="index.html">The path</a>
+          <a href="index.html#start">Get started <span class="d">15 min</span></a>
+          <a href="module-1-rev.html">1 · Landing zone <span class="d">40 min</span></a>
+          <a href="module-2-rev.html">2 · Identity <span class="d">40 min</span></a>
+          <a href="module-3-rev.html">3 · Control plane and governance <span class="d">40 min</span></a>
+          <a href="module-4-rev.html">4 · Tool plane <span class="d">40 min</span></a>
+          <a href="module-5-rev.html">5 · Model gateway <span class="d">40 min</span></a>
+          <a href="module-6-rev.html">6 · AgentOps <span class="d">40 min</span></a>
+          <a href="module-7-rev.html">7 · Operate and observe <span class="d">40 min</span></a>
+          <a href="cleanup.html">Clean up <span class="d">35 min</span></a>
+        </nav>
+      </details>
+    </div>
+    <script src="course.js"></script>
+  </body>
+</html>

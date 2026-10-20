@@ -1,0 +1,19 @@
+# AnyCompany HR assistant: agent blueprint (build-contracts.md section 6).
+# The platform resolves every ref against the project's registered resources for one environment (dev or prod) and
+# renders an AgentCore Harness configuration. Version 1 carries the seeded regression (prompts/hr-assistant-v1.md has no
+# instruction to search the policy knowledge base); version 2 of this blueprint only changes systemPrompt.file to
+# prompts/hr-assistant-v2.md.
+apiVersion: platform/v1
+kind: AgentBlueprint
+metadata: {domain: people-ops, project: hr-assistant, version: 1}
+spec:
+  model: {ref: model/claude-sonnet-5-5}                  # approved alias in the model gateway (baseline guardrail included)
+  systemPrompt: {file: prompts/hr-assistant-v1.md}       # relative to this file; the API stores the resolved text
+  tools: [{ref: tool/hr-core}]                           # the environment's gateway: hrtools___* Lambda tools + hrkb___Retrieve
+  knowledge: [{ref: kb/hr-policies}]                     # knowledge-base connector target on the same gateway (department == HR)
+  memory: {strategies: [SUMMARIZATION, USER_PREFERENCE]} # the environment's registered memory
+  limits: {maxIterations: 30, maxTokens: 4000, timeoutSeconds: 120}
+  budget: {perModelCap: 1.00, resetPeriod: 7d}           # virtual key cap for this agent, environment and model (USD; 7d avoids a UTC-midnight reset mid-event)
+  evaluation:
+    dataset: evaluation/hr-assistant.json                # relative to scenario/ (also uploaded to the dataset bucket)
+    thresholds: {Correctness: 0.8, GoalSuccessRate: 0.9, TrajectoryInOrderMatch: 0.9, Harmfulness: 0.0}

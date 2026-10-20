@@ -1,0 +1,73 @@
+[
+  {
+    "name": "get_employee_profile",
+    "description": "Look up an AnyCompany employee's profile by employee id (ids look like E1001): name, work email, department, job title, office location, hire date and manager (id, name, title). Use it for 'who is', 'which department or team', 'where is X based', 'who is X's manager' and 'when was X hired' questions. It does not return leave balances; call get_leave_balance for those.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "employee_id": {
+          "type": "string",
+          "description": "Employee id: the letter E followed by four digits, for example E1001."
+        }
+      },
+      "required": ["employee_id"]
+    }
+  },
+  {
+    "name": "get_leave_balance",
+    "description": "Get an AnyCompany employee's current annual leave and sick leave balances in days, plus any leave requests that are still pending approval. Use it whenever an employee asks how much leave or time off they have left, or before submitting a leave request. Requires the employee id (format E1001); ask for it if the employee has not given it.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "employee_id": {
+          "type": "string",
+          "description": "Employee id: the letter E followed by four digits, for example E1001."
+        }
+      },
+      "required": ["employee_id"]
+    }
+  },
+  {
+    "name": "submit_leave_request",
+    "description": "Submit a new leave request for an AnyCompany employee. Creates a request with status 'pending' (the manager approves it later; the balance is not changed yet) and returns its id (LR-xxxx), start and end dates and whether director approval is required (requests longer than 10 consecutive days). Annual leave is checked against the employee's balance and the call returns an error if it is insufficient. Only call it when you have the employee id (E1001), the leave type, the start date and the number of days, and the employee has asked you to submit.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "employee_id": {
+          "type": "string",
+          "description": "Employee id: the letter E followed by four digits, for example E1001."
+        },
+        "leave_type": {
+          "type": "string",
+          "description": "Type of leave: one of annual, sick, parental, unpaid."
+        },
+        "start_date": {
+          "type": "string",
+          "description": "First day of leave as an ISO date, YYYY-MM-DD, for example 2026-11-16."
+        },
+        "days": {
+          "type": "integer",
+          "description": "Number of consecutive calendar days of leave, a whole number from 1 to 180. The end date is start_date plus days minus one."
+        }
+      },
+      "required": ["employee_id", "leave_type", "start_date", "days"]
+    }
+  },
+  {
+    "name": "get_public_holidays",
+    "description": "List the US public holidays (federal holidays) that AnyCompany observes in 2026 and 2027, optionally filtered by year and month. Each entry has the holiday date, the day it is observed (the Friday or Monday when the date falls on a weekend), the weekday and the name. Use it for 'which holidays are in <month>', 'is <date> a holiday' and 'when is the next day off' questions. Both parameters are optional; omit them to list every holiday in the data.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "integer",
+          "description": "Four-digit year, for example 2026. Only 2026 and 2027 are available."
+        },
+        "month": {
+          "type": "integer",
+          "description": "Month number from 1 (January) to 12 (December)."
+        }
+      }
+    }
+  }
+]

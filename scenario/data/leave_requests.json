@@ -1,0 +1,202 @@
+[
+  {
+    "request_id": "LR-1001",
+    "employee_id": "E1001",
+    "leave_type": "annual",
+    "start_date": "2026-03-02",
+    "end_date": "2026-03-06",
+    "days": 5,
+    "status": "approved",
+    "submitted_at": "2026-02-02T09:14:00Z"
+  },
+  {
+    "request_id": "LR-1002",
+    "employee_id": "E1007",
+    "leave_type": "annual",
+    "start_date": "2026-04-13",
+    "end_date": "2026-04-15",
+    "days": 3,
+    "status": "approved",
+    "submitted_at": "2026-03-20T15:02:00Z"
+  },
+  {
+    "request_id": "LR-1003",
+    "employee_id": "E1010",
+    "leave_type": "sick",
+    "start_date": "2026-02-10",
+    "end_date": "2026-02-11",
+    "days": 2,
+    "status": "approved",
+    "submitted_at": "2026-02-10T07:45:00Z"
+  },
+  {
+    "request_id": "LR-1004",
+    "employee_id": "E1006",
+    "leave_type": "annual",
+    "start_date": "2026-07-06",
+    "end_date": "2026-07-20",
+    "days": 15,
+    "status": "approved",
+    "submitted_at": "2026-05-11T10:30:00Z"
+  },
+  {
+    "request_id": "LR-1005",
+    "employee_id": "E1014",
+    "leave_type": "annual",
+    "start_date": "2026-05-26",
+    "end_date": "2026-05-29",
+    "days": 4,
+    "status": "approved",
+    "submitted_at": "2026-04-28T11:20:00Z"
+  },
+  {
+    "request_id": "LR-1006",
+    "employee_id": "E1019",
+    "leave_type": "annual",
+    "start_date": "2026-08-03",
+    "end_date": "2026-08-14",
+    "days": 12,
+    "status": "rejected",
+    "submitted_at": "2026-07-27T16:48:00Z"
+  },
+  {
+    "request_id": "LR-1007",
+    "employee_id": "E1017",
+    "leave_type": "sick",
+    "start_date": "2026-06-15",
+    "end_date": "2026-06-15",
+    "days": 1,
+    "status": "approved",
+    "submitted_at": "2026-06-15T08:05:00Z"
+  },
+  {
+    "request_id": "LR-1008",
+    "employee_id": "E1022",
+    "leave_type": "annual",
+    "start_date": "2026-09-14",
+    "end_date": "2026-09-18",
+    "days": 5,
+    "status": "approved",
+    "submitted_at": "2026-08-10T13:37:00Z"
+  },
+  {
+    "request_id": "LR-1009",
+    "employee_id": "E1010",
+    "leave_type": "parental",
+    "start_date": "2026-09-01",
+    "end_date": "2026-12-21",
+    "days": 112,
+    "status": "approved",
+    "submitted_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "request_id": "LR-1010",
+    "employee_id": "E1003",
+    "leave_type": "unpaid",
+    "start_date": "2026-10-05",
+    "end_date": "2026-10-14",
+    "days": 10,
+    "status": "approved",
+    "submitted_at": "2026-08-24T14:12:00Z"
+  },
+  {
+    "request_id": "LR-1011",
+    "employee_id": "E1012",
+    "leave_type": "annual",
+    "start_date": "2026-10-19",
+    "end_date": "2026-10-20",
+    "days": 2,
+    "status": "approved",
+    "submitted_at": "2026-10-01T10:05:00Z"
+  },
+  {
+    "request_id": "LR-1012",
+    "employee_id": "E1008",
+    "leave_type": "annual",
+    "start_date": "2026-11-23",
+    "end_date": "2026-11-25",
+    "days": 3,
+    "status": "pending",
+    "submitted_at": "2026-10-02T09:30:00Z"
+  },
+  {
+    "request_id": "LR-1013",
+    "employee_id": "E1018",
+    "leave_type": "annual",
+    "start_date": "2026-12-21",
+    "end_date": "2026-12-24",
+    "days": 4,
+    "status": "pending",
+    "submitted_at": "2026-10-05T12:00:00Z"
+  },
+  {
+    "request_id": "LR-1014",
+    "employee_id": "E1023",
+    "leave_type": "annual",
+    "start_date": "2026-12-28",
+    "end_date": "2026-12-30",
+    "days": 3,
+    "status": "pending",
+    "submitted_at": "2026-10-06T17:22:00Z"
+  },
+  {
+    "request_id": "LR-1015",
+    "employee_id": "E1004",
+    "leave_type": "parental",
+    "start_date": "2027-01-11",
+    "end_date": "2027-02-21",
+    "days": 42,
+    "status": "pending",
+    "submitted_at": "2026-10-06T10:10:00Z"
+  },
+  {
+    "request_id": "LR-1016",
+    "employee_id": "E1024",
+    "leave_type": "annual",
+    "start_date": "2026-11-30",
+    "end_date": "2026-11-30",
+    "days": 1,
+    "status": "pending",
+    "submitted_at": "2026-10-07T08:50:00Z"
+  },
+  {
+    "request_id": "LR-1017",
+    "employee_id": "E1016",
+    "leave_type": "annual",
+    "start_date": "2026-12-14",
+    "end_date": "2026-12-18",
+    "days": 5,
+    "status": "pending",
+    "submitted_at": "2026-10-07T15:40:00Z"
+  },
+  {
+    "request_id": "LR-1018",
+    "employee_id": "E1011",
+    "leave_type": "sick",
+    "start_date": "2026-09-28",
+    "end_date": "2026-09-30",
+    "days": 3,
+    "status": "approved",
+    "submitted_at": "2026-09-28T07:58:00Z"
+  },
+  {
+    "request_id": "LR-1019",
+    "employee_id": "E1025",
+    "leave_type": "annual",
+    "start_date": "2026-10-26",
+    "end_date": "2026-10-30",
+    "days": 5,
+    "status": "rejected",
+    "submitted_at": "2026-10-07T16:30:00Z"
+  },
+  {
+    "request_id": "LR-1020",
+    "employee_id": "E1013",
+    "leave_type": "annual",
+    "start_date": "2026-11-16",
+    "end_date": "2026-11-17",
+    "days": 2,
+    "status": "pending",
+    "submitted_at": "2026-10-08T09:05:00Z"
+  }
+]

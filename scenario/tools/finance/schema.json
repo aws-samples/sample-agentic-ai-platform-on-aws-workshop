@@ -1,0 +1,16 @@
+[
+  {
+    "name": "get_invoice_status",
+    "description": "FINANCE ONLY: get the payment status of a supplier invoice by invoice id (ids look like INV-1001). Returns the vendor, amount, currency, status (paid, pending or overdue) and due date. For the Finance team's accounts-payable assistant; not an HR tool.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "invoice_id": {
+          "type": "string",
+          "description": "Invoice id: INV- followed by four digits, for example INV-1001."
+        }
+      },
+      "required": ["invoice_id"]
+    }
+  }
+]

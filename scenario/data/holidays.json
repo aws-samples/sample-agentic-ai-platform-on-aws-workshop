@@ -1,0 +1,134 @@
+[
+  {
+    "date": "2026-01-01",
+    "observed": "2026-01-01",
+    "name": "New Year's Day",
+    "country": "US"
+  },
+  {
+    "date": "2026-01-19",
+    "observed": "2026-01-19",
+    "name": "Birthday of Martin Luther King, Jr.",
+    "country": "US"
+  },
+  {
+    "date": "2026-02-16",
+    "observed": "2026-02-16",
+    "name": "Washington's Birthday",
+    "country": "US"
+  },
+  {
+    "date": "2026-05-25",
+    "observed": "2026-05-25",
+    "name": "Memorial Day",
+    "country": "US"
+  },
+  {
+    "date": "2026-06-19",
+    "observed": "2026-06-19",
+    "name": "Juneteenth National Independence Day",
+    "country": "US"
+  },
+  {
+    "date": "2026-07-04",
+    "observed": "2026-07-03",
+    "name": "Independence Day",
+    "country": "US"
+  },
+  {
+    "date": "2026-09-07",
+    "observed": "2026-09-07",
+    "name": "Labor Day",
+    "country": "US"
+  },
+  {
+    "date": "2026-10-12",
+    "observed": "2026-10-12",
+    "name": "Columbus Day",
+    "country": "US"
+  },
+  {
+    "date": "2026-11-11",
+    "observed": "2026-11-11",
+    "name": "Veterans Day",
+    "country": "US"
+  },
+  {
+    "date": "2026-11-26",
+    "observed": "2026-11-26",
+    "name": "Thanksgiving Day",
+    "country": "US"
+  },
+  {
+    "date": "2026-12-25",
+    "observed": "2026-12-25",
+    "name": "Christmas Day",
+    "country": "US"
+  },
+  {
+    "date": "2027-01-01",
+    "observed": "2027-01-01",
+    "name": "New Year's Day",
+    "country": "US"
+  },
+  {
+    "date": "2027-01-18",
+    "observed": "2027-01-18",
+    "name": "Birthday of Martin Luther King, Jr.",
+    "country": "US"
+  },
+  {
+    "date": "2027-02-15",
+    "observed": "2027-02-15",
+    "name": "Washington's Birthday",
+    "country": "US"
+  },
+  {
+    "date": "2027-05-31",
+    "observed": "2027-05-31",
+    "name": "Memorial Day",
+    "country": "US"
+  },
+  {
+    "date": "2027-06-19",
+    "observed": "2027-06-18",
+    "name": "Juneteenth National Independence Day",
+    "country": "US"
+  },
+  {
+    "date": "2027-07-04",
+    "observed": "2027-07-05",
+    "name": "Independence Day",
+    "country": "US"
+  },
+  {
+    "date": "2027-09-06",
+    "observed": "2027-09-06",
+    "name": "Labor Day",
+    "country": "US"
+  },
+  {
+    "date": "2027-10-11",
+    "observed": "2027-10-11",
+    "name": "Columbus Day",
+    "country": "US"
+  },
+  {
+    "date": "2027-11-11",
+    "observed": "2027-11-11",
+    "name": "Veterans Day",
+    "country": "US"
+  },
+  {
+    "date": "2027-11-25",
+    "observed": "2027-11-25",
+    "name": "Thanksgiving Day",
+    "country": "US"
+  },
+  {
+    "date": "2027-12-25",
+    "observed": "2027-12-24",
+    "name": "Christmas Day",
+    "country": "US"
+  }
+]

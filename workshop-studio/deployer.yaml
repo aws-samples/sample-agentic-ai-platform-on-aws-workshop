@@ -1,0 +1,257 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Agentic AI Platform workshop: deploys the CDK foundation into this account with AWS CodeBuild. DeployScope pre-day (the
+  default) deploys the control plane and the sample data (Web, Auth, Platform, Scenario; about 12 minutes); the learners deploy
+  the landing zone themselves in module 1 (workshop apply 1). DeployScope all deploys the seven AgentPlatform-* stacks (about
+  20 minutes). Intended for AWS Workshop Studio (the event supplies AssetsBucketName and AssetsBucketPrefix); also usable
+  standalone. Deleting this stack destroys the foundation again (every stack, whichever scope created it).
+
+Parameters:
+  AssetsBucketName:
+    Type: String
+    Description: S3 bucket that holds the workshop assets (Workshop Studio fills this in).
+  AssetsBucketPrefix:
+    Type: String
+    Default: ""
+    Description: Prefix inside the bucket, ending with a slash when not empty (Workshop Studio fills this in).
+  RepoArchiveKey:
+    Type: String
+    Default: repo.zip
+    Description: Object key, relative to the prefix, of the repository archive produced by scripts/package_for_workshop_studio.py.
+  ComputeType:
+    Type: String
+    Default: BUILD_GENERAL1_MEDIUM
+    AllowedValues: [BUILD_GENERAL1_SMALL, BUILD_GENERAL1_MEDIUM, BUILD_GENERAL1_LARGE]
+    Description: CodeBuild compute size for the deployment build.
+  UvVersion:
+    Type: String
+    Default: 0.12.10
+    Description: uv release installed inside the build (keep in step with the version that wrote uv.lock).
+  DeployScope:
+    Type: String
+    Default: pre-day
+    AllowedValues: [pre-day, all]
+    Description: >-
+      pre-day deploys the control plane and the sample data (AgentPlatform-Web, -Auth, -Platform, -Scenario) and leaves the
+      landing zone (Network, SharedServices, ModelGateway) to the learners (module 1, `workshop apply 1`); all deploys everything.
+
+Resources:
+  DeployerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/codebuild/${AWS::StackName}-deployer
+      RetentionInDays: 30
+
+  DeployerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Role used by the CodeBuild deployer to bootstrap CDK and deploy or destroy the workshop foundation.
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: codebuild.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      Tags:
+        - { Key: Project, Value: workshop-agent-platform }
+        - { Key: ManagedBy, Value: workshop-studio }
+
+  DeployerProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${AWS::StackName}-deployer
+      Description: Deploys or destroys the Agentic AI Platform workshop foundation (CDK) and signals the CloudFormation custom resource.
+      ServiceRole: !GetAtt DeployerRole.Arn
+      TimeoutInMinutes: 55
+      QueuedTimeoutInMinutes: 10
+      Artifacts: { Type: NO_ARTIFACTS }
+      LogsConfig:
+        CloudWatchLogs: { Status: ENABLED, GroupName: !Ref DeployerLogGroup }
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: !Ref ComputeType
+        Image: aws/codebuild/standard:7.0
+        PrivilegedMode: false
+        EnvironmentVariables:
+          - { Name: ACTION, Value: deploy }
+          - { Name: UV_VERSION, Value: !Ref UvVersion }
+          - { Name: DEPLOY_SCOPE, Value: !Ref DeployScope }
+          - { Name: DEPLOYER_LOG_GROUP, Value: !Ref DeployerLogGroup }
+          - { Name: CFN_RESPONSE_URL, Value: "" }
+          - { Name: CFN_STACK_ID, Value: "" }
+          - { Name: CFN_REQUEST_ID, Value: "" }
+          - { Name: CFN_LOGICAL_ID, Value: "" }
+          - { Name: CFN_PHYSICAL_ID, Value: agent-platform-foundation }
+      Source:
+        Type: S3
+        Location: !Sub ${AssetsBucketName}/${AssetsBucketPrefix}${RepoArchiveKey}
+        # Everything runs in the build phase on purpose: CodeBuild skips post_build when install or pre_build fails, and
+        # post_build is where the custom resource is signalled. A build that never signals leaves the stack waiting for
+        # CloudFormation's one-hour custom-resource timeout.
+        BuildSpec: |
+          version: 0.2
+          env:
+            shell: bash
+          phases:
+            install:
+              runtime-versions:
+                nodejs: 20
+            build:
+              commands:
+                - |
+                  set -euo pipefail
+                  export PATH="$HOME/.local/bin:$PATH"
+                  ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+                  echo "== account $ACCOUNT_ID region $AWS_REGION action $ACTION build $CODEBUILD_BUILD_ID"
+                  t0=$(date +%s); mark() { echo "== TIMING $1: $(( $(date +%s) - t0 )) s"; t0=$(date +%s); }
+                  curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh
+                  uv --version
+                  uv python install 3.13
+                  uv sync --frozen
+                  npm ci --no-audit --no-fund
+                  mark "tools (uv, Python 3.13, uv sync, npm ci)"
+                  if [ "$ACTION" = "destroy" ]; then
+                    (cd foundation && npx cdk destroy --all --force --concurrency 4) || echo "WARNING: cdk destroy reported errors (continuing with the sweep)"
+                    mark "cdk destroy --all"
+                    uv run python scripts/cleanup.py --yes || echo "WARNING: cleanup.py reported errors"
+                    mark "cleanup.py"
+                  else
+                    if [ ! -f frontend/dist/index.html ]; then
+                      (cd frontend && npm ci --no-audit --no-fund && npm run build)
+                      mark "ui build"
+                    fi
+                    npx cdk bootstrap "aws://$ACCOUNT_ID/$AWS_REGION" --tags Project=workshop-agent-platform
+                    mark "cdk bootstrap"
+                    if [ "$DEPLOY_SCOPE" = "all" ]; then
+                      STACKS="AgentPlatform-Network AgentPlatform-SharedServices AgentPlatform-ModelGateway AgentPlatform-Web AgentPlatform-Auth AgentPlatform-Platform AgentPlatform-Scenario"
+                    else
+                      STACKS="AgentPlatform-Web AgentPlatform-Auth AgentPlatform-Platform AgentPlatform-Scenario"
+                    fi
+                    (cd foundation && npx cdk deploy $STACKS --require-approval never --concurrency 4)
+                    mark "cdk deploy $STACKS"
+                    if [ "$DEPLOY_SCOPE" = "all" ]; then
+                      uv run python scripts/create_personas.py
+                      mark "personas"
+                    fi
+                    if uv run python scripts/doctor.py; then
+                      echo PASS > /tmp/doctor.status
+                    else
+                      echo FAIL > /tmp/doctor.status
+                      echo "WARNING: doctor reported failures (see above); the stack still completes"
+                    fi
+                    mark "doctor"
+                  fi
+            post_build:
+              commands:
+                - python3 workshop-studio/cfn_signal.py
+      Tags:
+        - { Key: Project, Value: workshop-agent-platform }
+        - { Key: ManagedBy, Value: workshop-studio }
+
+  StartBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: start-build
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [codebuild:StartBuild, codebuild:BatchGetBuilds]
+                Resource: !GetAtt DeployerProject.Arn
+      Tags:
+        - { Key: Project, Value: workshop-agent-platform }
+        - { Key: ManagedBy, Value: workshop-studio }
+
+  StartBuildFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Custom resource handler that starts the deployer build; the build itself signals CloudFormation when it finishes.
+      Runtime: python3.13
+      Handler: index.handler
+      Timeout: 60
+      Role: !GetAtt StartBuildRole.Arn
+      Environment:
+        Variables:
+          PROJECT_NAME: !Ref DeployerProject
+      Tags:
+        - { Key: Project, Value: workshop-agent-platform }
+        - { Key: ManagedBy, Value: workshop-studio }
+      Code:
+        ZipFile: |
+          import json, os, urllib.request, boto3
+
+          def respond(event, status, reason, data=None):
+              body = json.dumps({"Status": status, "Reason": reason[:1000],
+                                 "PhysicalResourceId": event.get("PhysicalResourceId") or "agent-platform-foundation",
+                                 "StackId": event["StackId"], "RequestId": event["RequestId"],
+                                 "LogicalResourceId": event["LogicalResourceId"], "Data": data or {}}).encode()
+              req = urllib.request.Request(event["ResponseURL"], data=body, method="PUT", headers={"Content-Type": ""})
+              urllib.request.urlopen(req, timeout=30)
+
+          def handler(event, context):
+              print(json.dumps({k: v for k, v in event.items() if k != "ResponseURL"}))
+              action = "destroy" if event["RequestType"] == "Delete" else "deploy"
+              physical = event.get("PhysicalResourceId") or "agent-platform-foundation"
+              try:
+                  build = boto3.client("codebuild").start_build(
+                      projectName=os.environ["PROJECT_NAME"],
+                      environmentVariablesOverride=[
+                          {"name": "ACTION", "value": action, "type": "PLAINTEXT"},
+                          {"name": "CFN_RESPONSE_URL", "value": event["ResponseURL"], "type": "PLAINTEXT"},
+                          {"name": "CFN_STACK_ID", "value": event["StackId"], "type": "PLAINTEXT"},
+                          {"name": "CFN_REQUEST_ID", "value": event["RequestId"], "type": "PLAINTEXT"},
+                          {"name": "CFN_LOGICAL_ID", "value": event["LogicalResourceId"], "type": "PLAINTEXT"},
+                          {"name": "CFN_PHYSICAL_ID", "value": physical, "type": "PLAINTEXT"},
+                      ])["build"]
+                  print("started build", build["id"], "for", action)
+                  # The build posts the SUCCESS/FAILED response to CloudFormation when it finishes (post_build).
+              except Exception as exc:  # noqa: BLE001
+                  print("start_build failed:", exc)
+                  # On Delete, do not block stack deletion because the build could not start.
+                  respond(event, "SUCCESS" if action == "destroy" else "FAILED", f"start_build failed: {exc}")
+
+  Foundation:
+    Type: Custom::AgentPlatformFoundation
+    DependsOn: [DeployerLogGroup, StartBuildRole]
+    Properties:
+      ServiceToken: !GetAtt StartBuildFunction.Arn
+      ProjectName: !Ref DeployerProject
+      RepoArchive: !Sub ${AssetsBucketName}/${AssetsBucketPrefix}${RepoArchiveKey}
+      Version: "2"
+
+Outputs:
+  UiUrl:
+    Description: Platform UI (sign in with the personas from the users secret).
+    Value: !GetAtt Foundation.UiUrl
+  ApiUrl:
+    Description: Platform API base URL.
+    Value: !GetAtt Foundation.ApiUrl
+  ModelGatewayUrl:
+    Description: Model gateway (LiteLLM) URL; admin UI at /ui.
+    Value: !GetAtt Foundation.ModelGatewayUrl
+  UsersSecretArn:
+    Description: Secrets Manager secret with the admin, developer and approver sign-in details.
+    Value: !GetAtt Foundation.UsersSecretArn
+  PersonaPasswordsCommand:
+    Description: Command that prints the persona passwords.
+    Value: !Sub aws secretsmanager get-secret-value --secret-id ${Foundation.UsersSecretArn} --query SecretString --output text
+  DoctorStatus:
+    Description: Result of scripts/doctor.py at the end of the deployment (PASS or FAIL; details in the build log).
+    Value: !GetAtt Foundation.Doctor
+  DeployerBuildId:
+    Description: CodeBuild build that deployed the foundation.
+    Value: !GetAtt Foundation.BuildId
+  DeployerBuildLogs:
+    Description: CloudWatch log group of the deployer build.
+    Value: !Ref DeployerLogGroup

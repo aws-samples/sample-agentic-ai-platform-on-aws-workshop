@@ -1,0 +1,81 @@
+# Your platform design record. One block per module, two parts:
+#   inputs    read by `workshop apply N` (bold on the course pages): they shape the platform you build today
+#   decisions what this workshop chose, and your call for your own organisation (free text; module 7 turns them into a backlog)
+# Missing inputs fall back to the workshop defaults, so this file builds the reference platform as it is.
+# Check it any time with `workshop record`.
+
+module_1:
+  inputs: none                                  # workshop apply 1 deploys the landing zone as designed (network, shared services, model gateway)
+  decisions:
+    accounts:        {workshop: one-account,          my_call: "..."}   # Dev and Prod by name
+    network:         {workshop: private-endpoints,    my_call: "..."}   # one private VPC, endpoints only: no internet path
+    iac:             {workshop: cdk + control-plane,  my_call: "..."}   # 7 platform stacks + the IdP stand-in (module 2); per-project objects at run time; the agentcore CLI on the developer's laptop
+    operating_model: {workshop: federated,            my_call: "..."}   # the platform team shares, project teams build
+
+module_2:
+  inputs:                                       # read by: workshop apply 2 and workshop obo
+    employee: E1001                             # the employee who signs in at the corporate IdP; the on-behalf-of chain acts for this person
+  decisions:
+    people:        {workshop: cognito-groups,       my_call: "..."}   # three groups are the three personas
+    agents:        {workshop: iam-sigv4,            my_call: "..."}   # one role pair per project and environment
+    secrets:       {workshop: token-vault,          my_call: "..."}   # one key per agent, environment, model
+    corporate_idp: {workshop: keycloak-self-hosted, my_call: "..."}   # one realm on Fargate, HTTPS through API Gateway; Okta or Entra in production
+    user_identity: {workshop: obo-token-exchange,   my_call: "..."}   # RFC 8693 at each hop, brokered by AgentCore Identity
+
+module_3:
+  inputs:                                       # read by: workshop apply 3
+    domain: people-ops
+    project: hr-assistant
+    owner: margaret.chen@anycompany.example
+    models: [claude-sonnet-5-5, claude-haiku-4-5]
+    model: claude-sonnet-5-5                    # the alias the agent uses (one of models)
+    budget: {usd: 5, period: 7d, tpm: 200000, rpm: 200}
+  decisions:
+    tenancy:    {workshop: templates,               my_call: "..."}
+    governance: {workshop: layered,                 my_call: "..."}
+    approvals:  {workshop: admin + domain-approver, my_call: "..."}
+    registry:   {workshop: one-registry,            my_call: "..."}   # every persona reads; the admin approves
+
+module_4:
+  inputs:                                       # read by: workshop apply 4
+    knowledge_filter: {department: HR}          # pinned at the knowledge base target
+    max_leave_days: 10                          # the argument rule in Cedar
+    gateway_mode: LOG_ONLY                      # where the gateways start; you flip ENFORCE on the Governance screen
+  decisions:
+    layout:   {workshop: per-project-env,  my_call: "..."}
+    layers:   {workshop: single,           my_call: "..."}
+    targets:  {workshop: lambda + kb,      my_call: "..."}
+    rollout:  {workshop: log-then-enforce, my_call: "..."}
+    user_tools: {workshop: openapi-jwt-target, my_call: "..."}   # API Gateway JWT authorizer in front of the unchanged Lambda, called with an exchanged token
+
+module_5:
+  inputs:                                       # read by: workshop apply 5
+    key_cap: {usd: 1.00, period: 7d}            # the Dev key for the agent's model
+  decisions:
+    model_access:        {workshop: model-gateway,       my_call: "..."}   # LiteLLM
+    spend_control:       {workshop: hard-caps,           my_call: "..."}   # team budget + key caps
+    catalogue:           {workshop: agent-registry,      my_call: "..."}   # manual approval, a label
+    processing_location: {workshop: geographic-profiles, my_call: "..."}   # us. profiles; the SCP side is 3.2
+
+module_6:
+  inputs:                                       # read by: workshop apply 6 and workshop export
+    prompt_version: v1                          # v1 has the planted bug; set v2 to fix it, then apply again
+    thresholds: {Correctness: 0.8, GoalSuccessRate: 0.9, TrajectoryInOrderMatch: 0.9, Harmfulness: 0.0}
+    export: strands                             # strands | langgraph
+  decisions:
+    agent_form:   {workshop: harness-from-blueprint,       my_call: "..."}
+    release_gate: {workshop: dataset + thresholds + human, my_call: "..."}
+    promotion:    {workshop: pin-live,                     my_call: "..."}
+
+module_7:
+  inputs:                                       # read by: workshop apply 7
+    prod_traffic: 10                            # conversations sent to Prod
+  decisions:
+    observability:     {workshop: transaction-search,   my_call: "..."}
+    prod_quality:      {workshop: online-eval-100pct,   my_call: "..."}
+    telemetry_content: {workshop: full-content,         my_call: "..."}   # synthetic data; CloudWatch IAM controls trace access
+    cost_allocation:   {workshop: measured-consumption, my_call: "..."}   # per key; the foundation unallocated
+  backlog:                                      # your production path: one line per recap row, with an owner
+    - "accounts: platform + workload, owner: cloud team"
+    - "identity: brokered Entra ID, owner: IAM team"
+    - "..."
