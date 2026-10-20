@@ -1,0 +1,1199 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Design an Enterprise Agentic AI Platform</title>
+        <link rel="stylesheet" href="course.css">
+    </head>
+    <body>
+        <header class="hero">
+            <div class="hero-inner">
+                <h1>Design an Enterprise Agentic AI Platform</h1>
+                <p>
+                    This workshop has 7 modules.
+                    <br>
+                    You will first make design decisions, then see what this workshop will build, and finally run it in your account.
+                    <br>
+                    Final outcome: One functional platform built end to end on Amazon Bedrock AgentCore.
+                </p>
+                <div class="meta">
+                    <span>18 Oct 2026</span>
+                </div>
+            </div>
+        </header>
+        <div class="wrap">
+            <nav class="pager">
+                <span></span>
+                <a href="module-1-rev.html">Module 1 · Landing&nbsp;zone&nbsp;→</a>
+            </nav>
+            <main>
+                <section id="path">
+                    <h2>The learning path</h2>
+                    <p class="lead">Seven modules, one per layer of the platform, arranged in the order an architect decides.</p>
+                    <div class="rail">
+                        <a href="module-1-rev.html">
+                            <span class="n">Module 1</span>
+                            <span class="t">Landing zone</span>
+                            <span class="l">Decides ownership, account topology,  network and infrastructure</span>
+                        </a>
+                        <span class="arrow arrow-sm" aria-hidden="true">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="m6 5 7 7-7 7M13 5l7 7-7 7"/>
+                            </svg>
+                        </span>
+                        <a href="module-2-rev.html">
+                            <span class="n">Module 2</span>
+                            <span class="t">Identity</span>
+                            <span class="l">Who calls? On whose behalf, with Keycloak and token exchange? Where do secrets live?</span>
+                        </a>
+                        <span class="arrow arrow-sm" aria-hidden="true">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="m6 5 7 7-7 7M13 5l7 7-7 7"/>
+                            </svg>
+                        </span>
+                        <a href="module-3-rev.html">
+                            <span class="n">Module 3</span>
+                            <span class="t">Governance</span>
+                            <span class="l">Control plane for tenant boundaries and approvals</span>
+                        </a>
+                        <span class="arrow arrow-sm" aria-hidden="true">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="m6 5 7 7-7 7M13 5l7 7-7 7"/>
+                            </svg>
+                        </span>
+                        <a href="module-4-rev.html">
+                            <span class="n">Module 4</span>
+                            <span class="t">Tool plane</span>
+                            <span class="l">Fine-grained controls for tools and knowledge; the employee's identity carried to a tool</span>
+                        </a>
+                        <span class="arrow arrow-sm" aria-hidden="true">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="m6 5 7 7-7 7M13 5l7 7-7 7"/>
+                            </svg>
+                        </span>
+                        <a href="module-5-rev.html">
+                            <span class="n">Module 5</span>
+                            <span class="t">Model gateway</span>
+                            <span class="l">Model access, safety, spend limit and where requests are served</span>
+                        </a>
+                        <span class="arrow arrow-sm" aria-hidden="true">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="m6 5 7 7-7 7M13 5l7 7-7 7"/>
+                            </svg>
+                        </span>
+                        <a href="module-6-rev.html">
+                            <span class="n">Module 6</span>
+                            <span class="t">AgentOps</span>
+                            <span class="l">Turn an agent configuration into a tested, approved production release</span>
+                        </a>
+                        <span class="arrow arrow-sm" aria-hidden="true">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="m6 5 7 7-7 7M13 5l7 7-7 7"/>
+                            </svg>
+                        </span>
+                        <a href="module-7-rev.html">
+                            <span class="n">Module 7</span>
+                            <span class="t">Operate and observe</span>
+                            <span class="l">Monitor quality, behavior and cost</span>
+                        </a>
+                    </div>
+                    <br>
+                    <p class="lead">Each module has three parts</p>
+                    <div class="shape">
+                        <div class="explain">
+                            <span class="m">
+                                <strong>Explain</strong>
+                                <span class="pill tag command">Instructor</span>
+                            </span>
+                            <span class="m">10 min</span>
+                            <p>What decisions this layer needs, and why</p>
+                        </div>
+                        <div class="discuss">
+                            <span class="m">
+                                <strong>Design</strong>
+                                <span class="pill tag record">Everyone</span>
+                            </span>
+                            <span class="m">10 min</span>
+                            <p>The options, pros & cons, when to pick each</p>
+                        </div>
+                        <div class="hands">
+                            <span class="m">
+                                <strong>Hands-on</strong>
+                                <span class="pill tag screen">You</span>
+                            </span>
+                            <span class="m">20 min</span>
+                            <p>Build this workshop's choice in your account, and see it work.</p>
+                        </div>
+                    </div>
+                    <!-- <div class="key">
+                        <strong>Key</strong>
+                        <div class="key-cols">
+                            <div>
+                                <div>
+                                    <span class="sw" style="border:2px solid #ff9900;background:#fff8ea"></span>
+                                    The option this workshop chose and built.
+                                </div>
+                                <div>
+                                    <span style="color:#1d8102;font-weight:700">+</span>
+                                    Pros
+                                </div>
+                                <div>
+                                    <span style="color:#8a5a00;font-weight:700">–</span>
+                                    Cons
+                                </div>
+                            </div>
+                            <div>
+                                <div>
+                                    <span class="sw" style="background:#f7fbfe;border:2px dashed #0972d3"></span>
+                                    Hands-on part
+                                </div>
+                                <div>
+                                    <span class="sw" style="background:#f2f3f3;border:1px solid #d5dbdb"></span>
+                                    Thing to remember
+                                </div>
+                                <div>
+                                    <span class="sw" style="background:#161e2d"></span>
+                                    Code and your design record
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
+                </section>
+
+                <!-- Agenda -->
+                <section id="agenda">
+                    <h2>Agenda</h2>
+                    <table class="plain">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Block</th>
+                                <th>Min</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>09:00</td>
+                                <td>Welcome + Kahoot (survey cohort's background and preferences)</td>
+                                <td>10</td>
+                            </tr>
+                            <tr>
+                                <td>09:10</td>
+                                <td>Presentation: Agentic AI Platform</td>
+                                <td>30</td>
+                            </tr>
+                            <tr>
+                                <td>09:40</td>
+                                <td>Module 1 - Landing zone</td>
+                                <td>40</td>
+                            </tr>
+                            <tr>
+                                <td>10:20</td>
+                                <td>Module 2 - Identity</td>
+                                <td>40</td>
+                            </tr>
+                            <tr>
+                                <td>11:00</td>
+                                <td>Break</td>
+                                <td>10</td>
+                            </tr>
+                            <tr>
+                                <td>11:10</td>
+                                <td>Module 3 - Control plane and governance</td>
+                                <td>40</td>
+                            </tr>
+                            <tr>
+                                <td>11:50</td>
+                                <td>Module 4 - Tool plane</td>
+                                <td>40</td>
+                            </tr>
+                            <tr>
+                                <td>12:30</td>
+                                <td>Lunch</td>
+                                <td>45</td>
+                            </tr>
+                            <tr>
+                                <td>13:15</td>
+                                <td>Module 5 - Model gateway</td>
+                                <td>40</td>
+                            </tr>
+                            <tr>
+                                <td>13:55</td>
+                                <td>Module 6 - AgentOps</td>
+                                <td>40</td>
+                            </tr>
+                            <tr>
+                                <td>14:35</td>
+                                <td>Break</td>
+                                <td>10</td>
+                            </tr>
+                            <tr>
+                                <td>14:45</td>
+                                <td>Module 7 - Operate and observe</td>
+                                <td>40</td>
+                            </tr>
+                            <tr>
+                                <td>15:25</td>
+                                <td>Wrap-up + Room QA</td>
+                                <td>15</td>
+                            </tr>
+                            <tr>
+                                <td>15:40</td>
+                                <td>End</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section id="build">
+                    <h2>How the day builds the platform</h2>
+                    <p class="lead">
+                        The control plane is already deployed for you.
+                        <br>
+                        Each module adds one layer of your own platform foundation. At the end you own a complete, governed platform with one agent in production.
+                    </p>
+                    <figure>
+                        <svg viewBox="0 0 960 330" role="img" aria-labelledby="fb-title">
+                            <title id="fb-title">Pre-deployed foundation, seven modules, one complete platform</title>
+                            <defs>
+                                <marker
+                                    id="fb-arr"
+                                    viewBox="0 0 10 10"
+                                    refX="9"
+                                    refY="5"
+                                    markerWidth="7"
+                                    markerHeight="7"
+                                    orient="auto-start-reverse"
+                                >
+                                    <path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/>
+                                </marker>
+                            </defs>
+                            <rect
+                                class="d-box d-account"
+                                x="10"
+                                y="20"
+                                width="250"
+                                height="300"
+                            />
+                            <text class="d-text d-title" x="24" y="44">Deployed before you arrive</text>
+                            <rect
+                                class="d-box d-platform"
+                                x="24"
+                                y="58"
+                                width="222"
+                                height="36"
+                            />
+                            <text
+                                class="d-text"
+                                x="135"
+                                y="76"
+                                text-anchor="middle"
+                            >Control plane</text>
+                            <text
+                                class="d-text d-small"
+                                x="135"
+                                y="89"
+                                text-anchor="middle"
+                            >web UI · API · state · worker</text>
+                            <rect
+                                class="d-box d-platform"
+                                x="24"
+                                y="102"
+                                width="222"
+                                height="36"
+                            />
+                            <text
+                                class="d-text"
+                                x="135"
+                                y="120"
+                                text-anchor="middle"
+                            >Sample data</text>
+                            <text
+                                class="d-text d-small"
+                                x="135"
+                                y="133"
+                                text-anchor="middle"
+                            >tools · documents · tests</text>
+                            <path class="d-arrow" d="M260 150 L300 150" marker-end="url(#fb-arr)"/>
+                            <rect
+                                class="d-box d-account"
+                                x="302"
+                                y="20"
+                                width="400"
+                                height="300"
+                            />
+                            <text class="d-text d-title" x="316" y="44">You add, module by module</text>
+                            <rect
+                                class="d-box d-aws"
+                                x="316"
+                                y="58"
+                                width="372"
+                                height="30"
+                            />
+                            <text class="d-text" x="326" y="78">1. Landing zone including network and CDK stacks</text>
+                            <rect
+                                class="d-box d-aws"
+                                x="316"
+                                y="94"
+                                width="372"
+                                height="30"
+                            />
+                            <text class="d-text" x="326" y="114">2. Identity: Cognito personas; Keycloak, on behalf of</text>
+                            <rect
+                                class="d-box d-aws"
+                                x="316"
+                                y="130"
+                                width="372"
+                                height="30"
+                            />
+                            <text class="d-text" x="326" y="150">3. Two domains, two projects, roles and budgets</text>
+                            <rect
+                                class="d-box d-aws"
+                                x="316"
+                                y="166"
+                                width="372"
+                                height="30"
+                            />
+                            <text class="d-text" x="326" y="186">4. Gateways, targets, policies, on-behalf-of door</text>
+                            <rect
+                                class="d-box d-aws"
+                                x="316"
+                                y="202"
+                                width="372"
+                                height="30"
+                            />
+                            <text class="d-text" x="326" y="222">5. Model keys and caps; catalogue approvals</text>
+                            <rect
+                                class="d-box d-aws"
+                                x="316"
+                                y="238"
+                                width="372"
+                                height="30"
+                            />
+                            <text class="d-text" x="326" y="258">6. Memory, blueprint, Dev agent, release, Prod</text>
+                            <rect
+                                class="d-box d-aws"
+                                x="316"
+                                y="274"
+                                width="372"
+                                height="30"
+                            />
+                            <text class="d-text" x="326" y="294">7. Traffic, dashboard, online evaluation</text>
+                            <path class="d-arrow" d="M702 150 L742 150" marker-end="url(#fb-arr)"/>
+                            <rect
+                                class="d-box d-ours"
+                                x="744"
+                                y="20"
+                                width="206"
+                                height="300"
+                                style="fill:#fff8ea"
+                            />
+                            <text
+                                class="d-text d-title"
+                                x="847"
+                                y="44"
+                                text-anchor="middle"
+                            >End of the day</text>
+                            <text
+                                class="d-text d-strong"
+                                x="847"
+                                y="90"
+                                text-anchor="middle"
+                            >① A complete platform</text>
+                            <text
+                                class="d-text d-small"
+                                x="847"
+                                y="110"
+                                text-anchor="middle"
+                            >Governed tools and models</text>
+                            <text
+                                class="d-text d-small"
+                                x="847"
+                                y="126"
+                                text-anchor="middle"
+                            >Two approvals in place</text>
+                            <text
+                                class="d-text d-strong"
+                                x="847"
+                                y="166"
+                                text-anchor="middle"
+                            >② One agent in production</text>
+                            <text
+                                class="d-text d-small"
+                                x="847"
+                                y="186"
+                                text-anchor="middle"
+                            >HR assistant (Dev and Prod)</text>
+                            <text
+                                class="d-text d-small"
+                                x="847"
+                                y="202"
+                                text-anchor="middle"
+                            >evaluated, approved and monitored</text>
+                            <text
+                                class="d-text d-strong"
+                                x="847"
+                                y="242"
+                                text-anchor="middle"
+                            >③ Your design record</text>
+                            <text
+                                class="d-text d-small"
+                                x="847"
+                                y="262"
+                                text-anchor="middle"
+                            >Key decision backlog</text>
+                        </svg>
+                        <figcaption>
+                            <ul>
+                                <li>
+                                    <span class="d-strong">Pre-deployed</span>
+                                    for you are the foundation control plane and sample data.
+                                </li>
+                                <li>
+                                    <span class="d-strong">Modules 1~2</span>
+                                    deploy the landing zone, create the user personas and bring up the corporate login (Keycloak).
+                                </li>
+                                <li>
+                                    <span class="d-strong">Modules 3~7</span>
+                                    add the project-level objects with your own values.
+                                </li>
+                            </ul>
+                        </figcaption>
+                    </figure>
+                </section>
+                <section id="record">
+                    <h2>Your design record</h2>
+                    <p class="lead">
+                        We will use a project template to capture key design decisions:
+                        <code>design-record.yaml</code>
+                        <br>
+                        You will edit it throughout this workshop.
+                    </p>
+                    <figure>
+                        <svg viewBox="0 0 960 190" role="img" aria-labelledby="fr-title">
+                            <title id="fr-title">The design record drives the build and the recap</title>
+                            <defs>
+                                <marker
+                                    id="fr-arr"
+                                    viewBox="0 0 10 10"
+                                    refX="9"
+                                    refY="5"
+                                    markerWidth="7"
+                                    markerHeight="7"
+                                    orient="auto-start-reverse"
+                                >
+                                    <path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/>
+                                </marker>
+                            </defs>
+                            <rect
+                                x="20"
+                                y="20"
+                                width="330"
+                                height="150"
+                                rx="8"
+                                fill="#161e2d"
+                            />
+                            <text x="36" y="44" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#9cdcfe">module_3:</text>
+                            <text x="46" y="64" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#ffd27a;font-weight:700">  inputs:</text>
+                            <text x="66" y="82" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#ffd27a">    project: hr-assistant</text>
+                            <text x="66" y="100" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#ffd27a">    budget: {usd: 5, period: 7d}</text>
+                            <text x="46" y="122" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#9cdcfe">  decisions:</text>
+                            <text x="66" y="140" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#9cdcfe">    tenancy: {workshop: templates,</text>
+                            <text x="66" y="158" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#9cdcfe">              my_call: "accounts per project"}</text>
+                            <path class="d-arrow" d="M350 80 L408 80" marker-end="url(#fr-arr)"/>
+                            <rect
+                                class="d-box d-platform"
+                                x="410"
+                                y="58"
+                                width="200"
+                                height="44"
+                            />
+                            <text
+                                class="d-text pill tag persona"
+                                x="510"
+                                y="77"
+                                text-anchor="middle"
+                                style="font-family:ui-monospace,Menlo,monospace"
+                            >
+                                workshop apply
+                            </text>
+                            <text
+                                class="d-text d-small"
+                                x="510"
+                                y="94"
+                                text-anchor="middle"
+                            >One command per module</text>
+                            <path class="d-arrow" d="M610 70 L668 70" marker-end="url(#fr-arr)"/>
+                            <rect
+                                class="d-box d-aws"
+                                x="670"
+                                y="58"
+                                width="200"
+                                height="44"
+                            />
+                            <text
+                                class="d-text"
+                                x="770"
+                                y="77"
+                                text-anchor="middle"
+                            >AgentCore services</text>
+                            <text
+                                class="d-text d-small"
+                                x="770"
+                                y="94"
+                                text-anchor="middle"
+                            >with your configuration</text>
+                            <path class="d-arrow" d="M610 90 L640 90 L640 140 L668 140" marker-end="url(#fr-arr)"/>
+                            <path class="d-arrow" d="M770 104 L770 118" stroke-dasharray="3 3"/>
+                            <rect
+                                class="d-box d-blue"
+                                x="670"
+                                y="120"
+                                width="200"
+                                height="40"
+                            />
+                            <text
+                                class="d-text"
+                                x="770"
+                                y="138"
+                                text-anchor="middle"
+                            >Agentic AI platform</text>
+                            <text
+                                class="d-text d-small"
+                                x="770"
+                                y="153"
+                                text-anchor="middle"
+                            >A functional MVP</text>
+                        </svg>
+                        <figcaption>
+                            <p class="d-strong">One block per module, two parts:</p>
+                            <ul>
+                                <li>
+                                    <span class="d-strong">
+                                        <code>inputs</code>
+                                    </span>
+                                    are values you set that shape the platform you build today. They are read by the apply command.
+                                </li>
+                                <li>
+                                    <span class="d-strong">
+                                        <code>decisions</code>
+                                    </span>
+                                    hold, per decision, what this workshop chose and your call for your own organisation. Module 7 will turns your calls into a backlog.
+                                </li>
+                            </ul>
+                            <p>You take the file home. It is your platform design, written during the day.</p>
+                        </figcaption>
+                    </figure>
+                </section>
+                <section id="hands">
+                    <h2>Hands-on, how it works</h2>
+                    <p class="lead">In each module, you will perform a list of actions consist of four kinds:</p>
+                    <table class="plain">
+                        <thead>
+                            <tr>
+                                <th>Step tag</th>
+                                <th>What you'll do</th>
+                                <th>Example</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <span class="pill tag record">record</span>
+                                </td>
+                                <td>change one value in the design record</td>
+                                <td>
+                                    <code>knowledge_filter: HR</code>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="pill tag command">command</span>
+                                </td>
+                                <td>one command in the terminal; it reads the record and prints what it did</td>
+                                <td>
+                                    <code>workshop apply 4</code>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="pill tag screen">screen</span>
+                                </td>
+                                <td>open a platform screen or an AWS console page and find one thing</td>
+                                <td>Governance: the policy mode toggle</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="pill tag file">file</span>
+                                </td>
+                                <td>open one file and read one part of it</td>
+                                <td>the agent role template</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+                <section id="start">
+                    <h2>
+                        Get started
+                        <span class="time">before module 1 · 15 min</span>
+                    </h2>
+                    <!-- Tools -->
+                    <div class="hands-on">
+                        <strong>What you need</strong>
+                        <table class="options">
+                            <thead>
+                                <tr>
+                                    <th>Tool</th>
+                                    <th>Check and install</th>
+                                    <th>What</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>A terminal</td>
+                                    <td>macOS: Terminal. Windows: PowerShell (not Command Prompt).</td>
+                                    <td>Where you type every command.</td>
+                                </tr>
+                                <tr>
+                                    <td>Git</td>
+                                    <td>
+                                        <code>git --version</code>
+                                        ·
+                                        <a href="https://git-scm.com/downloads">install Git</a>
+                                    </td>
+                                    <td>Fetches the code.</td>
+                                </tr>
+                                <tr>
+                                    <td>uv</td>
+                                    <td>
+                                        <code>uv --version</code>
+                                        ·
+                                        <a href="https://docs.astral.sh/uv/getting-started/installation/">install uv</a>
+                                    </td>
+                                    <td>
+                                        Builds the Python environment and the
+                                        <code>workshop</code>
+                                        command.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Node.js 20 or later</td>
+                                    <td>
+                                        <code>node --version</code>
+                                        ·
+                                        <a href="https://nodejs.org/en/download">install Node.js</a>
+                                        (the LTS offered)
+                                    </td>
+                                    <td>Runs the CDK CLI that deploys the landing zone in module 1.</td>
+                                </tr>
+                                <tr>
+                                    <td>An editor</td>
+                                    <td>VS Code, or any editor with YAML highlighting</td>
+                                    <td>
+                                        Where you write
+                                        <code>design-record.yaml</code>
+                                        .
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>The event page</td>
+                                    <td>keep it open in a browser tab</td>
+                                    <td>Your AWS console and your AWS credentials.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                    </div>
+                    <!-- Set up -->
+                    <p class="lead mt-4 mb-2">
+                        You will need the following tools and environments ready to run the workshop commands, author code and deploy platform.
+                    </p>
+                    <div class="hands-on">
+                        <strong>Set up</strong>
+                        <svg
+                            width="0"
+                            height="0"
+                            style="position:absolute"
+                            aria-hidden="true"
+                            focusable="false"
+                        >
+                            <symbol id="logo-mac" viewBox="0 0 24 24">
+                                <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
+                            </symbol>
+                            <symbol id="logo-win" viewBox="0 0 24 24">
+                                <path d="M0 0h11.377v11.372H0zm12.623 0H24v11.372H12.623zM0 12.623h11.377V24H0zm12.623 0H24V24H12.623z"/>
+                            </symbol>
+                        </svg>
+                        <table class="setup">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Commands</th>
+                                    <th>What this does</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="n">
+                                        <span>1</span>
+                                    </td>
+                                    <td class="cmd">
+                                        <div>
+                                            <span
+                                                class="pill tag os"
+                                                role="img"
+                                                aria-label="Mac"
+                                                title="Mac"
+                                            >
+                                                <svg>
+                                                    <use href="#logo-mac"/>
+                                                </svg>
+                                            </span>
+                                            <code>git clone &lt;repository URL&gt; &amp;&amp; cd workshop-agentic-ai-platform</code>
+                                        </div>
+                                        <div>
+                                            <span
+                                                class="pill tag os"
+                                                role="img"
+                                                aria-label="Windows"
+                                                title="Windows"
+                                            >
+                                                <svg>
+                                                    <use href="#logo-win"/>
+                                                </svg>
+                                            </span>
+                                            <code>git clone &lt;repository URL&gt;; cd workshop-agentic-ai-platform</code>
+                                        </div>
+                                    </td>
+                                    <td>Gets the source code from the event's aws sample repository</td>
+                                </tr>
+                                <tr>
+                                    <td class="n">
+                                        <span>2</span>
+                                    </td>
+                                    <td class="cmd">
+                                        <div>
+                                            <span
+                                                class="pill tag os"
+                                                role="img"
+                                                aria-label="Mac"
+                                                title="Mac"
+                                            >
+                                                <svg>
+                                                    <use href="#logo-mac"/>
+                                                </svg>
+                                            </span>
+                                            <code>uv sync &amp;&amp; npm install</code>
+                                        </div>
+                                        <div>
+                                            <span
+                                                class="pill tag os"
+                                                role="img"
+                                                aria-label="Windows"
+                                                title="Windows"
+                                            >
+                                                <svg>
+                                                    <use href="#logo-win"/>
+                                                </svg>
+                                            </span>
+                                            <code>uv sync; npm install</code>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        Builds the Python environment with the
+                                        <code>workshop</code>
+                                        command and installs the CDK CLI (two to five minutes).
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="n">
+                                        <span>3</span>
+                                    </td>
+                                    <td class="cmd">
+                                        <div>
+                                            <span
+                                                class="pill tag os"
+                                                role="img"
+                                                aria-label="Mac"
+                                                title="Mac"
+                                            >
+                                                <svg>
+                                                    <use href="#logo-mac"/>
+                                                </svg>
+                                            </span>
+                                            <code>source .venv/bin/activate</code>
+                                        </div>
+                                        <div>
+                                            <span
+                                                class="pill tag os"
+                                                role="img"
+                                                aria-label="Windows"
+                                                title="Windows"
+                                            >
+                                                <svg>
+                                                    <use href="#logo-win"/>
+                                                </svg>
+                                            </span>
+                                            <code>.venv\Scripts\Activate.ps1</code>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        Activates the environment so this terminal knows
+                                        <code>workshop</code>
+                                        (check:
+                                        <code>workshop --version</code>
+                                        ).
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="n">
+                                        <span>4</span>
+                                    </td>
+                                    <td class="cmd">
+                                        <div>
+                                            <span
+                                                class="pill tag os"
+                                                role="img"
+                                                aria-label="Mac"
+                                                title="Mac"
+                                            >
+                                                <svg>
+                                                    <use href="#logo-mac"/>
+                                                </svg>
+                                            </span>
+                                            <code>export AWS_DEFAULT_REGION=us-east-1</code>
+                                        </div>
+                                        <div>
+                                            <span
+                                                class="pill tag os"
+                                                role="img"
+                                                aria-label="Windows"
+                                                title="Windows"
+                                            >
+                                                <svg>
+                                                    <use href="#logo-win"/>
+                                                </svg>
+                                            </span>
+                                            <code>$env:AWS_DEFAULT_REGION = "us-east-1"</code>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        Paste the event page's
+                                        <em>Get AWS CLI credentials</em>
+                                        lines for your shell first, then set the region.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="n">
+                                        <span>5</span>
+                                    </td>
+                                    <td class="cmd">
+                                        <div>
+                                            <span class="pill tag os" role="img"></span>
+                                            <code>workshop status</code>
+                                        </div>
+                                        <pre class="code-dark ml-5"><code>account stacks in us-east-1:
+AgentPlatform-Network            not deployed         landing zone
+AgentPlatform-SharedServices     not deployed         landing zone
+AgentPlatform-ModelGateway       not deployed         landing zone
+AgentPlatform-Web                CREATE_COMPLETE      control plane
+AgentPlatform-Auth               CREATE_COMPLETE      control plane
+AgentPlatform-Platform           CREATE_COMPLETE      control plane
+AgentPlatform-Scenario           CREATE_COMPLETE      sample data
+AgentPlatform-Idp                not deployed         corporate IdP (module 2)</code></pre>
+                                    </td>
+                                    <td>Prints the status of the eight stacks. Before module 1 starts, four are pre-deployed; module 1 deploys the three landing-zone stacks and module 2 the corporate IdP.</td>
+                                </tr>
+                                <tr>
+                                    <td class="n">
+                                        <span>6</span>
+                                    </td>
+                                    <td class="cmd">
+                                        <div>
+                                            <span class="pill tag os" role="img"></span>
+                                            <code>code design-record.yaml</code>
+                                        </div>
+                                    </td>
+                                    <td>Opens your design record in VS Code (or open it in your editor); keep it open, every module writes into it.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Troubleshooting -->
+                    <!-- <div class="card">
+                        <strong>If something is off</strong>
+                        <table class="options">
+                            <thead>
+                                <tr>
+                                    <th>You see</th>
+                                    <th>It means</th>
+                                    <th>Do</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <code>command not found: workshop</code>
+                                        (zsh),
+                                        <code>workshop: command not found</code>
+                                        (bash),
+                                        <code>The term 'workshop' is not recognized</code>
+                                        (PowerShell)
+                                    </td>
+                                    <td>
+                                        this terminal has not activated
+                                        <code>.venv</code>
+                                        , or
+                                        <code>uv sync</code>
+                                        has not run
+                                    </td>
+                                    <td>
+                                        <code>source .venv/bin/activate</code>
+                                        or
+                                        <code>.venv\Scripts\Activate.ps1</code>
+                                        ; or prefix the command with
+                                        <code>uv run</code>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        PowerShell:
+                                        <code>running scripts is disabled on this system</code>
+                                    </td>
+                                    <td>
+                                        Windows refuses
+                                        <code>Activate.ps1</code>
+                                        under the default execution policy
+                                    </td>
+                                    <td>
+                                        <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code>
+                                        once, then activate again; or skip activation and write
+                                        <code>uv run workshop …</code>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <code>no usable AWS credentials</code>
+                                        ,
+                                        <code>ExpiredToken</code>
+                                        , or
+                                        <code>cannot read the platform configuration from SSM (NoCredentialsError …)</code>
+                                    </td>
+                                    <td>no credentials in this terminal, or the event credentials expired (the event page issues fresh ones at any time)</td>
+                                    <td>
+                                        paste fresh lines from the event page, set the region, run
+                                        <code>workshop status</code>
+                                        again
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <code>cannot read the platform configuration from SSM</code>
+                                        with another error in the bracket
+                                    </td>
+                                    <td>wrong account or region, or the control plane is not deployed in this account (SSM is the parameter store where the control plane publishes its settings)</td>
+                                    <td>
+                                        check that the first line of
+                                        <code>workshop status</code>
+                                        reads
+                                        <code>us-east-1</code>
+                                        ; unset or change
+                                        <code>AWS_REGION</code>
+                                        and
+                                        <code>AWS_DEFAULT_REGION</code>
+                                        ; own account:
+                                        <code>workshop deploy pre-day</code>
+                                        first
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <code>Node.js 20 or later is needed</code>
+                                        ,
+                                        <code>the pinned CDK CLI is not installed</code>
+                                    </td>
+                                    <td>
+                                        module 1's deployment needs Node and the CLI from
+                                        <code>npm install</code>
+                                    </td>
+                                    <td>
+                                        install Node.js, run
+                                        <code>npm install</code>
+                                        at the repository root
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <code>certificate verify failed</code>
+                                        ,
+                                        <code>self-signed certificate</code>
+                                        ,
+                                        <code>ETIMEDOUT</code>
+                                        during clone,
+                                        <code>uv sync</code>
+                                        or
+                                        <code>npm install</code>
+                                    </td>
+                                    <td>a company proxy or TLS inspection sits between you and the internet</td>
+                                    <td>
+                                        set
+                                        <code>HTTPS_PROXY</code>
+                                        (PowerShell:
+                                        <code>$env:HTTPS_PROXY</code>
+                                        ); uv:
+                                        <code>UV_NATIVE_TLS=1</code>
+                                        ; npm:
+                                        <code>npm config set proxy &lt;url&gt;</code>
+                                        ; or use the guest Wi-Fi, or ask the facilitator
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <code>request socket did not establish a connection</code>
+                                        during
+                                        <code>workshop apply 1</code>
+                                    </td>
+                                    <td>VPN or a slow network while the CDK CLI publishes its assets</td>
+                                    <td>run the same command again: finished stacks are kept</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div> -->
+                    
+                    <!-- <p class="note">
+                        Own account instead of an event account:
+                        <code>export AWS_PROFILE=&lt;profile&gt;</code>
+                        (PowerShell:
+                        <code>$env:AWS_PROFILE = "&lt;profile&gt;"</code>
+                        ) in each terminal instead of the event credentials, then
+                        <code>workshop deploy pre-day</code>
+                        (about 12 minutes; it bootstraps CDK and builds the Web UI when needed) gives you what an event account already has: the control plane and the sample data. Everything else is the modules' work; the
+                        <a href="cleanup.html">Clean up</a>
+                        page reverses it at the end. The AWS CLI is needed only to create your profile.
+                    </p> -->
+                
+                </section>
+                
+                
+            </main>
+            <details class="toc-disclosure" id="course-contents">
+                <summary
+                    class="toc-toggle"
+                    aria-label="Table of contents"
+                    title="Table of contents"
+                    aria-controls="contents-navigation"
+                >
+                    <svg
+                        class="toc-expand"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="M4 5h11M4 12h11M4 19h11m3-10 3 3-3 3"/>
+                    </svg>
+                    <svg
+                        class="toc-collapse"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                        aria-hidden="true"
+                    >
+                        <path d="m6 6 12 12M18 6 6 18"/>
+                    </svg>
+                </summary>
+                <nav class="toc" id="contents-navigation" aria-label="Table of contents">
+                    <strong>Contents</strong>
+                    <a href="index.html">The learning path</a>
+                    <a href="index.html#start">
+                        Get started
+                        <span class="d">15 min</span>
+                    </a>
+                    <a href="module-1-rev.html">
+                        1 · Landing zone
+                        <span class="d">40 min</span>
+                    </a>
+                    <a href="module-2-rev.html">
+                        2 · Identity
+                        <span class="d">40 min</span>
+                    </a>
+                    <a href="module-3-rev.html">
+                        3 · Control plane and governance
+                        <span class="d">40 min</span>
+                    </a>
+                    <a href="module-4-rev.html">
+                        4 · Tool plane
+                        <span class="d">40 min</span>
+                    </a>
+                    <a href="module-5-rev.html">
+                        5 · Model gateway
+                        <span class="d">40 min</span>
+                    </a>
+                    <a href="module-6-rev.html">
+                        6 · AgentOps
+                        <span class="d">40 min</span>
+                    </a>
+                    <a href="module-7-rev.html">
+                        7 · Operate and observe
+                        <span class="d">40 min</span>
+                    </a>
+                    <a href="cleanup.html">
+                        Clean up
+                        <span class="d">35 min</span>
+                    </a>
+                </nav>
+            </details>
+        </div>
+        <script src="course.js"></script>
+    </body>
+</html>

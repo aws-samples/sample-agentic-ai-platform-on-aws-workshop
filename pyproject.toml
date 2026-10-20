@@ -1,0 +1,56 @@
+[project]
+name = "workshop-agentic-ai-platform"
+version = "0.1.0"
+description = "Build an Agentic AI Platform with Amazon Bedrock AgentCore: foundation, platform SDK, the workshop command and tooling"
+requires-python = ">=3.12"
+dependencies = [
+    "platform-sdk",
+    "workshop-cli",
+    "boto3>=1.43.108",
+    "bedrock-agentcore==1.24.1",
+    "strands-agents==1.58.1",
+    "openai>=2.54",
+    "pyyaml>=6.0.3",
+    "requests>=2.34",
+    "aws-cdk-lib==2.272.0",
+    "constructs>=10.0.0,<11.0.0",
+    "rich>=13.9",
+    "cdk-ecr-deployment>=4.2.74",
+]
+
+[dependency-groups]
+langgraph = [
+    "langgraph>=0.3",
+    "langchain-openai>=0.3",
+    "langchain-core>=0.3",
+    "langchain>=1.0",
+]
+dev = [
+    "pytest>=9.0",
+    "pytest-timeout>=2.3",
+    "ruff>=0.14",
+    "moto[dynamodb,ssm,secretsmanager]>=5.1",
+]
+
+[tool.uv]
+default-groups = ["dev", "langgraph"]
+
+[tool.uv.workspace]
+members = ["platform_sdk", "workshop_cli"]
+
+[tool.uv.sources]
+platform-sdk = { workspace = true }
+workshop-cli = { workspace = true }
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["build", "cdk.out", "frontend", ".claude"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["platform_sdk/tests", "workshop_cli/tests", "backend/tests", "foundation/tests", "scenario/tests"]
+timeout = 600

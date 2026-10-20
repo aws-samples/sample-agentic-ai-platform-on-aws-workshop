@@ -1,0 +1,162 @@
+{
+  "_comment": "Agent (harness) execution role template, build-contracts.md section 2.3, scoped like the AgentCore Runtime execution role documentation (runtime-permissions, read 8 Oct 2026): workload identities workload-identity-directory/default and .../workload-identity/<agentName>-* where the harness's agent name is harness_<snake>_<env>, the project's LiteLLM credential providers in the default token vault, runtime log groups /aws/bedrock-agentcore/runtimes/* with logs:PutResourcePolicy on this harness's groups only, X-Ray, cloudwatch:PutMetricData in the bedrock-agentcore namespace. Verified live by the end-to-end dry run (harness invocations through LiteLLM with the key from the token vault, logs in the runtime log group). No bedrock:InvokeModel: model calls go through the LiteLLM model gateway with the key fetched from the token vault (GetResourceApiKey + secretsmanager:GetSecretValue on the bedrock-agentcore-identity!default/apikey/litellm-<project>-* secrets). Placeholders: {{account_id}}, {{region}}, {{project_id}}, {{env}}, {{snake}}. Rendered by platform_sdk.templates.roles.render_agent_role; the trust policy allows the AgentCore service (scoped to this account and its AgentCore resources) and the account root so attendees can assume the role in module 4. Private landing zone (tier 3, 16 Oct 2026): the harness runs in VPC mode and pulls its managed container image from the regional private ECR repository harness-<region> through the ecr.api, ecr.dkr and S3 endpoints (harness security page), which needs ecr:BatchGetImage, ecr:GetDownloadUrlForLayer and ecr:BatchCheckLayerAvailability on arn:aws:ecr:<region>:*:repository/harness-* (the repository belongs to the service, hence the wildcard account) plus ecr:GetAuthorizationToken, which IAM only grants on *.",
+  "trust": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "AgentCoreService",
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "bedrock-agentcore.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole",
+        "Condition": {
+          "StringEquals": {
+            "aws:SourceAccount": "{{account_id}}"
+          },
+          "ArnLike": {
+            "aws:SourceArn": "arn:aws:bedrock-agentcore:{{region}}:{{account_id}}:*"
+          }
+        }
+      },
+      {
+        "Sid": "AccountAdmins",
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::{{account_id}}:root"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  },
+  "policy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "InvokeProjectGateways",
+        "Effect": "Allow",
+        "Action": [
+          "bedrock-agentcore:InvokeGateway"
+        ],
+        "Resource": "arn:aws:bedrock-agentcore:{{region}}:{{account_id}}:gateway/{{project_id}}-{{env}}-gw*"
+      },
+      {
+        "Sid": "ProjectMemoryDataPlane",
+        "Effect": "Allow",
+        "Action": [
+          "bedrock-agentcore:CreateEvent",
+          "bedrock-agentcore:GetEvent",
+          "bedrock-agentcore:ListEvents",
+          "bedrock-agentcore:DeleteEvent",
+          "bedrock-agentcore:ListSessions",
+          "bedrock-agentcore:ListActors",
+          "bedrock-agentcore:GetMemory",
+          "bedrock-agentcore:GetMemoryRecord",
+          "bedrock-agentcore:ListMemoryRecords",
+          "bedrock-agentcore:RetrieveMemoryRecords",
+          "bedrock-agentcore:BatchCreateMemoryRecords",
+          "bedrock-agentcore:BatchUpdateMemoryRecords",
+          "bedrock-agentcore:BatchDeleteMemoryRecords",
+          "bedrock-agentcore:DeleteMemoryRecord"
+        ],
+        "Resource": "arn:aws:bedrock-agentcore:{{region}}:{{account_id}}:memory/{{snake}}_{{env}}_memory*"
+      },
+      {
+        "Sid": "WorkloadIdentityAndApiKeys",
+        "Effect": "Allow",
+        "Action": [
+          "bedrock-agentcore:GetResourceApiKey",
+          "bedrock-agentcore:GetWorkloadAccessToken",
+          "bedrock-agentcore:GetWorkloadAccessTokenForJWT",
+          "bedrock-agentcore:GetWorkloadAccessTokenForUserId"
+        ],
+        "Resource": [
+          "arn:aws:bedrock-agentcore:{{region}}:{{account_id}}:workload-identity-directory/default",
+          "arn:aws:bedrock-agentcore:{{region}}:{{account_id}}:workload-identity-directory/default/workload-identity/harness_{{snake}}_{{env}}-*",
+          "arn:aws:bedrock-agentcore:{{region}}:{{account_id}}:token-vault/default",
+          "arn:aws:bedrock-agentcore:{{region}}:{{account_id}}:token-vault/default/apikeycredentialprovider/litellm-{{project_id}}-*"
+        ]
+      },
+      {
+        "Sid": "ReadProjectLiteLlmKeys",
+        "Effect": "Allow",
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Resource": "arn:aws:secretsmanager:{{region}}:{{account_id}}:secret:bedrock-agentcore-identity!default/apikey/litellm-{{project_id}}-*"
+      },
+      {
+        "Sid": "RuntimeLogGroups",
+        "Effect": "Allow",
+        "Action": [
+          "logs:DescribeLogStreams",
+          "logs:CreateLogGroup"
+        ],
+        "Resource": "arn:aws:logs:{{region}}:{{account_id}}:log-group:/aws/bedrock-agentcore/runtimes/*"
+      },
+      {
+        "Sid": "RuntimeLogResourcePolicy",
+        "Effect": "Allow",
+        "Action": [
+          "logs:PutResourcePolicy"
+        ],
+        "Resource": "arn:aws:logs:{{region}}:{{account_id}}:log-group:/aws/bedrock-agentcore/runtimes/harness_{{snake}}_{{env}}-*"
+      },
+      {
+        "Sid": "DescribeLogGroups",
+        "Effect": "Allow",
+        "Action": [
+          "logs:DescribeLogGroups"
+        ],
+        "Resource": "arn:aws:logs:{{region}}:{{account_id}}:log-group:*"
+      },
+      {
+        "Sid": "RuntimeLogStreams",
+        "Effect": "Allow",
+        "Action": [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        "Resource": "arn:aws:logs:{{region}}:{{account_id}}:log-group:/aws/bedrock-agentcore/runtimes/*:log-stream:*"
+      },
+      {
+        "Sid": "Tracing",
+        "Effect": "Allow",
+        "Action": [
+          "xray:PutTraceSegments",
+          "xray:PutTelemetryRecords",
+          "xray:GetSamplingRules",
+          "xray:GetSamplingTargets"
+        ],
+        "Resource": "*"
+      },
+      {
+        "Sid": "Metrics",
+        "Effect": "Allow",
+        "Action": "cloudwatch:PutMetricData",
+        "Resource": "*",
+        "Condition": {
+          "StringEquals": {
+            "cloudwatch:namespace": "bedrock-agentcore"
+          }
+        }
+      },
+      {
+        "Sid": "HarnessVpcImagePull",
+        "Effect": "Allow",
+        "Action": [
+          "ecr:BatchGetImage",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchCheckLayerAvailability"
+        ],
+        "Resource": "arn:aws:ecr:{{region}}:*:repository/harness-*"
+      },
+      {
+        "Sid": "HarnessVpcEcrAuth",
+        "Effect": "Allow",
+        "Action": "ecr:GetAuthorizationToken",
+        "Resource": "*"
+      }
+    ]
+  }
+}

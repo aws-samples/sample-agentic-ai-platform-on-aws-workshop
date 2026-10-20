@@ -1,0 +1,28 @@
+/* Markdown answers inside Cloudscape chat bubbles: keep the bubble's rhythm, no outer margins. */
+.playground-markdown > :first-child {
+  margin-top: 0;
+}
+.playground-markdown > :last-child {
+  margin-bottom: 0;
+}
+.playground-markdown p,
+.playground-markdown ul,
+.playground-markdown ol {
+  margin: 0 0 8px;
+}
+.playground-markdown ul,
+.playground-markdown ol {
+  padding-inline-start: 20px;
+}
+.playground-markdown pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.playground-markdown table {
+  border-collapse: collapse;
+}
+.playground-markdown th,
+.playground-markdown td {
+  border: 1px solid #c6c6cd;
+  padding: 2px 8px;
+}

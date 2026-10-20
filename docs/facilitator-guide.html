@@ -1,0 +1,2411 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Facilitator guide</title>
+    <style>
+       /* Bootstrap 5 imitation CSS (Jixin) */
+      .px-1 {
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+      }
+      .px-2 {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+      }
+      .px-3 {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+      }
+      .px-4 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+      .px-5 {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+      }
+      .py-1 {
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+      }
+      .py-2 {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+      }
+      .py-3 {
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+      }
+      .py-4 {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+      }
+      .py-5 {
+        padding-top: 1.25rem;
+        padding-bottom: 1.25rem;
+      }
+      .mx-1 {
+        margin-left: 0.25rem;
+        margin-right: 0.25rem;
+      }
+      .mx-2 {
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+      }
+      .mx-3 {
+        margin-left: 0.75rem;
+        margin-right: 0.75rem;
+      }
+      .mx-4 {
+        margin-left: 1rem;
+        margin-right: 1rem;
+      }
+      .mx-5 {
+        margin-left: 1.25rem;
+        margin-right: 1.25rem;
+      }
+      .my-1 {
+        margin-top: 0.25rem;
+        margin-bottom: 0.25rem;
+      }
+      .my-2 {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .my-3 {
+        margin-top: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+      .my-4 {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+      }
+      .my-5 {
+        margin-top: 1.25rem;
+        margin-bottom: 1.25rem;
+      }
+      .pt-1 {
+        padding-top: 0.25rem;
+      }
+      .pt-2 {
+        padding-top: 0.5rem;
+      }
+      .pt-3 {
+        padding-top: 0.75rem;
+      }
+      .pt-4 {
+        padding-top: 1rem;
+      }
+      .pt-5 {
+        padding-top: 1.25rem;
+      }
+      .pb-1 {
+        padding-bottom: 0.25rem;
+      }
+      .pb-2 {
+        padding-bottom: 0.5rem;
+      }
+      .pb-3 {
+        padding-bottom: 0.75rem;
+      }
+      .pb-4 {
+        padding-bottom: 1rem;
+      }
+      .pb-5 {
+        padding-bottom: 1.25rem;
+      }
+      :root {
+        --orange: #ff9900;
+        --black: #232f3e;
+        --gray: #545b64;
+        --light: #f2f3f3;
+        --blue: #0972d3;
+        --border: #d5dbdb;
+        --green: #1d8102;
+        --page-max-width: 1280px;
+        --page-gutter: 24px;
+        --section-gutter: 28px;
+        --toc-button-size: 56px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Amazon Ember", "Helvetica Neue", Arial, sans-serif;
+        color: #16191f;
+        line-height: 1.5;
+        background: #fafafa;
+      }
+      header.hero {
+        background: var(--black);
+        color: #fff;
+        padding: 40px 0 32px;
+        border-bottom: 6px solid var(--orange);
+      }
+      .hero-inner {
+        max-width: var(--page-max-width);
+        margin: 0 auto;
+        padding: 0 var(--page-gutter);
+      }
+      header.hero h1 {
+        margin: 0 0 8px;
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1.5;
+      }
+      header.hero p {
+        margin: 4px 0 14px;
+        color: #d5dbdb;
+        max-width: 980px;
+        font-size: 17px;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .meta span {
+        background: #2f3e52;
+        color: #fff;
+        border: 1px solid #4a5a70;
+        border-radius: 999px;
+        padding: 3px 11px;
+        font-size: 13px;
+      }
+      .wrap {
+        max-width: var(--page-max-width);
+        margin: 0 auto;
+        padding: 22px var(--page-gutter) 60px;
+      }
+      main section {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 22px var(--section-gutter);
+        margin-bottom: 22px;
+      }
+      h2 {
+        margin: 0 0 12px;
+        font-size: 24px;
+        color: var(--black);
+        border-left: 5px solid var(--orange);
+        padding-left: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      h2 .time {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--black);
+        background: #ffe3b3;
+        border-radius: 999px;
+        padding: 2px 10px;
+        margin-left: auto;
+      }
+      h3 {
+        margin: 20px 0 8px;
+        font-size: 18px;
+        color: var(--black);
+      }
+      p,
+      li,
+      td,
+      th {
+        font-size: 14.5px;
+      }
+      .lead {
+        color: var(--gray);
+        margin: 0 0 10px;
+      }
+      section {
+        scroll-margin-top: 24px;
+      }
+      :focus-visible {
+        outline: 3px solid var(--blue);
+        outline-offset: 4px;
+      }
+      /* table of contents: the same button-and-menu pattern as workshop-guide.html */
+      .toc-disclosure {
+        position: fixed;
+        bottom: max(20px, env(safe-area-inset-bottom));
+        left: max(20px, env(safe-area-inset-left));
+        z-index: 20;
+      }
+      .toc-toggle {
+        display: grid;
+        place-items: center;
+        width: var(--toc-button-size);
+        height: var(--toc-button-size);
+        list-style: none;
+        cursor: pointer;
+        background: var(--black);
+        color: #fff;
+        border: 1px solid #64748b;
+        border-radius: 16px;
+        box-shadow: 0 4px 14px #0f172a26;
+      }
+      .toc-toggle::-webkit-details-marker {
+        display: none;
+      }
+      .toc-toggle svg {
+        width: 28px;
+        height: 28px;
+      }
+      .toc-toggle .toc-collapse,
+      .toc-disclosure[open] .toc-expand {
+        display: none;
+      }
+      .toc-disclosure[open] .toc-collapse {
+        display: block;
+      }
+      .toc-toggle:hover {
+        background: #35485e;
+      }
+      .toc-disclosure[open] .toc-toggle {
+        background: var(--orange);
+        color: var(--black);
+        border-color: var(--orange);
+      }
+      nav.toc {
+        position: absolute;
+        bottom: calc(100% + 12px);
+        left: 0;
+        width: min(
+          340px,
+          calc(
+            100vw - 40px - env(safe-area-inset-left) -
+              env(safe-area-inset-right)
+          )
+        );
+        max-height: calc(
+          100dvh - var(--toc-button-size) - 52px - env(safe-area-inset-bottom) -
+            env(safe-area-inset-top)
+        );
+        overflow: auto;
+        margin: 0;
+        background: #fff;
+        border: 1px solid #dbe2ea;
+        border-radius: 14px;
+        padding: 20px;
+        font-size: 14px;
+        box-shadow: 0 14px 50px #0f172a26;
+      }
+      nav.toc strong {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 16px;
+      }
+      nav.toc a {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        color: var(--black);
+        text-decoration: none;
+        padding: 9px 10px;
+        border-radius: 7px;
+        line-height: 1.4;
+      }
+      nav.toc a .d {
+        flex: none;
+        font-size: 12px;
+        color: var(--gray);
+      }
+      nav.toc a:hover,
+      nav.toc a[aria-current="location"] {
+        background: #fff4e2;
+        color: #804600;
+      }
+      /* pills */
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.32em;
+        padding: 0.15rem 0.55rem 0.15rem 0.45rem;
+        border-radius: 999px;
+        font-size: 12.5px;
+        font-weight: 600;
+        line-height: 1.25;
+        white-space: nowrap;
+        vertical-align: middle;
+      }
+      .pill > svg {
+        flex: none;
+        width: 1.05em;
+        height: 1.05em;
+      }
+      .persona {
+        background: #f2f9e9;
+        color: #3b591b;
+      }
+      .ui {
+        background: #e8f3fc;
+        color: #21567d;
+      }
+      .wait {
+        background: #fff0d7;
+        color: #835016;
+      }
+      .neutral {
+        background: #eef0f3;
+        color: #485465;
+      }
+      .key {
+        padding: 12px 16px 10px;
+        margin: 22px 0 22px 0;
+        border: 1px solid #dbe3ed;
+        border-radius: 12px;
+        background: #fff;
+        font-size: 13px;
+        color: #526174;
+      }
+      .key strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+        color: #35465b;
+      }
+      .key > div {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 8px;
+        padding: 4px 0;
+      }
+      .key .def {
+        margin-left: 4px;
+      }
+      /* checklist */
+      ol.steps {
+        list-style: none;
+        counter-reset: step;
+        margin: 8px 0 0;
+        padding: 0;
+      }
+      ol.steps > li {
+        counter-increment: step;
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 10px;
+        padding: 9px 0;
+        border-bottom: 1px dashed var(--border);
+        align-items: start;
+      }
+      ol.steps > li::before {
+        content: counter(step);
+        display: inline-grid;
+        place-items: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--black);
+        color: #fff;
+        font-size: 12.5px;
+        font-weight: 700;
+        margin-top: 1px;
+      }
+      ol.steps > li > div {
+        min-width: 0;
+      }
+      ol.steps label.tick {
+        float: right;
+        margin-left: 12px;
+        cursor: pointer;
+        color: var(--gray);
+        font-size: 12px;
+        user-select: none;
+      }
+      ol.steps label.tick input {
+        vertical-align: middle;
+        margin-right: 4px;
+        accent-color: var(--orange);
+      }
+      ol.steps li.done > div > .text {
+        text-decoration: line-through;
+        color: #8a94a1;
+      }
+      .text {
+        display: block;
+      }
+      /* code */
+      pre,
+      code {
+        font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+        font-size: 13px;
+      }
+      code {
+        background: #f1f3f5;
+        border-radius: 4px;
+        padding: 0 4px;
+      }
+      pre.code-dark {
+        position: relative;
+        background: #161e2d;
+        color: #d6deeb;
+        border: 1px solid #2b3648;
+        border-radius: 8px;
+        padding: 12px 14px;
+        line-height: 1.55;
+        overflow: auto;
+        margin: 8px 0 6px;
+      }
+      pre.code-dark code {
+        background: none;
+        padding: 0;
+        color: inherit;
+      }
+      pre.code-dark .c {
+        color: #6c7a90;
+        font-style: italic;
+      }
+      pre.code-dark .copy {
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        font:
+          12px "Amazon Ember",
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        background: #2f3e52;
+        color: #fff;
+        border: 1px solid #4a5a70;
+        border-radius: 6px;
+        padding: 2px 8px;
+        cursor: pointer;
+      }
+      pre.code-dark .copy:hover {
+        background: var(--orange);
+        color: var(--black);
+      }
+      /* callouts, tables */
+      .callout {
+        border-left: 4px solid var(--blue);
+        background: #f1f7fd;
+        padding: 9px 13px;
+        border-radius: 4px;
+        margin: 10px 0;
+      }
+      .callout.warn {
+        border-left-color: var(--orange);
+        background: #fff7e6;
+      }
+      .callout.ok {
+        border-left-color: var(--green);
+        background: #eef8ea;
+      }
+      .callout b {
+        color: var(--black);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        margin: 10px 0 6px;
+      }
+      th {
+        text-align: left;
+        background: var(--black);
+        color: #fff;
+        padding: 8px 10px;
+        font-weight: 600;
+      }
+      td {
+        padding: 7px 10px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      tbody tr:nth-child(even) {
+        background: #fafbfc;
+      }
+      .table-scroll {
+        max-width: 100%;
+        overflow: auto;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 12px;
+        margin: 6px 0 4px;
+      }
+      .card {
+        background: var(--light);
+        border-radius: 8px;
+        padding: 12px 14px;
+        border-top: 3px solid var(--orange);
+      }
+      .card .k {
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--gray);
+      }
+      .card .v {
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--black);
+        margin-top: 3px;
+      }
+      .card .s {
+        font-size: 12px;
+        color: var(--gray);
+        margin-top: 2px;
+      }
+      main details {
+        margin: 8px 0;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 14px;
+        background: #fcfcfc;
+      }
+      main summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--black);
+      }
+      .docs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .docs a {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 6px 12px;
+        color: var(--black);
+        text-decoration: none;
+        font-size: 14px;
+      }
+      .docs a:hover {
+        border-color: var(--orange);
+      }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: flex-end;
+        margin: 4px 0 8px;
+        font-size: 13px;
+        color: var(--gray);
+      }
+      .toolbar .hint {
+        color: #67788d;
+      }
+      .toolbar button {
+        font:
+          13px "Amazon Ember",
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 4px 10px;
+        cursor: pointer;
+      }
+      .toolbar button:hover {
+        border-color: var(--orange);
+      }
+      footer {
+        text-align: center;
+        color: var(--gray);
+        font-size: 13px;
+        padding: 20px;
+      }
+      @media (max-width: 800px) {
+        h2 .time {
+          margin-left: 0;
+        }
+      }
+      @media print {
+        .copy,
+        .toolbar,
+        label.tick,
+        .toc-disclosure {
+          display: none !important;
+        }
+        .pill {
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        main section {
+          break-inside: avoid;
+        }
+        body {
+          background: #fff;
+        }
+        pre.code-dark {
+          color: #111;
+          background: #f4f4f4;
+          border-color: #ccc;
+        }
+        pre.code-dark .c {
+          color: #666;
+        }
+      }
+      /* Custom CSS (Jixin) - Overall reading font size */
+      :root {
+        --reading-font-size: 17px;
+      }
+      p,
+      li,
+      .callout,
+      .lead {
+        font-size: var(--reading-font-size);
+      }
+      table,
+      td,
+      th {
+        font-size: calc(var(--reading-font-size) - 0px);
+      }
+    </style>
+  </head>
+  <body>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="0"
+      height="0"
+      aria-hidden="true"
+      focusable="false"
+      style="position: absolute; overflow: hidden"
+    >
+      <defs>
+        <g
+          id="icon-person"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="7" r="3.2" />
+          <path d="M5.5 21v-2.5a6.5 6.5 0 0 1 13 0V21" />
+        </g>
+        <g
+          id="icon-screen"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="3" y="4" width="18" height="12.5" rx="2" />
+          <path d="M8.5 20.5h7M12 16.5v4" />
+        </g>
+        <g
+          id="icon-clock"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="8.5" />
+          <path d="M12 7.5V12l3.2 2" />
+        </g>
+      </defs>
+    </svg>
+    <header class="hero">
+      <div class="hero-inner">
+        <h1>Facilitator Guide</h1>
+        <p>
+          End-to-end run-through for building an Agentic AI Platform with Amazon Bedrock AgentCore.
+          <br/>① Deploy the control plane before the day&nbsp; ② Run modules 1-7&nbsp; ③ Clean up.
+        </p>
+        <div class="meta pt-4">
+          <span>Updated 20 Oct 2026</span>
+        </div>
+      </div>
+    </header>
+    <div class="wrap">
+      <details class="toc-disclosure" id="guide-contents">
+        <summary
+          class="toc-toggle"
+          aria-label="Expand table of contents"
+          title="Expand table of contents"
+          aria-controls="contents-navigation"
+        >
+          <svg
+            class="toc-expand"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 5h11M4 12h11M4 19h11m3-10 3 3-3 3" />
+          </svg>
+          <svg
+            class="toc-collapse"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="m6 6 12 12M18 6 6 18" />
+          </svg>
+        </summary>
+        <nav
+          class="toc"
+          id="contents-navigation"
+          aria-label="Table of contents"
+        >
+          <strong>Table of Contents</strong>
+          <a href="#run">The run-through</a>
+          <a href="#p0">Part 0: get the code <span class="d">5 min</span></a>
+          <a href="#p1"
+            >Part 1: laptop and account <span class="d">10 min</span></a
+          >
+          <a href="#p2"
+            >Part 2: deploy the control plane before the day
+            <span class="d">about 12 min</span></a
+          >
+          <a href="#p3"
+            >Part 3: modules 1-4, the morning
+            <span class="d">4 × 40 min</span></a
+          >
+          <a href="#p4"
+            >Part 4: modules 5-7, the afternoon
+            <span class="d">3 × 40 min</span></a
+          >
+          <a href="#p5"
+            >Part 5: clean up <span class="d">35 min, 10 attended</span></a
+          >
+          <a href="#day">Day-of reference</a>
+        </nav>
+      </details>
+      <main>
+        <section id="run">
+          <h2>The run-through</h2>
+          <p class="lead">
+            This is a complete run-through from a fresh AWS account to the cleaned-up one. A facilitator uses it to rehearse what an attendee experiences through the workshop.
+            <br/>
+            The document outlines short steps, exact commands, where to look in the UI. The detailed explanations live in the course pages:
+            <a href="v2/course/index.html">docs/v2/course</a> (the path, the agenda, Get started, one page per module, clean up).
+          </p>
+
+          <div class="key">
+            <strong>Key</strong>
+            <div>
+              <span class="pill persona">Platform admin</span>
+              <span class="pill persona">Agent developer</span>
+              <span class="pill persona">Domain approver</span>
+              <span class="def">the persona acting</span>
+            </div>
+            <div>
+              <span class="pill ui">Overview</span>
+              <span class="def">a screen to open in the web UI</span>
+            </div>
+            <div>
+              <span class="pill wait">about 5 min</span>
+              <span class="def">a step that waits, with the measured time</span>
+            </div>
+            <div>
+              <code>command</code>
+              <span class="def"
+                >a command, path or identifier; the dark boxes hold the commands
+                to paste</span
+              >
+            </div>
+          </div>
+          <div class="cards">
+            <div class="card">
+              <div class="k">Pre-day deploy</div>
+              <div class="v">about 12 min</div>
+              <div class="s">
+                <code>scripts/deploy.sh --pre-day</code> or the Workshop Studio
+                deployer: Web, Auth, Platform, Scenario
+              </div>
+            </div>
+            <div class="card">
+              <div class="k">Modules</div>
+              <div class="v">7 × 40 min</div>
+              <div class="s">
+                Explain 10 · Design 10 · Hands-on 20; clean up 35 min after
+                module 7
+              </div>
+            </div>
+            <div class="card">
+              <div class="k">Longest waits</div>
+              <div class="v">about 20 min</div>
+              <div class="s">
+                <code>workshop apply 1</code> about 20 min ·
+                <code>workshop apply 6</code> run 1 12-15 min
+              </div>
+            </div>
+            <div class="card">
+              <div class="k">Cost</div>
+              <div class="v">about 0.36 USD/h</div>
+              <div class="s">
+                while everything is deployed: landing zone about 0.28, corporate
+                IdP about 0.08
+              </div>
+            </div>
+            <div class="card">
+              <div class="k">Region</div>
+              <div class="v">us-east-1</div>
+              <div class="s">
+                one account; Dev and Prod are labels inside it
+              </div>
+            </div>
+          </div>
+        </section>
+        <section id="p0">
+          <h2>Part 0: get the code<span class="time">5 min</span></h2>
+          <ol class="steps">
+            <li>
+              <div>
+                <label class="tick"><input type="checkbox" id="s1" />done</label
+                ><span class="text"
+                  >Clone the repository (the learners do the same in Get started,
+                  step 1). <code>repo.zip</code> from
+                  <code>scripts/package_for_workshop_studio.py</code> is the
+                  deployer's CodeBuild source, not an attendee download.
+                  <pre
+                    class="code-dark"
+                  ><code>git clone &lt;repository URL&gt; &amp;&amp; cd workshop-agentic-ai-platform   <span class="c"># frontend/dist is git-ignored: Part 2 builds it</span></code></pre>
+                </span>
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"><input type="checkbox" id="s2" />done</label
+                ><span class="text"
+                  >Open the course once:
+                  <a href="v2/course/index.html">v2/course/index.html</a> (the
+                  path, the <a href="v2/course/index.html#agenda">agenda</a>,
+                  <a href="v2/course/index.html#start">Get started</a>) and
+                  <a href="workshop-guide.html">workshop-guide.html</a>
+                  (architecture, services). Keep Get started open: its six steps
+                  are what every learner does before module 1.</span
+                >
+              </div>
+            </li>
+          </ol>
+        </section>
+        <section id="p1">
+          <h2>Part 1: laptop and account<span class="time">10 min</span></h2>
+          <ol class="steps">
+            <li>
+              <div>
+                <label class="tick"><input type="checkbox" id="s3" />done</label
+                ><span class="text"
+                  >Check the laptop tools. No Docker anywhere; no AWS CLI for
+                  learners.
+                  <div class="table-scroll">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Tool</th>
+                          <th>Version</th>
+                          <th>Check</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>Python</td>
+                          <td>3.12 or later</td>
+                          <td>
+                            No laptop install needed: <code>uv sync</code>
+                            installs 3.13 from <code>.python-version</code>.
+                            Check after sync: <code>uv run python --version</code>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>uv</td>
+                          <td>0.12.10 or later</td>
+                          <td>
+                            <code>uv --version</code>; install:
+                            <code
+                              >curl -LsSf https://astral.sh/uv/install.sh |
+                              sh</code
+                            >
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Node.js</td>
+                          <td>20 or later</td>
+                          <td>
+                            <code>node --version</code>; every learner needs it:
+                            <code>workshop apply 1</code> runs the pinned CDK CLI
+                            from <code>npm install</code>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>AWS CLI v2</td>
+                          <td>2.36 or later</td>
+                          <td>
+                            <code>aws --version</code>; facilitators' own
+                            accounts only. Learners paste the event credentials
+                            and never call <code>aws</code>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Git; VS Code or any editor</td>
+                          <td></td>
+                          <td>
+                            <code>git --version</code>; an editor with YAML
+                            highlighting for <code>design-record.yaml</code>
+                            (<code>code design-record.yaml</code>)
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table></div
+                ></span>
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"><input type="checkbox" id="s4" />done</label
+                ><span class="text"
+                  >Account: administrator access, region <code>us-east-1</code>.
+                  Own account: use a profile that refreshes itself (for example
+                  an <code>isengardcli</code> credential_process profile).
+                  Event account: the event page issues fresh credentials at any
+                  time; when they expire, paste the fresh lines, set the region,
+                  run <code>workshop status</code> again and re-run the
+                  interrupted <code>workshop apply N</code>.</span
+                >
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"><input type="checkbox" id="s5" />done</label
+                ><span class="text"
+                  >Export the profile and region, verify the account:
+                  <pre
+                    class="code-dark"
+                  ><code>export AWS_PROFILE=&lt;profile&gt; AWS_DEFAULT_REGION=us-east-1
+aws sts get-caller-identity   <span class="c"># the account id must be the workshop account</span></code></pre>
+                </span>
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"><input type="checkbox" id="s6" />done</label
+                ><span class="text"
+                  >Bedrock model access: do nothing yet. The model gateway
+                  exists only after <code>workshop apply 1</code>, which runs
+                  the doctor at its end (the all-seven
+                  <code>scripts/deploy.sh</code> runs it after the deploy). If
+                  the doctor's <em>LiteLLM chat completion</em> row fails with
+                  an access error, submit the one-time Anthropic use-case form
+                  under <em>Model access</em> in the Bedrock console and run
+                  <code>uv run python scripts/doctor.py</code> again.</span
+                >
+              </div>
+            </li>
+          </ol>
+        </section>
+        <section id="p2">
+          <h2>
+            Part 2: deploy the control plane before the day<span class="time"
+              >about 12 min</span
+            >
+          </h2>
+          <p class="lead">
+            What Workshop Studio does in every attendee account before the event;
+            in your own account, do it yourself. It deploys
+            <code>AgentPlatform-Web</code>, <code>-Auth</code>,
+            <code>-Platform</code> (the control plane: web UI, API, state,
+            worker, the Cognito user pool and app client) and
+            <code>AgentPlatform-Scenario</code> (the sample data). The landing
+            zone is the learners' module 1, the personas and Keycloak their
+            module 2.
+          </p>
+          <ol class="steps">
+            <li>
+              <div>
+                <label class="tick"><input type="checkbox" id="s7" />done</label
+                ><span class="text"
+                  >Python environment with the <code>workshop</code> command and
+                  the pinned CDK CLI, <span class="pill wait">2-5 min</span>:
+                  <pre
+                    class="code-dark"
+                  ><code>uv sync &amp;&amp; npm install
+source .venv/bin/activate   <span class="c"># Windows: .venv\Scripts\Activate.ps1; or prefix every command with uv run</span></code></pre>
+                </span>
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"><input type="checkbox" id="s8" />done</label
+                ><span class="text"
+                  >Deploy the four pre-day stacks,
+                  <span class="pill wait">about 12 min</span>. The script
+                  rebuilds <code>frontend/dist</code> when it is missing or
+                  older than the sources (the Web stack ships whatever it holds),
+                  bundles the backend, deploys with
+                  <code>--concurrency 4</code>, retries once with concurrency 1
+                  on a network error and ends with the doctor.
+                  <pre
+                    class="code-dark"
+                  ><code>(cd foundation &amp;&amp; npx cdk bootstrap)   <span class="c"># once per account and region; workshop deploy does it itself when CDKToolkit is missing</span>
+scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, Scenario; or: workshop deploy pre-day (builds the UI when missing)</span></code></pre>
+                  The seven-stack <code>scripts/deploy.sh</code> (about 16 min,
+                  also creates the personas) is the self-paced path:
+                  <code>workshop apply 1</code> then finds its stacks deployed
+                  and goes straight to its checks. <code>workshop apply 2</code>
+                  finds the personas but still deploys
+                  <code>AgentPlatform-Idp</code> (about 7 min) unless
+                  <code>scripts/deploy.sh --idp</code> ran as well.</span
+                >
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"><input type="checkbox" id="s9" />done</label
+                ><span class="text"
+                  >Read the doctor. The landing-zone rows read not deployed and
+                  the personas not created: expected before modules 1 and 2, and
+                  the doctor does not fail on it. Passwords exist only after
+                  <code>workshop apply 2</code>.
+                  <pre
+                    class="code-dark"
+                  ><code>uv run python scripts/doctor.py   <span class="c"># --show-passwords works after workshop apply 2</span></code></pre>
+                </span>
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"
+                  ><input type="checkbox" id="s10" />done</label
+                ><span class="text"
+                  >Check the stacks the way the learners will in Get started,
+                  step 5:
+                  <pre
+                    class="code-dark"
+                  ><code>workshop status
+<span class="c"># account stacks in us-east-1:</span>
+<span class="c"># AgentPlatform-Network         not deployed      landing zone</span>
+<span class="c"># AgentPlatform-SharedServices  not deployed      landing zone</span>
+<span class="c"># AgentPlatform-ModelGateway    not deployed      landing zone</span>
+<span class="c"># AgentPlatform-Web             CREATE_COMPLETE   control plane</span>
+<span class="c"># AgentPlatform-Auth            CREATE_COMPLETE   control plane</span>
+<span class="c"># AgentPlatform-Platform        CREATE_COMPLETE   control plane</span>
+<span class="c"># AgentPlatform-Scenario        CREATE_COMPLETE   sample data</span>
+<span class="c"># AgentPlatform-Idp             not deployed      corporate IdP (module 2)</span></code></pre>
+                  Eight rows: four CREATE_COMPLETE, four not deployed. The first
+                  look at the UI waits for module 2: the personas exist only
+                  after <code>workshop apply 2</code>.</span
+                >
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"
+                  ><input type="checkbox" id="s11" />done</label
+                ><span class="text"
+                  ><details>
+                    <summary>
+                      Alternative: deploy through the Workshop Studio deployer
+                      template (what the event does; DeployScope pre-day about
+                      12 min, all about 20 min)
+                    </summary>
+                    <pre
+                      class="code-dark"
+                    ><code><span class="c"># build/workshop-studio/repo.zip + deployer.yaml; --skip-ui-check lets CodeBuild build the UI</span>
+uv run python scripts/package_for_workshop_studio.py
+aws s3 mb s3://&lt;bucket&gt; &amp;&amp; aws s3 cp build/workshop-studio/repo.zip s3://&lt;bucket&gt;/ws/repo.zip
+aws cloudformation deploy --stack-name agent-platform-deployer --template-file workshop-studio/deployer.yaml \
+  --capabilities CAPABILITY_IAM --parameter-overrides AssetsBucketName=&lt;bucket&gt; AssetsBucketPrefix=ws/
+<span class="c"># DeployScope defaults to pre-day (Web, Auth, Platform, Scenario); DeployScope=all deploys the seven stacks</span>
+<span class="c"># outputs: UiUrl, ApiUrl, ModelGatewayUrl, UsersSecretArn, PersonaPasswordsCommand, DoctorStatus, DeployerBuildId, DeployerBuildLogs</span>
+aws cloudformation describe-stacks --stack-name agent-platform-deployer --query &#x27;Stacks[0].Outputs&#x27;</code></pre>
+                    <p>
+                      Build logs: CloudWatch log group
+                      <code
+                        >/aws/codebuild/agent-platform-deployer-deployer</code
+                      >. <code>ModelGatewayUrl</code> reads "not deployed yet"
+                      until module 1; <code>PersonaPasswordsCommand</code>
+                      prints the passwords after module 2. Deleting the stack
+                      starts a destroy build (destroy path not yet exercised end
+                      to end).
+                    </p>
+                  </details></span
+                >
+              </div>
+            </li>
+          </ol>
+        </section>
+        <section id="p3">
+          <h2>
+            Part 3: modules 1-4, the morning<span class="time"
+              >4 × 40 min</span
+            >
+          </h2>
+          <p class="lead">
+            Every module: Explain 10 min · Design 10 min · Hands-on 20 min.
+            <code>workshop apply N</code> reads <code>design-record.yaml</code>
+            (<code>model: claude-sonnet-5-5</code> under
+            <code>module_3.inputs</code>) and is idempotent: a re-run says
+            <code>exists</code>. Start the long deployments as the module begins
+            (the Start now boxes on the course pages). Pages:
+            <a href="v2/course/module-1-rev.html">module 1</a> ·
+            <a href="v2/course/module-2-rev.html">module 2</a> ·
+            <a href="v2/course/module-3-rev.html">module 3</a> ·
+            <a href="v2/course/module-4-rev.html">module 4</a>.
+          </p>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Module</th>
+                  <th>Persona</th>
+                  <th>What happens</th>
+                  <th>Then look at</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1 Landing zone</td>
+                  <td>none: account work</td>
+                  <td>
+                    <code>workshop status</code>: eight stacks, four
+                    CREATE_COMPLETE, four not deployed.
+                    <code>workshop apply 1</code> as the module begins,
+                    <span class="pill wait">about 20 min</span>: deploys
+                    <code>AgentPlatform-Network</code>,
+                    <code>-SharedServices</code>, <code>-ModelGateway</code>
+                    (database, proxy and relay; the LiteLLM image copied into
+                    ECR), then prints the eight stack rows, the VPC (six isolated
+                    subnets, nine interface endpoints and the S3 gateway
+                    endpoint, "private posture"), <code>GET /health/liveliness</code>
+                    through the relay with the three aliases and guardrail
+                    <code>hr-baseline</code>, the SSM table under
+                    <code>/agent-platform/</code>, the doctor (personas "not
+                    created": expected). "did not answer yet": wait a minute,
+                    <code>workshop apply 1 --no-deploy</code>. A failed
+                    deployment is rerun with the same command; completed stacks
+                    are kept.
+                  </td>
+                  <td>
+                    CloudFormation console: three new stacks beside the four
+                    pre-deployed; VPC console: one VPC, six subnets, no internet
+                    or NAT gateway, nine interface endpoints + S3 gateway
+                    endpoint. Record: four <code>my_call</code> entries.
+                  </td>
+                </tr>
+                <tr>
+                  <td>2 Identity</td>
+                  <td>
+                    <span class="pill persona">Platform admin</span>
+                    <span class="pill persona">Agent developer</span>
+                    <span class="pill persona">Domain approver</span>
+                  </td>
+                  <td>
+                    <code>workshop apply 2</code> as the module begins,
+                    <span class="pill wait">about 8 min</span> (seven of them
+                    the <code>AgentPlatform-Idp</code> stack; re-run about 1
+                    min): three groups and users in the user pool with stored
+                    passwords, a sign-in as each persona, developer
+                    <code>POST /domains</code> &rarr; 403; Keycloak on Fargate
+                    behind API Gateway plus the HR API; realm
+                    <code>anycompany</code> with clients hr-portal, hr-agent,
+                    hr-obo-gateway, hr-tools-api; employee
+                    <code>alex.rivera</code> (E1001); credential providers
+                    <code>kc-hr-agent</code>, <code>kc-hr-obo-gateway</code>.
+                    <code>workshop obo</code>: T0, then T1 by hand (one hop).
+                    <code>uv run python scripts/doctor.py --show-passwords</code>:
+                    three personas and the employee. First look at the UI: sign
+                    in once, Switch persona (user menu, top right) to Agent
+                    developer: Create domain and Governance are hidden; and
+                    back.
+                  </td>
+                  <td>
+                    Keycloak admin console (address in the apply output;
+                    username <code>admin</code>, password in secret
+                    <code>agent-platform/keycloak-admin</code>): Clients, Users
+                    alex.rivera with employee_id E1001. AgentCore console,
+                    Identity, OAuth clients: kc-hr-agent, kc-hr-obo-gateway.
+                    <span class="pill ui">Overview</span>
+                    <span class="pill ui">Domains and projects</span>
+                    <span class="pill ui">Catalogue</span> (empty before module
+                    4); <span class="pill ui">Governance</span>: the model
+                    gateway's admin URL and credentials. File:
+                    <code>platform_sdk/platform_sdk/templates/agent_role.json</code>.
+                  </td>
+                </tr>
+                <tr>
+                  <td>3 Control plane and governance</td>
+                  <td><span class="pill persona">Platform admin</span></td>
+                  <td>
+                    Record: domain <code>people-ops</code>, project
+                    <code>hr-assistant</code>, owner
+                    <code>margaret.chen@anycompany.example</code>, models
+                    claude-sonnet-5-5 + claude-haiku-4-5, budget 5 USD/7d,
+                    200 000 tpm, 200 rpm. <code>workshop record</code> validates
+                    (no AWS). <code>workshop apply 3</code>,
+                    <span class="pill wait">under 1 min</span>: domains
+                    people-ops "People Operations", finance-ops "Finance
+                    Operations"; projects hr-assistant, invoice-helper (four IAM
+                    roles and a model-gateway team each); the boundary: two
+                    <code>AccessDeniedException</code> lines from the agent role
+                    + an OK line; state file
+                    <code>.workshop/state/hr-assistant.json</code>.
+                    <code>WARN could not inspect the agent role</code>: IAM
+                    still propagating, run it again.
+                  </td>
+                  <td>
+                    <span class="pill ui">Domains and projects</span>: caps,
+                    models, roles. IAM console:
+                    <code>agent-platform-proj-hr-assistant-dev-agent</code> (no
+                    bedrock:InvokeModel, no lambda:InvokeFunction; only
+                    bedrock-agentcore:InvokeGateway on
+                    <code>hr-assistant-dev-gw*</code>) and
+                    <code>-dev-gateway</code>. Record: four decisions.
+                  </td>
+                </tr>
+                <tr>
+                  <td>4 Tool plane</td>
+                  <td><span class="pill persona">Platform admin</span></td>
+                  <td>
+                    Record: <code>knowledge_filter: {department: HR}</code>,
+                    <code>max_leave_days: 10</code>, keep
+                    <code>gateway_mode: LOG_ONLY</code>.
+                    <code>workshop apply 4</code> during Discuss,
+                    <span class="pill wait">5-6 min</span>: registry
+                    <code>agent_platform_catalogue</code> READY after
+                    <span class="pill wait">about 1 min</span>; three gateways
+                    (HR Dev, HR Prod, Finance Dev), targets hrtools + hrkb on
+                    the HR gateways, fintools on Finance; tools/list: five
+                    tools; eight resources registered; three catalogue records
+                    PENDING_APPROVAL; policy engine with Cedar policies attached
+                    LOG_ONLY; the fourth door
+                    <code>hr-assistant-dev-gw-obo</code> (CUSTOM_JWT, aud
+                    hr-obo-gateway) with target <code>hrapi</code> (OpenAPI,
+                    OAUTH TOKEN_EXCHANGE &rarr; aud hr-tools-api),
+                    <span class="pill wait">about 20 s</span>.
+                  </td>
+                  <td>
+                    project <span class="pill ui">Resources</span> tab: eight
+                    resources; <span class="pill ui">Catalogue</span>: 3
+                    PENDING_APPROVAL (approved in module 5).
+                  </td>
+                </tr>
+                <tr>
+                  <td>4 Tool plane (policy test)</td>
+                  <td><span class="pill persona">Platform admin</span></td>
+                  <td>
+                    <code>workshop call --as hr-dev get_leave_balance E1001</code>
+                    &rarr; leave balance; <code>--as finance-dev</code> &rarr;
+                    HTTP 403 (IAM, before any policy);
+                    <code>--as hr-dev submit_leave_request E1001 15</code> &rarr;
+                    <code>OK allowed</code> with the tool's own refusal (the
+                    deny is only logged in LOG_ONLY). Governance: Policy engine
+                    and gateways table, row hr-assistant / dev, Enforce toggle,
+                    <em>Set ENFORCE</em>, <span class="pill wait">about 10 s</span>
+                    (fallback <code>workshop mode ENFORCE --gateway hr-dev</code>);
+                    the same call again &rarr; <code>JSON-RPC error -32002</code>.
+                    <code>workshop obo</code>: two hops; step 3 calls
+                    <code>hrapi___get_leave_balance</code> on the on-behalf-of
+                    gateway, step 4 reads the evidence line from
+                    <code>/aws/lambda/agent-platform-hr-api</code>. File:
+                    <code>platform_sdk/platform_sdk/templates/agent_role.json</code>.
+                  </td>
+                  <td>
+                    <span class="pill ui">Governance</span>: engine and gateway
+                    modes (the on-behalf-of gateway is not listed);
+                    <span class="pill ui">Overview</span>: Allow / Deny counts,
+                    <span class="pill wait">up to 4 min</span>. Record: five
+                    decisions.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout warn">
+            <b>Checkpoint after module 4</b>
+            <ol>
+              <li>Two domains and two projects, four IAM roles and a model-gateway team each</li>
+              <li>Registry <code>agent_platform_catalogue</code> READY with three records PENDING_APPROVAL</li>
+              <li>Three gateways with the policy engine attached: HR Dev in ENFORCE, HR Prod and Finance Dev in LOG_ONLY</li>
+              <li>The on-behalf-of gateway <code>hr-assistant-dev-gw-obo</code> with target <code>hrapi</code></li>
+              <li>Eight resources on the projects' Resources tabs</li>
+              <li>A Deny count on the Overview after the <code>-32002</code> call (up to four minutes)</li>
+            </ol>
+            The catalogue approval and the Dev key are module 5. The state file
+            <code>.workshop/state/hr-assistant.json</code> holds what the applies created.
+          </div>
+        </section>
+        <section id="p4">
+          <h2>
+            Part 4: modules 5-7, the afternoon<span class="time"
+              >3 × 40 min</span
+            >
+          </h2>
+          <p class="lead">
+            Pages: <a href="v2/course/module-5-rev.html">module 5</a> ·
+            <a href="v2/course/module-6-rev.html">module 6</a> ·
+            <a href="v2/course/module-7-rev.html">module 7</a>. Module 6 is two
+            runs of <code>workshop apply 6</code>; start run 1 as the module
+            begins.
+          </p>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Module</th>
+                  <th>Persona</th>
+                  <th>What happens</th>
+                  <th>Then look at</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>5 Model gateway</td>
+                  <td><span class="pill persona">Platform admin</span></td>
+                  <td>
+                    Record: <code>key_cap: {usd: 1.00, period: 7d}</code>.
+                    <code>workshop apply 5</code>: the governance summary
+                    (aliases claude-sonnet-5-5, claude-haiku-4-5, nova-2-lite,
+                    each with hr-baseline; team spend against budget); creates
+                    the Dev key <code>hr-assistant-dev-claude-sonnet-5-5</code>
+                    (cap 1 USD/7d, one model) and makes three raw-key calls: a
+                    normal answer with the <code>x-litellm-response-cost</code>
+                    header, the guardrail's
+                    <code>finish_reason=content_filter</code>, the other alias
+                    &rarr; HTTP 403; stores the key in the token vault, adopts
+                    it into the Keys tab, waits for the first spend.
+                    <code>workshop cap --dev low</code> &rarr;
+                    <code>OK BUDGET_EXCEEDED</code>, HTTP 422 (still passes: the
+                    proxy writes spend every 10 s, run it once more); then
+                    <code>workshop cap --dev restore</code> before module 6.
+                    Catalogue: filter Pending approval, approve
+                    hr-assistant-tools, kb-hr-policies, model-claude-sonnet-5-5
+                    (fallback <code>workshop approve catalogue</code>).
+                    <code>workshop inventory</code> ends with "platform
+                    complete".
+                  </td>
+                  <td>
+                    <span class="pill ui">Keys</span> tab: spend against cap;
+                    <span class="pill ui">Catalogue</span>: 3 APPROVED;
+                    <span class="pill ui">Governance</span>: the model gateway
+                    URL, username <code>admin</code>, masked password. Record:
+                    four decisions.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout ok">
+            <b>Checkpoint "Platform complete" after module 5</b>
+            <ol>
+              <li>Catalogue <code>agent_platform_catalogue</code> with three APPROVED records</li>
+              <li>Policy engine with its Cedar policies; four gateways: HR Dev, HR Prod, Finance Dev and <code>hr-assistant-dev-gw-obo</code></li>
+              <li>An agent and gateway role pair per project and environment; the model-gateway team with its caps</li>
+              <li>The Dev key <code>hr-assistant-dev-claude-sonnet-5-5</code> in the token vault and on the Keys tab, cap restored to 1 USD/7d</li>
+              <li>Three credential providers in AgentCore Identity: the Dev key's API-key provider, <code>kc-hr-agent</code>, <code>kc-hr-obo-gateway</code></li>
+            </ol>
+            Check: <code>workshop inventory</code> ends with
+            <code>platform complete: registry, policy engine with policies, gateways, roles, team and key exist; no agent yet</code>.
+            It does not list the on-behalf-of gateway or the two OAuth2 providers; both are in the AgentCore console.
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Module</th>
+                  <th>Persona</th>
+                  <th>What happens</th>
+                  <th>Then look at</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>6 AgentOps · run 1</td>
+                  <td><span class="pill persona">Agent developer</span></td>
+                  <td>
+                    Check the Dev cap is restored. Record
+                    <code>prompt_version: v1</code>.
+                    <code>workshop apply 6</code> as the module begins,
+                    <span class="pill wait">12-15 min</span>: memories Dev and
+                    Prod, <span class="pill wait">about 2.5 min</span> (the first
+                    run also writes two sample events for E1001 into the Dev
+                    memory); blueprint v1 (prints the Company policy questions
+                    section); first Dev deployment,
+                    <span class="pill wait">4-5 min</span> (the first harness in
+                    the VPC); warm-up question,
+                    <span class="pill wait">35-40 s</span> (v1: empty tools
+                    list, no citation); the on-behalf-of twin
+                    <code>hr_assistant_dev_obo</code>,
+                    <span class="pill wait">about 30 s</span>; release 1
+                    evaluation, <span class="pill wait">5-6 min</span> (ten
+                    scripted conversations: one minute of invocations, a
+                    180-second telemetry delay, scoring by four evaluators)
+                    &rarr; BLOCKED: Correctness 0.7 (&ge; 0.8), GoalSuccessRate
+                    0.7 (&ge; 0.9), TrajectoryInOrderMatch 0.625 (&ge; 0.9),
+                    Harmfulness harm rate 0.0 (&le; 0.0).
+                  </td>
+                  <td>
+                    <span class="pill ui">Releases</span>: release 1 BLOCKED
+                    with its scores; <span class="pill ui">Playground</span>
+                    Dev: a policy question. File:
+                    <code>scenario/blueprint/blueprint.yaml</code> and the two
+                    prompts (the instruction changed in v2).
+                  </td>
+                </tr>
+                <tr>
+                  <td>6 AgentOps · run 2</td>
+                  <td><span class="pill persona">Agent developer</span></td>
+                  <td>
+                    Record <code>prompt_version: v2</code>.
+                    <code>workshop apply 6</code> again,
+                    <span class="pill wait">6-7 min</span>: new Dev version
+                    (<span class="pill wait">about 20 s</span>), the warm-up
+                    line now shows <code>hrkb___Retrieve</code> and cites the
+                    AnyCompany Remote Work Policy, the on-behalf-of twin,
+                    release 2 evaluation, <span class="pill wait">5-6 min</span>
+                    &rarr; PENDING_APPROVAL. Scores posted by the command are
+                    self-reported; a release created on the Releases screen (or
+                    <em>Run evaluation</em>) is run by the platform worker.
+                  </td>
+                  <td>
+                    <span class="pill ui">Releases</span>: release 2
+                    PENDING_APPROVAL; <span class="pill ui">Playground</span>
+                    Dev: v2 cites the knowledge base.
+                  </td>
+                </tr>
+                <tr>
+                  <td>6 AgentOps · approve, promote, Prod</td>
+                  <td>
+                    <span class="pill persona">Domain approver</span>
+                    <span class="pill persona">Agent developer</span>
+                  </td>
+                  <td>
+                    Switch persona to Domain approver: on the release's page
+                    approve release 2, then promote (fallback
+                    <code>workshop approve release</code> then
+                    <code>workshop promote</code>; developer and admin get 403).
+                    The worker creates the Prod key
+                    <code>hr-assistant-prod-claude-sonnet-5-5</code>, the Prod
+                    harness, pins <code>live</code> and registers
+                    <code>hr_assistant_prod_online_eval</code>; the first Prod
+                    deployment can take minutes. Playground · Prod: cold start
+                    <span class="pill wait">about 35 s</span>.
+                    <code>workshop traffic --prod 3</code>: three conversations
+                    for module 7's scores. <code>workshop obo</code>: the whole
+                    chain, first call <span class="pill wait">35-40 s</span>
+                    (warm run about 24 s): "Hi Alex, your annual leave balance
+                    is 12 days" via <code>hrapi___get_leave_balance</code>, then
+                    the evidence line. Optional:
+                    <code>workshop export --strands</code> or
+                    <code>--langgraph</code> (<code>--run</code> executes once
+                    through the relay with a temporary key, deleted afterwards)
+                    &rarr; <code>exports/hr_assistant_dev_strands_agent.py</code>
+                    or <code>hr_assistant_dev_langgraph_agent.py</code>.
+                  </td>
+                  <td>
+                    <span class="pill ui">Releases</span>: Approve, Promote;
+                    afterwards release 2 PROMOTED, version history, live
+                    endpoint; <span class="pill ui">Playground</span> Prod.
+                    Record: three decisions.
+                  </td>
+                </tr>
+                <tr>
+                  <td>7 Operate and observe</td>
+                  <td>any persona: Overview reading</td>
+                  <td>
+                    Record <code>prod_traffic: 10</code>.
+                    <code>workshop apply 7</code> (needs the promoted release,
+                    else "no Prod agent yet"),
+                    <span class="pill wait">about 1 min</span>, allow up to 5:
+                    prints the online evaluation (100 % sampling, quiet timeout
+                    1 min, Helpfulness, Harmfulness, ToolSelectionAccuracy),
+                    sends ten Prod conversations three at a time &rarr;
+                    <code>OK 10 of 10 conversations answered</code>, waits
+                    <span class="pill wait">up to 3 min</span> for the Prod
+                    metrics (invocations, errors, sessions, latency, Allow /
+                    Deny, spend by environment), posts one thumbs-up
+                    (<code>POST /feedback</code>), reads E1001's long-term memory
+                    records, ends with the online scores so far or "none yet".
+                    <code>workshop scores</code>: the three seeded conversations
+                    should be scored; today's ten arrive
+                    <span class="pill wait">8-11 min</span> after each session
+                    goes quiet. Unit cost: Prod key spend &divide; conversations
+                    answered.
+                  </td>
+                  <td>
+                    <span class="pill ui">Overview</span> with Prod selected:
+                    invocations, error rate, latency, spend by environment,
+                    Allow / Deny, online scores, feedback. CloudWatch, GenAI
+                    observability: one Prod trace step by step. Record: the
+                    backlog, one action and owner per recap row.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout warn">
+            <b>Checkpoint at the end of the day, after module 7</b>
+            <ol>
+              <li>Dev harness <code>hr_assistant_dev</code> with versions v1 and v2; the on-behalf-of twin <code>hr_assistant_dev_obo</code></li>
+              <li>Prod harness <code>hr_assistant_prod</code> with <code>live</code> pinned to the approved v2</li>
+              <li>Two releases: release 1 BLOCKED, release 2 PROMOTED</li>
+              <li>Prod key <code>hr-assistant-prod-claude-sonnet-5-5</code> (created at promotion) and online evaluation <code>hr_assistant_prod_online_eval</code></li>
+              <li>Overview (Prod): the three seeded plus ten conversations, one thumbs-up, online scores 8-11 min after the traffic</li>
+              <li>Spend reading: Prod key spend &divide; answered conversations is the unit cost</li>
+              <li><code>design-record.yaml</code>: every module's decisions and the backlog filled in</li>
+            </ol>
+          </div>
+        </section>
+        <section id="p5">
+          <h2>Part 5: clean up<span class="time">35 min, 10 attended</span></h2>
+          <p class="lead">
+            After module 7, outside the agenda: Explain 5 · Discuss 5 ·
+            Hands-on 25, of which about 10 attended. Optional in an event
+            account (Workshop Studio deletes the account); run it once anyway,
+            the order teaches what a stack knows about. Page:
+            <a href="v2/course/cleanup.html">clean up</a>.
+          </p>
+          <ol class="steps">
+            <li>
+              <div>
+                <label class="tick"
+                  ><input type="checkbox" id="s12" />done</label
+                ><span class="text"
+                  >The inventory by name: what you built, what is shared, what
+                  belongs to others. Nothing is deleted.
+                  <pre class="code-dark"><code>workshop cleanup --dry-run</code></pre>
+                </span>
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"
+                  ><input type="checkbox" id="s13" />done</label
+                ><span class="text"
+                  >Remove what modules 3-7 built, in reverse order:
+                  <span class="pill wait">about 10 min</span>, mostly AgentCore
+                  deleting harnesses and memories in the background (2-8 min).
+                  Nine steps; step 9 lists leftovers and that list must be
+                  empty. If it stops, run it again. The shared registry and
+                  policy engine go only when the last project goes. Also removes
+                  <code>.workshop/state/</code> and <code>exports/</code>
+                  (<code>--keep-state</code> keeps them).
+                  <pre
+                    class="code-dark"
+                  ><code>workshop cleanup   <span class="c"># type yes; rerunnable</span></code></pre>
+                  Then <span class="pill ui">Domains and projects</span> is
+                  empty and <span class="pill ui">Governance</span> shows no
+                  gateways; AgentCore console: no harness, gateway or memory
+                  with your names.</span
+                >
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"
+                  ><input type="checkbox" id="s14" />done</label
+                ><span class="text"
+                  >Own account: destroy the stacks and sweep what the deletion
+                  leaves (secrets in recovery, recreated log groups, orphan
+                  buckets). <code>cdk destroy --all</code>,
+                  <span class="pill wait">about 13 min</span>, then the sweep,
+                  about 1 min; the ModelGateway and Network stacks can wait
+                  <span class="pill wait">up to 20 min</span> for the relay
+                  Lambda's network interfaces. Optional in an event account.
+                  <pre
+                    class="code-dark"
+                  ><code>workshop cleanup --stacks   <span class="c"># answer yes to each prompt</span>
+workshop status             <span class="c"># every row reads not deployed; CloudFormation: only CDKToolkit is left</span></code></pre>
+                </span>
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"
+                  ><input type="checkbox" id="s15" />done</label
+                ><span class="text"
+                  >What stays on purpose and costs cents at most: the CDK
+                  bootstrap stack <code>CDKToolkit</code>, the CloudWatch
+                  Transaction Search setting, the two AgentCore Runtime
+                  service-linked roles, Bedrock model access, the metric
+                  history. If the deployer template was used: run
+                  <code>workshop cleanup</code> first, then delete the
+                  <code>agent-platform-deployer</code> stack; its destroy build
+                  runs <code>cdk destroy --all</code> and the sweep (not yet
+                  exercised end to end).</span
+                >
+              </div>
+            </li>
+          </ol>
+        </section>
+        <section id="day">
+          <h2>Day-of reference</h2>
+          <h3>Timeline</h3>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Block</th>
+                  <th>Min</th>
+                  <th>Personas</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>09:00</td>
+                  <td>Welcome + Kahoot (survey cohort's background and preferences)</td>
+                  <td>10</td>
+                  <td>-</td>
+                </tr>
+                <tr>
+                  <td>09:10</td>
+                  <td>Presentation: Agentic AI Platform</td>
+                  <td>30</td>
+                  <td>-</td>
+                </tr>
+                <tr>
+                  <td>09:40</td>
+                  <td>Module 1 - Landing zone</td>
+                  <td>40</td>
+                  <td>none: account work</td>
+                </tr>
+                <tr>
+                  <td>10:20</td>
+                  <td>Module 2 - Identity</td>
+                  <td>40</td>
+                  <td>
+                    <span class="pill persona">Platform admin</span>
+                    <span class="pill persona">Agent developer</span>
+                    <span class="pill persona">Domain approver</span>
+                    via Switch persona; Alex Rivera, the employee (not a hat)
+                  </td>
+                </tr>
+                <tr>
+                  <td>11:00</td>
+                  <td>Break</td>
+                  <td>10</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td>11:10</td>
+                  <td>Module 3 - Control plane and governance</td>
+                  <td>40</td>
+                  <td><span class="pill persona">Platform admin</span></td>
+                </tr>
+                <tr>
+                  <td>11:50</td>
+                  <td>Module 4 - Tool plane</td>
+                  <td>40</td>
+                  <td>
+                    <span class="pill persona">Platform admin</span> (Governance
+                    toggle)
+                  </td>
+                </tr>
+                <tr>
+                  <td>12:30</td>
+                  <td>Lunch</td>
+                  <td>45</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td>13:15</td>
+                  <td>Module 5 - Model gateway</td>
+                  <td>40</td>
+                  <td>
+                    <span class="pill persona">Platform admin</span> (cap,
+                    Catalogue)
+                  </td>
+                </tr>
+                <tr>
+                  <td>13:55</td>
+                  <td>Module 6 - AgentOps</td>
+                  <td>40</td>
+                  <td>
+                    <span class="pill persona">Agent developer</span>
+                    <span class="pill persona">Domain approver</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>14:35</td>
+                  <td>Break</td>
+                  <td>10</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td>14:45</td>
+                  <td>Module 7 - Operate and observe</td>
+                  <td>40</td>
+                  <td>any persona: Overview reading</td>
+                </tr>
+                <tr>
+                  <td>15:25</td>
+                  <td>Wrap-up + Room QA</td>
+                  <td>15</td>
+                  <td>-</td>
+                </tr>
+                <tr>
+                  <td>15:40</td>
+                  <td>End</td>
+                  <td></td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Clean up (35 min, 10 attended) has no agenda slot: after 15:40,
+            optional in event accounts.
+          </p>
+          <h3>Slow steps to announce</h3>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Step</th>
+                  <th>Duration</th>
+                  <th>Where</th>
+                  <th>What to say</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Pre-day deploy</td>
+                  <td>about 12 min</td>
+                  <td>before the day, <code>scripts/deploy.sh --pre-day</code> or the deployer</td>
+                  <td>Four stacks; the learners never wait for this.</td>
+                </tr>
+                <tr>
+                  <td><code>uv sync &amp;&amp; npm install</code></td>
+                  <td>2-5 min</td>
+                  <td>Get started, before module 1</td>
+                  <td>
+                    Builds the Python environment with the
+                    <code>workshop</code> command and installs the pinned CDK
+                    CLI.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>workshop apply 1</code></td>
+                  <td>about 20 min</td>
+                  <td>module 1, start as the module begins</td>
+                  <td>
+                    Three stacks: database, proxy and relay; the LiteLLM image is
+                    copied into ECR. Explain and Design fill the wait. "did not
+                    answer yet": <code>workshop apply 1 --no-deploy</code> a
+                    minute later.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>workshop apply 2</code></td>
+                  <td>about 8 min; re-run about 1 min</td>
+                  <td>module 2, start as the module begins</td>
+                  <td>
+                    Seven of the eight minutes are the
+                    <code>AgentPlatform-Idp</code> stack (Keycloak on Fargate).
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>workshop apply 4</code></td>
+                  <td>5-6 min</td>
+                  <td>module 4, during Discuss</td>
+                  <td>
+                    The registry is READY in about a minute; the on-behalf-of
+                    gateway adds about 20 s at the end.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Set ENFORCE</td>
+                  <td>about 10 s</td>
+                  <td>module 4, Governance</td>
+                  <td>UpdateGateway; the gateway stays reachable.</td>
+                </tr>
+                <tr>
+                  <td>Policy metrics after LOG_ONLY traffic</td>
+                  <td>up to 4 min</td>
+                  <td>module 4, Overview after <code>workshop call</code></td>
+                  <td>
+                    CloudWatch delivers Allow and Deny separately; in LOG_ONLY
+                    the result line reads <code>OK allowed</code> and the deny
+                    shows only here, as a Deny count.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Memory creation</td>
+                  <td>about 2.5 min</td>
+                  <td>module 6, <code>workshop apply 6</code> run 1</td>
+                  <td>
+                    Both memories are created in parallel; the first run also
+                    writes two sample events for E1001.
+                  </td>
+                </tr>
+                <tr>
+                  <td>First Dev deployment</td>
+                  <td>4-5 min</td>
+                  <td>module 6, run 1</td>
+                  <td>
+                    The first harness in the VPC waits for its network
+                    interfaces; later versions and the on-behalf-of twin take
+                    under a minute (a new version about 20 s).
+                  </td>
+                </tr>
+                <tr>
+                  <td>First invocation of a new harness version</td>
+                  <td>35-40 s</td>
+                  <td>
+                    module 6 warm-up, Playground after a deploy; module 7: a cold
+                    session 25-40 s
+                  </td>
+                  <td>
+                    A new session starts a microVM. Keep one session per
+                    conversation; a warm on-behalf-of run is about 24 s.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Evaluation run</td>
+                  <td>5-6 min</td>
+                  <td>module 6, run 1 and run 2</td>
+                  <td>
+                    Ten scripted conversations: one minute of invocations, a
+                    180-second telemetry delay, then scoring by four evaluators.
+                    Coffee moment; start it, then talk.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Promotion</td>
+                  <td>minutes for the first Prod deployment</td>
+                  <td>module 6, release detail</td>
+                  <td>
+                    The worker creates the Prod key, the Prod harness, pins
+                    <code>live</code> and registers the online evaluation; later
+                    versions are faster.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>workshop apply 7</code></td>
+                  <td>about 1 min, allow up to 5</td>
+                  <td>module 7</td>
+                  <td>
+                    Ten conversations three at a time (31 s on warm sessions);
+                    the metrics check waits up to three minutes.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Online evaluation results</td>
+                  <td>8-11 min after a session goes quiet</td>
+                  <td>module 7, <code>workshop scores</code> and Overview (Prod)</td>
+                  <td>
+                    Quiet timeout one minute; the three conversations seeded in
+                    module 6 should already be scored.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>workshop cleanup</code></td>
+                  <td>about 10 min</td>
+                  <td>clean up</td>
+                  <td>
+                    Harnesses and memories take 2-8 min in the background; if
+                    it stops, run it again.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>workshop cleanup --stacks</code></td>
+                  <td>about 13 min, plus up to 20 min</td>
+                  <td>clean up, own account</td>
+                  <td>
+                    <code>cdk destroy --all</code> then the sweep; the relay
+                    Lambda's network interfaces can hold ModelGateway and
+                    Network.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Troubleshooting</h3>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Symptom</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <code>command not found: workshop</code>,
+                    <code>The term 'workshop' is not recognized</code>
+                  </td>
+                  <td>
+                    The terminal has not activated <code>.venv</code>, or
+                    <code>uv sync</code> has not run:
+                    <code>source .venv/bin/activate</code> or
+                    <code>.venv\Scripts\Activate.ps1</code>; or prefix the
+                    command with <code>uv run</code>. PowerShell
+                    <code>running scripts is disabled on this system</code>:
+                    <code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code>
+                    once, then activate again.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>cannot read the platform configuration from SSM (…)</code>
+                  </td>
+                  <td>
+                    Wrong account or region, or the control plane is not
+                    deployed: the first line of <code>workshop status</code>
+                    must read <code>us-east-1</code>; unset or change
+                    <code>AWS_REGION</code> and
+                    <code>AWS_DEFAULT_REGION</code>; own account:
+                    <code>workshop deploy pre-day</code> first. Learners have no
+                    AWS CLI: do not send them to <code>aws sts</code>.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>ExpiredToken</code>,
+                    <code>no usable AWS credentials</code>,
+                    <code>… SSM (NoCredentialsError …)</code>
+                  </td>
+                  <td>
+                    Paste fresh lines from the event page, set the region, run
+                    <code>workshop status</code> again; re-run the interrupted
+                    <code>workshop apply N</code> (idempotent).
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>Node.js 20 or later is needed for cdk deploy</code>,
+                    <code>the pinned CDK CLI is not installed</code>
+                  </td>
+                  <td>
+                    Module 1's deployment runs the CDK CLI: install Node.js 20
+                    or later, then <code>npm install</code> at the repository
+                    root.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>certificate verify failed</code>,
+                    <code>self-signed certificate</code>,
+                    <code>ETIMEDOUT</code> during clone, <code>uv sync</code> or
+                    <code>npm install</code>
+                  </td>
+                  <td>
+                    A company proxy or TLS inspection: set
+                    <code>HTTPS_PROXY</code> (PowerShell
+                    <code>$env:HTTPS_PROXY</code>); uv:
+                    <code>UV_NATIVE_TLS=1</code>; npm:
+                    <code>npm config set proxy &lt;url&gt;</code>; or the guest
+                    Wi-Fi.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>workshop apply 1</code> or
+                    <code>scripts/deploy.sh</code>:
+                    <code
+                      >@smithy/node-http-handler ... did not establish a
+                      connection ... 10000 ms</code
+                    >, <code>Failed to publish asset</code>
+                  </td>
+                  <td>
+                    Laptop network, VPN or proxy: the CDK CLI could not open S3
+                    connections while uploading the 19 MB backend bundle.
+                    Finished stacks are kept. Learners: run
+                    <code>workshop apply 1</code> again. Pre-day:
+                    <code>scripts/deploy.sh --pre-day</code> resumes and retries
+                    once with <code>--concurrency 1 --no-asset-parallelism</code>;
+                    or start with
+                    <code>DEPLOY_CONCURRENCY=1 scripts/deploy.sh --pre-day</code>.
+                    Check the VPN or <code>HTTPS_PROXY</code> if it persists.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>workshop apply 1</code>: the gateway "did not answer
+                    yet"
+                  </td>
+                  <td>
+                    The ECS Express service needs a minute after the stack
+                    completes: <code>workshop apply 1 --no-deploy</code> repeats
+                    the checks and the doctor without redeploying.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>AuthError: Cognito refused the sign-in</code>; Switch
+                    persona fails with <code>502 SIGN_IN_FAILED</code>
+                  </td>
+                  <td>
+                    Re-run <code>workshop apply 2</code>: it re-applies the
+                    stored passwords (permanent). Facilitator fallback:
+                    <code
+                      >aws cognito-idp admin-set-user-password --user-pool-id
+                      $(aws ssm get-parameter --name
+                      /agent-platform/auth/user-pool-id --query Parameter.Value
+                      --output text) --username &lt;admin | developer |
+                      approver&gt; --password '&lt;from the agent-platform/users
+                      secret&gt;' --permanent</code
+                    >.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>workshop obo</code> step 1 fails with a sign-in error
+                    (modules 4, 6)
+                  </td>
+                  <td>
+                    The Keycloak task restarted since
+                    <code>workshop apply 2</code> and the employee is gone with
+                    it: run <code>workshop apply 2</code> again (about a
+                    minute).
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>workshop apply 3</code>:
+                    <code
+                      >WARN could not inspect the agent role ... IAM may still be
+                      propagating</code
+                    >
+                  </td>
+                  <td>
+                    The new role was not visible yet: run
+                    <code>workshop apply 3</code> again; it is safe to repeat.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>workshop call --as finance-dev ...</code> &rarr; HTTP
+                    403
+                  </td>
+                  <td>
+                    Expected: IAM denies Finance's role on HR's gateway before
+                    any policy runs. <code>workshop call --as</code> assumes
+                    the project's agent role.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    MCP call denied, <code>JSON-RPC error -32002</code>
+                  </td>
+                  <td>
+                    Expected for
+                    <code>workshop call --as hr-dev submit_leave_request E1001 15</code>
+                    after Set ENFORCE: the max_leave_days forbid rule blocks
+                    before the tool runs. Elsewhere: the gateway is in ENFORCE
+                    and no policy permits that tool for that role.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Overview Allow / Deny still 0 after the LOG_ONLY call</td>
+                  <td>
+                    CloudWatch is late: up to four minutes.
+                    <code>workshop apply 7</code> waits up to three minutes for
+                    the Prod metrics for the same reason.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    Playground "Spending cap reached";
+                    <code>BUDGET_EXCEEDED</code>, HTTP 422
+                  </td>
+                  <td>
+                    Expected after <code>workshop cap --dev low</code> in module
+                    5 (if that call still passes, the proxy writes spend every
+                    10 s: run it once more). Fix:
+                    <code>workshop cap --dev restore</code> (or
+                    <code>workshop cap --dev &lt;USD&gt;</code>), or
+                    <span class="pill persona">Platform admin</span> on the
+                    <span class="pill ui">Keys</span> tab. Module 6 starts with
+                    the cap restored; the record's cap is 1 USD/7d.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Release REJECTED in the UI</td>
+                  <td>
+                    Terminal by design. Re-run <code>workshop apply 6</code>: it
+                    ignores REJECTED releases and creates a new one.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    Release EVALUATING (created on the Releases screen or with
+                    <em>Run evaluation</em>)
+                  </td>
+                  <td>
+                    The platform worker runs it and
+                    <code>workshop apply 6</code> follows that run. Still
+                    EVALUATING after 15 minutes: open the Releases screen,
+                    <em>Run again</em> appears once the job has stalled, then
+                    run the command again.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>workshop apply 7</code>: <code>no Prod agent yet</code>
+                  </td>
+                  <td>
+                    Approve and promote release 2 first (module 6, as
+                    <span class="pill persona">Domain approver</span>).
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>workshop apply 7</code> ends with "none yet"
+                  </td>
+                  <td>
+                    Online scores arrive 8-11 min after a session goes quiet:
+                    <code>workshop scores</code> later; the Overview shows them
+                    too. Move on.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>workshop cleanup</code> seems stuck on a harness or
+                    memory
+                  </td>
+                  <td>
+                    Normal: 2-8 min of background deletion; most of the ten
+                    minutes is AgentCore deleting. If it stops, run it again.
+                    <code>--stacks</code>: ModelGateway and Network can wait up
+                    to about 20 min for the relay Lambda's network interfaces.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    The UI shows "The platform UI is coming" (placeholder) or
+                    "not configured"
+                  </td>
+                  <td>
+                    Placeholder: the Web stack deployed while
+                    <code>frontend/dist</code> was missing (git-ignored; fresh
+                    clone or pull). Fix:
+                    <code>(cd frontend && npm ci && npm run build)</code> then
+                    <code
+                      >(cd foundation && npx cdk deploy AgentPlatform-Web
+                      --require-approval never)</code
+                    >
+                    (about 80 s). <code>scripts/deploy.sh</code> rebuilds the
+                    frontend when it is missing or older than the sources;
+                    <code>workshop deploy</code> builds it when missing; the
+                    doctor fails the UI row on a placeholder. "Not configured":
+                    the Platform stack has not written
+                    <code>config.json</code> yet.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Reset between groups</h3>
+          <p>
+            Workshop Studio gives every attendee a fresh account: nothing to
+            reset. In your own account:
+          </p>
+          <pre
+            class="code-dark"
+          ><code><span class="c"># (a) keep the platform: about 10 min; the modules run again (workshop apply 1 and 2 find their stacks)</span>
+workshop cleanup
+<span class="c"># (b) back to the pre-day state: about 13 min (+ up to 20 min for the relay ENIs), then about 12 min</span>
+workshop cleanup --stacks
+workshop deploy pre-day</code></pre>
+          <p>
+            There is no headless all-module runner;
+            <code>scripts/e2e_dryrun.py</code> covers modules 3-6 with the SDK
+            (tagged <code>ManagedBy=dryrun</code>).
+          </p>
+          <h3>Go / no-go</h3>
+          <ol class="steps">
+            <li>
+              <div>
+                <label class="tick"
+                  ><input type="checkbox" id="s16" />done</label
+                ><span class="text"
+                  ><code>uv run pytest -q</code>,
+                  <code>uv run ruff check .</code>,
+                  <code>(cd frontend && npm test && npm run typecheck)</code>,
+                  <code>(cd foundation && npx cdk synth)</code> clean.</span
+                >
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"
+                  ><input type="checkbox" id="s17" />done</label
+                ><span class="text"
+                  >Workshop Studio test event deployed with
+                  <code>deployer.yaml</code>, <code>repo.zip</code> and
+                  <code>attendee-policy.json</code>, DeployScope
+                  <code>pre-day</code>; <code>DoctorStatus = PASS</code> in the
+                  outputs (the doctor passes with the landing zone and the
+                  personas not deployed; <code>ModelGatewayUrl</code> reads "not
+                  deployed yet"). See
+                  <a href="../workshop-studio/README.md"
+                    >workshop-studio/README.md</a
+                  >.</span
+                >
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"
+                  ><input type="checkbox" id="s18" />done</label
+                ><span class="text"
+                  >A full <code>workshop apply 1</code> to
+                  <code>workshop apply 7</code> plus
+                  <code>workshop cleanup</code> in a fresh account passed, each
+                  module inside its 40-min slot (<code>apply 1</code> and
+                  <code>apply 6</code> run 1 started as their modules
+                  begin).</span
+                >
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"
+                  ><input type="checkbox" id="s19" />done</label
+                ><span class="text"
+                  >Persona passwords retrievable after
+                  <code>workshop apply 2</code>
+                  (<code>uv run python scripts/doctor.py --show-passwords</code>
+                  or the <code>PersonaPasswordsCommand</code> output);
+                  <code>workshop cap --dev restore</code> before module 6 in the
+                  facilitator's notes.</span
+                >
+              </div>
+            </li>
+            <li>
+              <div>
+                <label class="tick"
+                  ><input type="checkbox" id="s20" />done</label
+                ><span class="text"
+                  >Cost per account checked (Cost Explorer with the
+                  <code>Project</code> tag, or about 0.36 USD/h while everything
+                  is deployed); accounts destroyed after the event.</span
+                >
+              </div>
+            </li>
+          </ol>
+          <h3>More</h3>
+          <div class="docs">
+            <a href="v2/course/index.html#agenda">Course and agenda</a
+            ><a href="v2/course/index.html#start">Get started</a
+            ><a href="v2/course/cleanup.html">Clean up</a
+            ><a href="workshop-guide.html">Workshop guide</a
+            ><a href="../workshop_cli/README.md">The workshop command</a
+            ><a href="../workshop-studio/README.md">Workshop Studio</a>
+          </div>
+        </section>
+      </main>
+    </div>
+    <footer>
+      Internal facilitator document. Hand-maintained like the workshop guide:
+      edit the HTML, save, refresh.
+    </footer>
+    <script>
+      (function () {
+        var KEY = "facilitator-guide-ticks-v2";
+        var state = {};
+        try {
+          state = JSON.parse(localStorage.getItem(KEY) || "{}");
+        } catch (e) {
+          state = {};
+        }
+        var boxes = document.querySelectorAll("ol.steps input[type=checkbox]");
+        boxes.forEach(function (b) {
+          if (state[b.id]) {
+            b.checked = true;
+            b.closest("li").classList.add("done");
+          }
+          b.addEventListener("change", function () {
+            b.closest("li").classList.toggle("done", b.checked);
+            if (b.checked) state[b.id] = 1;
+            else delete state[b.id];
+            localStorage.setItem(KEY, JSON.stringify(state));
+          });
+        });
+        // Pill icons: the sprite-and-<use> approach of workshop-guide.html, applied by class.
+        var SVG_NS = "http://www.w3.org/2000/svg";
+        var ICONS = {
+          persona: "icon-person",
+          ui: "icon-screen",
+          wait: "icon-clock",
+        };
+        document.querySelectorAll(".pill").forEach(function (pill) {
+          var kind = Object.keys(ICONS).filter(function (k) {
+            return pill.classList.contains(k);
+          })[0];
+          if (!kind || pill.querySelector("svg")) return;
+          var svg = document.createElementNS(SVG_NS, "svg");
+          svg.setAttribute("viewBox", "0 0 24 24");
+          svg.setAttribute("aria-hidden", "true");
+          svg.setAttribute("focusable", "false");
+          var use = document.createElementNS(SVG_NS, "use");
+          use.setAttribute("href", "#" + ICONS[kind]);
+          svg.appendChild(use);
+          pill.insertBefore(svg, pill.firstChild);
+        });
+        // Table of contents: the same wiring as workshop-guide.html.
+        var contents = document.getElementById("guide-contents");
+        if (contents) {
+          var toggle = contents.querySelector("summary");
+          contents.addEventListener("toggle", function () {
+            var label = contents.open
+              ? "Collapse table of contents"
+              : "Expand table of contents";
+            toggle.setAttribute("aria-label", label);
+            toggle.title = label;
+          });
+          document.addEventListener("pointerdown", function (e) {
+            if (contents.open && !contents.contains(e.target))
+              contents.open = false;
+          });
+          document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape" && contents.open) {
+              contents.open = false;
+              toggle.focus();
+            }
+          });
+          contents.querySelectorAll("a").forEach(function (link) {
+            link.addEventListener("click", function () {
+              contents.open = false;
+              contents.querySelectorAll("a").forEach(function (a) {
+                a.removeAttribute("aria-current");
+              });
+              link.setAttribute("aria-current", "location");
+              var dest = document.getElementById(link.hash.slice(1));
+              if (dest) {
+                dest.setAttribute("tabindex", "-1");
+                dest.focus({ preventScroll: true });
+              }
+            });
+          });
+        }
+        document.querySelectorAll("pre.code-dark").forEach(function (pre) {
+          var btn = document.createElement("button");
+          btn.className = "copy";
+          btn.type = "button";
+          btn.textContent = "Copy";
+          btn.addEventListener("click", function () {
+            var text = pre
+              .querySelector("code")
+              .innerText.replace(/^\$ /gm, "");
+            navigator.clipboard.writeText(text).then(function () {
+              btn.textContent = "Copied";
+              setTimeout(function () {
+                btn.textContent = "Copy";
+              }, 1500);
+            });
+          });
+          pre.appendChild(btn);
+        });
+      })();
+    </script>
+  </body>
+</html>

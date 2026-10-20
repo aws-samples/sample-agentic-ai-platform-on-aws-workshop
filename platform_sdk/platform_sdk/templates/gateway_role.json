@@ -1,0 +1,75 @@
+{
+  "_comment": "Gateway execution role template, build-contracts.md section 2.3 plus the Policy integration permissions from the AgentCore developer guide (policy-permissions): GetPolicyEngine on the policy engine and AuthorizeAction / PartiallyAuthorizeActions on the engine and the project's gateways (verified live 8 Oct 2026: CreateGateway with a policy engine fails with 'Access denied while calling GetPolicyEngine ... with Gateway role' without them). The shared policy engine is created by the admin in module 4 with a random id suffix, hence policy-engine/*. Placeholders: {{account_id}}, {{region}}, {{project_id}}, {{env}}, {{snake}}; the list placeholders {{allowed_tool_arns}} and {{kb_arns}} are replaced by the project's allowedToolArns and knowledge base ARNs, or by \"*\" when the list is empty (a project without tools or knowledge bases yet; tighten by PATCHing the project). Rendered by platform_sdk.templates.roles.render_gateway_role.",
+  "trust": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "AgentCoreService",
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "bedrock-agentcore.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole",
+        "Condition": {
+          "StringEquals": {
+            "aws:SourceAccount": "{{account_id}}"
+          },
+          "ArnLike": {
+            "aws:SourceArn": "arn:aws:bedrock-agentcore:{{region}}:{{account_id}}:*"
+          }
+        }
+      },
+      {
+        "Sid": "AccountAdmins",
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::{{account_id}}:root"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  },
+  "policy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "PolicyEngineConfiguration",
+        "Effect": "Allow",
+        "Action": [
+          "bedrock-agentcore:GetPolicyEngine"
+        ],
+        "Resource": "arn:aws:bedrock-agentcore:{{region}}:{{account_id}}:policy-engine/*"
+      },
+      {
+        "Sid": "PolicyEngineAuthorization",
+        "Effect": "Allow",
+        "Action": [
+          "bedrock-agentcore:AuthorizeAction",
+          "bedrock-agentcore:PartiallyAuthorizeActions"
+        ],
+        "Resource": [
+          "arn:aws:bedrock-agentcore:{{region}}:{{account_id}}:policy-engine/*",
+          "arn:aws:bedrock-agentcore:{{region}}:{{account_id}}:gateway/{{project_id}}-{{env}}-gw*"
+        ]
+      },
+      {
+        "Sid": "InvokeAllowedTools",
+        "Effect": "Allow",
+        "Action": [
+          "lambda:InvokeFunction"
+        ],
+        "Resource": "{{allowed_tool_arns}}"
+      },
+      {
+        "Sid": "QueryProjectKnowledgeBases",
+        "Effect": "Allow",
+        "Action": [
+          "bedrock:Retrieve",
+          "bedrock:GetKnowledgeBase",
+          "bedrock:AgenticRetrieveStream"
+        ],
+        "Resource": "{{kb_arns}}"
+      }
+    ]
+  }
+}

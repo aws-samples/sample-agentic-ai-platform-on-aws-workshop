@@ -1,0 +1,9 @@
+{
+  "name": "workshop-agentic-ai-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CDK CLI pin for the workshop foundation (run `npx cdk ...` from the repository root or foundation/)",
+  "devDependencies": {
+    "aws-cdk": "2.1145.0"
+  }
+}
