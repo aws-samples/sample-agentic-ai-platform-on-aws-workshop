@@ -85,7 +85,7 @@ def test_create_release_deploys_to_dev_then_evaluates(ready, dataset_run):
     assert (
         job["type"] == "release"
         and job["input"]["blueprintVersion"] == 1
-        and job["input"]["model"] == "claude-sonnet-5-5"
+        and job["input"]["model"] == "claude-sonnet-5"
     )
 
     # stage one: the Dev harness is created and registered, the evaluate job queued
@@ -254,7 +254,7 @@ def test_an_exhausted_dev_key_fails_the_run_before_any_scenario(ready, dataset_r
     evaluate_id = get_release(release["releaseId"])["pipeline"]["jobId"]
     result = run_job(evaluate_id)
     assert result["status"] == "FAILED" and result["error"]["code"] == "BUDGET_EXCEEDED"
-    assert result["error"]["details"]["alias"] == "hr-assistant-dev-claude-sonnet-5-5"
+    assert result["error"]["details"]["alias"] == "hr-assistant-dev-claude-sonnet-5"
     failed = get_release(release["releaseId"])
     assert failed["status"] == "DRAFT" and failed["error"]["code"] == "BUDGET_EXCEEDED"
     assert not dataset_run.calls

@@ -203,7 +203,7 @@ def model_gateway() -> dict:
     the admin UI cannot be opened from a browser, and every admin call of this backend travels through the relay function named
     here. A public landing zone (no `model-gateway/private` in SSM) reports `private: False`."""
     cfg = clients.cfg()
-    url = (cfg.get("model-gateway/url") or "").rstrip("/")
+    url = cfg.model_gateway_url if cfg.get("model-gateway/url") else ""
     if not url:
         return {
             "deployed": False,

@@ -356,7 +356,11 @@ def test_model_gateway(templates) -> None:
         and json.dumps(relay["VpcConfig"]["SubnetIds"]).count("appSubnet") == 3
     )
     assert "RelaySecurityGroup" in json.dumps(relay["VpcConfig"]["SecurityGroupIds"])
-    assert json.dumps(relay["Environment"]["Variables"]["MODEL_GATEWAY_URL"]).count("Endpoint") == 1
+    url = relay["Environment"]["Variables"]["MODEL_GATEWAY_URL"]
+    assert json.dumps(url).count("Endpoint") == 1
+    # one scheme whatever the Endpoint attribute carries: "https://ag-" + the part after the single "ag-" marker
+    assert url["Fn::Join"][1][0] == "https://ag-" and url["Fn::Join"][1][1]["Fn::Select"][0] == 1
+    assert url["Fn::Join"][1][1]["Fn::Select"][1]["Fn::Split"][0] == "ag-"
     relay_role = relay["Role"]["Fn::GetAtt"][0]
     managed = json.dumps(t.to_json()["Resources"][relay_role]["Properties"]["ManagedPolicyArns"])
     assert "AWSLambdaVPCAccessExecutionRole" in managed and "AWSLambdaBasicExecutionRole" in managed
@@ -377,7 +381,7 @@ def test_model_gateway(templates) -> None:
         r for r in t.find_resources("AWS::SSM::Parameter").values() if r["Properties"]["Name"].endswith("/models")
     ][0]
     aliases = [m["alias"] for m in json.loads(models_param["Properties"]["Value"])]
-    assert aliases == ["claude-sonnet-5-5", "claude-haiku-4-5", "nova-2-lite"]
+    assert aliases == ["claude-opus-5", "claude-sonnet-5", "gpt-6-1-sol", "nova-2-lite"]
 
 
 def test_litellm_config_template_matches_models() -> None:

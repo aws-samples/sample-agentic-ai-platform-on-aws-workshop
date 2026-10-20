@@ -99,7 +99,7 @@
           <table class="plain">
   <thead><tr><th>Step</th><th>What happens</th><th>Where to look</th></tr></thead>
   <tbody>
-    <tr><td>1 · Write</td><td>References such as <code>model/claude-sonnet-5-5</code> and <code>tool/hr-core</code>; prompt, limits, budget and thresholds</td><td><code>scenario/blueprint/</code></td></tr>
+    <tr><td>1 · Write</td><td>References such as <code>model/claude-sonnet-5</code> and <code>tool/hr-core</code>; prompt, limits, budget and thresholds</td><td><code>scenario/blueprint/</code></td></tr>
     <tr><td>2 · Validate</td><td>Store the spec and prompt as a version. Reject unknown kinds, unapproved or disabled models, and out-of-range limits or thresholds</td><td>Project · Blueprints</td></tr>
     <tr><td>3 · Render</td><td>Resolve the environment's alias, vault key, gateway, filtered KB target, memory and agent role. Missing resources produce named errors</td><td>Apply output</td></tr>
     <tr><td>4 · Deploy</td><td>Worker creates an immutable Harness version on Runtime; Dev <code>DEFAULT</code> follows the latest</td><td>Releases · new version ~20 seconds; first VPC deployment ~4–5 minutes</td></tr>
@@ -150,7 +150,7 @@
               <title id="fig6c-title">Two paths onto one platform: the blueprint rendered by the platform, or exported code built by a pipeline</title>
               <defs><marker id="arr6c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
               <rect x="20" y="66" width="212" height="124" rx="8" fill="#161e2d"/>
-              <text x="32" y="90" style="font-family:ui-monospace,Menlo,monospace;font-size:11px;fill:#9cdcfe">model: <tspan fill="#ffb86b">model/claude-sonnet-5-5</tspan></text>
+              <text x="32" y="90" style="font-family:ui-monospace,Menlo,monospace;font-size:11px;fill:#9cdcfe">model: <tspan fill="#ffb86b">model/claude-sonnet-5</tspan></text>
               <text x="32" y="112" style="font-family:ui-monospace,Menlo,monospace;font-size:11px;fill:#9cdcfe">prompt: <tspan fill="#ffb86b">hr-assistant-v2.md</tspan></text>
               <text x="32" y="134" style="font-family:ui-monospace,Menlo,monospace;font-size:11px;fill:#9cdcfe">tools: <tspan fill="#ffb86b">tool/hr-core</tspan></text>
               <text x="32" y="156" style="font-family:ui-monospace,Menlo,monospace;font-size:11px;fill:#9cdcfe">memory: <tspan fill="#ffb86b">summary, preferences</tspan></text>
@@ -249,7 +249,7 @@
                 <title id="fig6b-title">A blueprint is rendered against governed resources into a Harness per environment</title>
                 <defs><marker id="arr6b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
                 <rect x="20" y="20" width="250" height="160" rx="8" fill="#161e2d"/>
-                <text x="36" y="46" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#9cdcfe">model:     <tspan fill="#ffb86b">model/claude-sonnet-5-5</tspan></text>
+                <text x="36" y="46" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#9cdcfe">model:     <tspan fill="#ffb86b">model/claude-sonnet-5</tspan></text>
                 <text x="36" y="68" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#9cdcfe">prompt:    <tspan fill="#ffb86b">hr-assistant-v1.md</tspan></text>
                 <text x="36" y="90" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#9cdcfe">tools:     <tspan fill="#ffb86b">tool/hr-core</tspan></text>
                 <text x="36" y="112" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#9cdcfe">knowledge: <tspan fill="#ffb86b">kb/hr-policies</tspan></text>
@@ -366,7 +366,7 @@
                 <text class="d-text d-small" x="807" y="142" text-anchor="middle">real traffic · problems reach users first</text>
                 <text class="d-text d-tiny" x="807" y="156" text-anchor="middle">when: low-risk agents</text>
               </svg>
-              <figcaption>The demo scorecard shows v1 failing three thresholds. v2 should pass and wait for approval. Read the actual scores in Releases; a failing metric blocks promotion.</figcaption>
+              <figcaption>The demo scorecard shows v1 failing three thresholds; its numbers come from the 8 Oct 2026 dry runs, measured with the previous aliases Claude Sonnet 5.5 and Haiku 4.5, and the rehearsal with <code>claude-sonnet-5</code> is pending. v2 should pass and wait for approval. Read the actual scores in Releases; a failing metric blocks promotion.</figcaption>
             </figure>
             <table class="options">
               <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
@@ -449,7 +449,7 @@
             <div class="ours-box">
               <p><strong>This workshop.</strong> Promotion performs <strong>three actions</strong>:</p>
 <ol class="concept-list">
-  <li><strong>Resolve:</strong> the approved blueprint against Prod's gateway and memory, and ensure the Prod key. No Prod key exists yet: module 5 created the Dev key only, so the first promotion creates <code>hr-assistant-prod-claude-sonnet-5-5</code> with the blueprint's cap (1 USD per 7 days) and stores it in the token vault; the project's Keys tab then shows two keys, each with its own spend.</li>
+  <li><strong>Resolve:</strong> the approved blueprint against Prod's gateway and memory, and ensure the Prod key. No Prod key exists yet: module 5 created the Dev key only, so the first promotion creates <code>hr-assistant-prod-claude-sonnet-5</code> with the blueprint's cap (1 USD per 7 days) and stores it in the token vault; the project's Keys tab then shows two keys, each with its own spend.</li>
   <li><strong>Deploy:</strong> create the Prod Harness and pin <code>live</code> to its version.</li>
   <li><strong>Observe:</strong> register the online evaluation that module 7 reads. <code>hr_assistant_prod_online_eval</code> watches the <code>live</code> endpoint's spans and scores every Prod conversation (100 % sampling) with three judges, Helpfulness, Harmfulness and ToolSelectionAccuracy; scores arrive 8–11 minutes after a conversation goes quiet. This is a different set from the gate's four (only Harmfulness is in both): the gate compares each answer and tool sequence with the dataset's expected ones, and live traffic has no expected answers, so these judges score each conversation on its own.</li>
 </ol>

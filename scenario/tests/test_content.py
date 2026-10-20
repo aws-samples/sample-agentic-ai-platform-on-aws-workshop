@@ -304,7 +304,7 @@ def test_blueprint_matches_the_contract(blueprint):
     assert blueprint["apiVersion"] == "platform/v1" and blueprint["kind"] == "AgentBlueprint"
     assert blueprint["metadata"] == {"domain": "people-ops", "project": "hr-assistant", "version": 1}
     spec = blueprint["spec"]
-    assert spec["model"] == {"ref": "model/claude-sonnet-5-5"}
+    assert spec["model"] == {"ref": "model/claude-sonnet-5"}
     assert spec["systemPrompt"] == {"file": "prompts/hr-assistant-v1.md"}
     assert (BLUEPRINT / spec["systemPrompt"]["file"]).is_file()
     assert spec["tools"] == [{"ref": "tool/hr-core"}] and spec["knowledge"] == [{"ref": "kb/hr-policies"}]
@@ -326,7 +326,7 @@ def test_project_yaml_matches_the_blueprint(blueprint):
     project = _yaml(BLUEPRINT / "project.yaml")
     assert project["kind"] == "Project" and project["metadata"] == {"domain": "people-ops", "project": "hr-assistant"}
     spec = project["spec"]
-    assert spec["models"] == ["claude-sonnet-5-5", "claude-haiku-4-5"]
+    assert spec["models"] == ["claude-sonnet-5", "gpt-6-1-sol"]
     assert blueprint["spec"]["model"]["ref"].split("/")[1] in spec["models"]
     assert spec["caps"] == {"maxBudget": 5, "budgetDuration": "7d", "tpmLimit": 200000, "rpmLimit": 200}
     assert spec["description"] and spec["owner"].endswith("@anycompany.example")

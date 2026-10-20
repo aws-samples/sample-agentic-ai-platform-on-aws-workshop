@@ -17,9 +17,11 @@ Attendees take the HR assistant from Dev to Prod. Blueprint version 1 ships with
 prompt `blueprint/prompts/hr-assistant-v1.md` tells the model that the policy documents "are not available to you", to
 answer policy questions "from your general knowledge of standard HR practice" and not to call any tool for them (a
 stale prompt written before the knowledge base was connected; the instruction has to be this explicit because in the
-dry run Claude Haiku 4.5 searched the documents anyway when the prompt only said "answer from general knowledge" or
-even "do not use any tool"), so the three policy scenarios in the evaluation dataset score 0 (measured: Correctness
-0.7, GoalSuccessRate 0.7 and TrajectoryInOrderMatch 0.625, all below the thresholds) and the release is blocked.
+8 Oct 2026 dry runs the previous model, Claude Haiku 4.5, searched the documents anyway when the prompt only said "answer
+from general knowledge" or even "do not use any tool"), so the three policy scenarios in the evaluation dataset score 0
+(measured with the previous aliases Claude Sonnet 5.5 / Haiku 4.5 on 8 Oct 2026: Correctness 0.7, GoalSuccessRate 0.7
+and TrajectoryInOrderMatch 0.625, all below the thresholds; the rehearsal with `claude-sonnet-5` is pending) and the
+release is blocked.
 Version 2 (`hr-assistant-v2.md`) replaces that one section with an instruction to ALWAYS call the policy search tool
 `hrkb___Retrieve` first, answer only from the retrieved passages, cite the document title and say when nothing was
 found. Everything else in the two prompts is identical. Version 2 passes all thresholds and is promoted.

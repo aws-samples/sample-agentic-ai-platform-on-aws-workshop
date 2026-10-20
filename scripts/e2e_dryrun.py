@@ -763,7 +763,7 @@ def cleanup(ctx: Context) -> list[str]:
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
-        "--model", default="claude-haiku-4-5", help="approved model alias for the Dev harness (default: cheap)"
+        "--model", default="claude-sonnet-5", help="approved model alias for the Dev harness (default: the workshop agent model)"
     )
     parser.add_argument("--keep", action="store_true", help="leave everything running (skip the cleanup step)")
     parser.add_argument(

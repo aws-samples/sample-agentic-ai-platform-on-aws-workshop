@@ -21,7 +21,7 @@ from platform_sdk import agentcore, blueprint
 ROOT = Path(__file__).resolve().parents[3]
 BLUEPRINT_FILE = ROOT / "scenario" / "blueprint" / "blueprint.yaml"
 HR_LAMBDA = CONFIG["scenario/tools/hr-lambda-arn"]
-# Scores of the real dry run (dryrun-results/hr-assistant-v1-claude-haiku-4-5.json): prompt v1 fails three thresholds
+# Scores of the real dry run (dryrun-results/hr-assistant-v1-gpt-6-1-sol.json): prompt v1 fails three thresholds
 BLOCKED_SCORES = {
     "Correctness": {"mean": 0.7, "min": 0.0, "max": 1.0, "passRate": 0.7, "count": 10, "errors": 0, "failed": 0},
     "GoalSuccessRate": {"mean": 0.7, "min": 0.0, "max": 1.0, "passRate": 0.7, "count": 10, "errors": 0, "failed": 0},
@@ -112,14 +112,14 @@ def promoted_release(ready, version):
 # ---- blueprints ---------------------------------------------------------------------------------------------------------------
 def test_blueprint_versions_create_dedupe_list_get(ready):
     first = create_blueprint(ready)
-    assert first["version"] == 1 and first["model"] == "claude-sonnet-5-5" and first["createdBy"] == "developer"
+    assert first["version"] == 1 and first["model"] == "claude-sonnet-5" and first["createdBy"] == "developer"
     assert first["thresholds"] == {
         "Correctness": 0.8,
         "GoalSuccessRate": 0.9,
         "TrajectoryInOrderMatch": 0.9,
         "Harmfulness": 0,
     }
-    assert first["spec"]["model"] == {"ref": "model/claude-sonnet-5-5"} and "system_prompt" not in first["spec"]
+    assert first["spec"]["model"] == {"ref": "model/claude-sonnet-5"} and "system_prompt" not in first["spec"]
     assert first["systemPrompt"] == ready.blueprint.system_prompt and "PK" not in first
     status, again = call("POST", "/projects/hr-assistant/blueprints", body=ready.blueprint.to_api_body("again"))
     assert status == 200 and again["version"] == 1 and again["existing"] is True  # same content -> same version
@@ -163,18 +163,18 @@ def test_render_dry_run_is_unresolved_without_a_key_then_renders(ready):
     assert status == 400 and body["error"]["code"] == "BLUEPRINT_UNRESOLVED", body
     assert (
         "module 5" in body["error"]["message"]
-        and "litellm-hr-assistant-dev-claude-sonnet-5-5" in body["error"]["message"]
+        and "litellm-hr-assistant-dev-claude-sonnet-5" in body["error"]["message"]
     )
     assert body["error"]["details"]["missing"] == "key"
 
-    status, key = call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "claude-sonnet-5-5"})
+    status, key = call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "claude-sonnet-5"})
     assert status == 201
     status, spec = call("GET", "/projects/hr-assistant/blueprints/1/render", persona="developer")  # env defaults to dev
     assert status == 200, spec
     assert spec["harnessName"] == "hr_assistant_dev"
     assert spec["executionRoleArn"] == ready.project["roles"]["dev"]["agentRoleArn"]
     assert spec["model"]["liteLlmModelConfig"] == {
-        "modelId": "openai/claude-sonnet-5-5",
+        "modelId": "openai/claude-sonnet-5",
         "apiBase": "https://llm.example.test/v1",
         "apiKeyArn": key["credentialProviderArn"],
         "maxTokens": 2048,
@@ -199,9 +199,9 @@ def test_render_dry_run_is_unresolved_without_a_key_then_renders(ready):
         "hr-assistant",
         "prod",
         "credential_provider",
-        "litellm-hr-assistant-prod-claude-sonnet-5-5",
+        "litellm-hr-assistant-prod-claude-sonnet-5",
         arn="arn:provider-prod",
-        attributes={"model": "claude-sonnet-5-5"},
+        attributes={"model": "claude-sonnet-5"},
     )
     status, spec = call("GET", "/projects/hr-assistant/blueprints/1/render", query={"env": "prod"})
     assert status == 200 and spec["model"]["liteLlmModelConfig"]["apiKeyArn"] == "arn:provider-prod"
@@ -220,7 +220,7 @@ def test_render_puts_the_harness_in_the_vpc_on_a_private_landing_zone(ready, mon
     from platform_sdk import config as sdk_config
 
     create_blueprint(ready)
-    assert call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "claude-sonnet-5-5"})[0] == 201
+    assert call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "claude-sonnet-5"})[0] == 201
     status, public = call("GET", "/projects/hr-assistant/blueprints/1/render")
     assert status == 200 and "environment" not in public  # the public landing zone: managed network
     monkeypatch.setenv("PLATFORM_CONFIG_JSON", json.dumps(PRIVATE_CONFIG))
@@ -264,7 +264,7 @@ def test_deploy_job_ensures_the_key_deploys_and_registers(ready):
         "projectId": "hr-assistant",
         "env": "dev",
         "version": 1,
-        "model": "claude-sonnet-5-5",
+        "model": "claude-sonnet-5",
     }
 
     result = run_job(accepted["jobId"])
@@ -276,17 +276,17 @@ def test_deploy_job_ensures_the_key_deploys_and_registers(ready):
     )
     assert out["logGroup"] == "/aws/bedrock-agentcore/runtimes/harness_hr_assistant_dev-RT123-DEFAULT"
     assert (
-        out["keyAlias"] == "hr-assistant-dev-claude-sonnet-5-5" and out["seconds"] >= 0 and out["blueprintVersion"] == 1
+        out["keyAlias"] == "hr-assistant-dev-claude-sonnet-5" and out["seconds"] >= 0 and out["blueprintVersion"] == 1
     )
     assert call("GET", f"/jobs/{accepted['jobId']}")[1]["output"] == out
 
     # the key: LiteLLM service-account key with the blueprint's budget (1.0 USD / 7d), provider in Identity, KEY item
-    key_rows = [k for k in ready.fakes.litellm.keys.values() if k["key_alias"] == "hr-assistant-dev-claude-sonnet-5-5"]
+    key_rows = [k for k in ready.fakes.litellm.keys.values() if k["key_alias"] == "hr-assistant-dev-claude-sonnet-5"]
     assert len(key_rows) == 1 and key_rows[0]["max_budget"] == 1.0 and key_rows[0]["budget_duration"] == "7d"
-    assert key_rows[0]["team_id"] == "hr-assistant" and key_rows[0]["models"] == ["claude-sonnet-5-5"]
-    assert "litellm-hr-assistant-dev-claude-sonnet-5-5" in ready.fakes.identity.providers
+    assert key_rows[0]["team_id"] == "hr-assistant" and key_rows[0]["models"] == ["claude-sonnet-5"]
+    assert "litellm-hr-assistant-dev-claude-sonnet-5" in ready.fakes.identity.providers
     keys = call("GET", "/projects/hr-assistant/keys")[1]
-    assert [k["alias"] for k in keys] == ["hr-assistant-dev-claude-sonnet-5-5"] and keys[0]["createdBy"] == "developer"
+    assert [k["alias"] for k in keys] == ["hr-assistant-dev-claude-sonnet-5"] and keys[0]["createdBy"] == "developer"
 
     # the harness call used the rendered spec and the platform tags
     kind, name, spec, tags, region = ready.agentcore.calls[-1]
@@ -310,9 +310,7 @@ def test_deploy_job_ensures_the_key_deploys_and_registers(ready):
         and harness["registeredBy"] == "developer"
     )
     assert harness["attributes"]["version"] == "1" and harness["attributes"]["blueprintVersion"] == 1
-    assert (
-        harness["attributes"]["model"] == "claude-sonnet-5-5" and harness["attributes"]["logGroup"] == out["logGroup"]
-    )
+    assert harness["attributes"]["model"] == "claude-sonnet-5" and harness["attributes"]["logGroup"] == out["logGroup"]
     assert (
         harness["attributes"]["jobId"] == accepted["jobId"]
         and harness["attributes"]["runtimeId"] == "harness_hr_assistant_dev-RT123"
@@ -323,10 +321,8 @@ def test_deploy_job_ensures_the_key_deploys_and_registers(ready):
         endpoint["attributes"]["version"] == "1"
         and endpoint["attributes"]["serviceName"] == "harness_hr_assistant_dev.DEFAULT"
     )
-    provider = rows[("credential_provider", "litellm-hr-assistant-dev-claude-sonnet-5-5")]
-    assert (
-        provider["arn"] == keys[0]["credentialProviderArn"] and provider["attributes"]["model"] == "claude-sonnet-5-5"
-    )
+    provider = rows[("credential_provider", "litellm-hr-assistant-dev-claude-sonnet-5")]
+    assert provider["arn"] == keys[0]["credentialProviderArn"] and provider["attributes"]["model"] == "claude-sonnet-5"
 
     # second deploy (new blueprint version): UpdateHarness -> version 2, key reused
     create_blueprint(ready, 2, systemPrompt="v2 prompt: search the policy knowledge base first.")
@@ -662,8 +658,8 @@ def test_promote_job_deploys_prod_pins_live_and_enables_online_evaluation(ready)
 
     # prod key + provider created, resources registered
     aliases = sorted(k["key_alias"] for k in ready.fakes.litellm.keys.values())
-    assert aliases == ["hr-assistant-dev-claude-sonnet-5-5", "hr-assistant-prod-claude-sonnet-5-5"]
-    assert "litellm-hr-assistant-prod-claude-sonnet-5-5" in ready.fakes.identity.providers
+    assert aliases == ["hr-assistant-dev-claude-sonnet-5", "hr-assistant-prod-claude-sonnet-5"]
+    assert "litellm-hr-assistant-prod-claude-sonnet-5" in ready.fakes.identity.providers
     rows = {
         (r["type"], r["name"]): r for r in call("GET", "/projects/hr-assistant/resources", query={"env": "prod"})[1]
     }
@@ -678,7 +674,7 @@ def test_promote_job_deploys_prod_pins_live_and_enables_online_evaluation(ready)
     online = rows[("online_evaluation", "hr_assistant_prod_online_eval")]
     assert online["id"] == "hr_assistant_prod_online_eval-id" and online["attributes"]["logGroup"] == out["logGroup"]
     assert online["attributes"]["evaluators"] == evaluators
-    assert ("credential_provider", "litellm-hr-assistant-prod-claude-sonnet-5-5") in rows
+    assert ("credential_provider", "litellm-hr-assistant-prod-claude-sonnet-5") in rows
     assert call("POST", f"/releases/{release['releaseId']}/promote", persona="approver")[0] == 409  # PROMOTED is final
     assert call("DELETE", "/projects/hr-assistant")[0] == 409  # a PROMOTED release exists
     assert call("GET", f"/jobs/{accepted['jobId']}")[1]["status"] == "SUCCEEDED"
@@ -712,7 +708,7 @@ def test_promote_failure_marks_the_release_failed_and_can_be_retried(ready):
     )
     assert failed["promotion"]["jobId"] == accepted["jobId"]
     # the prod key was created before the harness failed; the retry reuses it
-    assert "litellm-hr-assistant-prod-claude-sonnet-5-5" in ready.fakes.identity.providers
+    assert "litellm-hr-assistant-prod-claude-sonnet-5" in ready.fakes.identity.providers
 
     ready.agentcore.fail_on.clear()
     status, accepted = call("POST", f"/releases/{release['releaseId']}/promote", persona="approver")
@@ -739,7 +735,7 @@ def test_invoke_flow_sessions_and_budget_exceeded(ready):
     assert len(session_id) >= 33 and session_id.endswith("-platform") and accepted["status"] == "QUEUED"
     job = call("GET", f"/jobs/{accepted['jobId']}")[1]
     assert job["input"]["harnessArn"].endswith("harness/hr_assistant_dev-ABC123") and job["input"]["qualifier"] is None
-    assert job["input"]["sessionId"] == session_id and job["input"]["model"] == "claude-sonnet-5-5"
+    assert job["input"]["sessionId"] == session_id and job["input"]["model"] == "claude-sonnet-5"
     assert job["createdBy"] == "approver" and job["ttl"] > 0
     result = run_job(accepted["jobId"])
     assert result["status"] == "SUCCEEDED", result
@@ -780,7 +776,7 @@ def test_invoke_flow_sessions_and_budget_exceeded(ready):
     token = call("GET", "/projects/hr-assistant/keys")[1][0]["litellmKeyId"]
     ready.fakes.litellm.keys[token].update(max_budget=0.0083, spend=0.0166)
     message = (
-        "litellm.BadRequestError: OpenAIException - Budget has been exceeded! Key=hr-assistant-dev-claude-sonnet-5-5 "
+        "litellm.BadRequestError: OpenAIException - Budget has been exceeded! Key=hr-assistant-dev-claude-sonnet-5 "
         "Current cost: 0.0166, Max budget: 0.0083"
     )
     ready.agentcore.invoke_responses.append(HarnessInvokeError(message, budget_exceeded=True, session_id=session_id))
@@ -788,9 +784,9 @@ def test_invoke_flow_sessions_and_budget_exceeded(ready):
     result = run_job(accepted["jobId"])
     assert result["status"] == "FAILED" and result["error"]["code"] == "BUDGET_EXCEEDED"
     details = result["error"]["details"]
-    assert details["alias"] == "hr-assistant-dev-claude-sonnet-5-5" and details["maxBudget"] == 0.0083
+    assert details["alias"] == "hr-assistant-dev-claude-sonnet-5" and details["maxBudget"] == 0.0083
     assert details["spend"] == 0.0166 and details["currentCost"] == 0.0166 and details["budgetResetAt"]
-    assert details["subject"] == "hr-assistant-dev-claude-sonnet-5-5" and details["blocked"] is False
+    assert details["subject"] == "hr-assistant-dev-claude-sonnet-5" and details["blocked"] is False
     assert "Budget has been exceeded" in result["error"]["message"]
 
     # any other invoke failure
@@ -962,8 +958,8 @@ def test_feedback_post_and_list(ready):
 
 
 def test_spend_by_env(ready):
-    call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "claude-haiku-4-5"})
-    call("POST", "/projects/hr-assistant/keys", body={"env": "prod", "model": "claude-haiku-4-5", "maxBudget": 2})
+    call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "gpt-6-1-sol"})
+    call("POST", "/projects/hr-assistant/keys", body={"env": "prod", "model": "gpt-6-1-sol", "maxBudget": 2})
     for row in ready.fakes.litellm.keys.values():
         row["spend"] = 0.25 if row["key_alias"].startswith("hr-assistant-dev") else 0.5
     body = call("GET", "/spend", query={"projectId": "hr-assistant"})[1]

@@ -578,22 +578,122 @@ def confirm(question: str, yes: bool) -> bool:
     return input(f"\n{question} Type yes to continue: ").strip().lower() == "yes"
 
 
+VPC_INTERFACE_TIMEOUT = (
+    1800  # seconds; AgentCore releases a deleted harness's VPC network interfaces 15-30 minutes later
+)
+VPC_INTERFACE_POLL = 20
+
+
+def vpc_interfaces(ec2, security_group: str | None, subnets: list[str], by_subnet: bool = False) -> list[dict]:
+    """The network interfaces still in the harness network: those on the harness security group (AgentCore Runtime's, released in
+    the background after a harness is deleted) or, with `by_subnet`, every interface left in the harness subnets (the relay
+    Lambda's go while the ModelGateway stack is deleted). A missing group or subnet counts as empty."""
+    if by_subnet and subnets:
+        filters = [{"Name": "subnet-id", "Values": list(subnets)}]
+    elif security_group:
+        filters = [{"Name": "group-id", "Values": [security_group]}]
+    else:
+        return []
+    found: dict[str, dict] = {}
+    try:
+        for page in ec2.get_paginator("describe_network_interfaces").paginate(Filters=filters):
+            for eni in page.get("NetworkInterfaces", []):
+                found[eni["NetworkInterfaceId"]] = {
+                    "id": eni["NetworkInterfaceId"],
+                    "status": eni.get("Status"),
+                    "description": (eni.get("Description") or "")[:80],
+                    "managed": bool(eni.get("RequesterManaged")),
+                }
+    except ClientError as exc:  # the group or a subnet is already gone: nothing holds the stack
+        say(
+            f"  describe-network-interfaces: {exc.response.get('Error', {}).get('Code')}; treating the network as clear"
+        )
+        return []
+    return sorted(found.values(), key=lambda e: e["id"])
+
+
+def wait_for_vpc_interfaces(
+    cfg,
+    region: str,
+    by_subnet: bool = False,
+    ec2=None,
+    timeout: float = VPC_INTERFACE_TIMEOUT,
+    every: float = VPC_INTERFACE_POLL,
+) -> bool:
+    """Wait until the harness network holds no network interface: a Network stack with interfaces left cannot delete its app
+    subnets or the harness security group (DELETE_FAILED "has dependencies", "has a dependent object"). True when clear, False
+    after `timeout` (the caller destroys anyway and says what is left). A public landing zone has nothing to wait for."""
+    network = cfg.harness_network() if cfg is not None else None
+    if not network:
+        return True
+    ec2 = ec2 or boto3.client("ec2", region_name=region)
+    security_group = network["securityGroups"][0]
+    where = "the harness subnets" if by_subnet else f"security group {security_group}"
+    started = time.monotonic()
+    last_report = None
+    while True:
+        left = vpc_interfaces(ec2, security_group, network["subnets"], by_subnet)
+        elapsed = time.monotonic() - started
+        if not left:
+            say(f"  harness network: no network interface left in {where} (after {elapsed:.0f} s)")
+            return True
+        if last_report is None or elapsed - last_report >= 60:
+            ids = ", ".join(e["id"] for e in left[:4]) + (" ..." if len(left) > 4 else "")
+            say(
+                f"  {len(left)} network interface(s) still in {where} after {elapsed / 60:.0f} min: {ids}. AgentCore and Lambda "
+                "release them in the background, usually within 15-30 minutes; waiting"
+            )
+            last_report = elapsed
+        if elapsed > timeout:
+            warn(
+                f"the harness network still holds {len(left)} interface(s) after {timeout / 60:.0f} min; trying anyway"
+            )
+            return False
+        time.sleep(every)
+
+
+def _config_or_none(ctx: Context):
+    """The platform configuration from SSM, or None when the parameters are gone (the Network stack is already destroyed)."""
+    try:
+        return ctx.cfg
+    except Exception as exc:  # noqa: BLE001 - without SSM there is no network to wait for
+        say(f"  platform configuration not readable ({exc}); skipping the network-interface wait")
+        return None
+
+
 def destroy_stacks(ctx: Context, region: str | None) -> bool:
-    """`cdk destroy --all --force` (about 13 minutes: the model gateway drains, RDS and CloudFront take their time; the relay
-    Lambda's network interfaces can hold the Network stack for up to about 20 more), then the sweep (scripts/cleanup.py --yes).
-    The ECR repository with the LiteLLM image copy is emptied by the stack. True when no AgentPlatform stack is left and the
-    sweep succeeded."""
+    """Wait for the harness network to be free of network interfaces, then `cdk destroy --all --force` (about 13 minutes: the
+    model gateway drains, RDS and CloudFront take their time; the relay Lambda's interfaces can hold the Network stack for up to
+    about 20 more), retry once after a DELETE_FAILED, then the sweep (scripts/cleanup.py --yes). The ECR repository with the
+    LiteLLM image copy is emptied by the stack. True when no AgentPlatform stack is left and the sweep succeeded."""
     account, region = cdk.identity(region)
     env = cdk.app_env(account, region)
+    cfg = _config_or_none(ctx)
+    head(
+        "harness network: wait for AgentCore to release the deleted harnesses' network interfaces (15-30 min after deletion)"
+    )
+    wait_for_vpc_interfaces(cfg, region)
     head("stacks: cdk destroy --all (about 13 minutes; the relay Lambda's network interfaces can add up to 20)")
     command = [*cdk.cdk_command(ctx.root), "destroy", "--all", "--force", "--concurrency", "4"]
     say(f"  $ (cd foundation && npx cdk {' '.join(command[2:])})")
     started = time.monotonic()
     completed = subprocess.run(command, cwd=str(ctx.root / "foundation"), env=env, check=False)
     if completed.returncode != 0:
+        statuses = cdk.stack_statuses(region, cdk.EVERYTHING)
+        failed = [name for name, status in statuses.items() if status and status.endswith("DELETE_FAILED")]
+        if failed:
+            warn(
+                f"{', '.join(failed)}: DELETE_FAILED, usually app subnets or the harness security group still holding network "
+                "interfaces; waiting for them, then destroying once more (CloudFormation retries only the failed resources)"
+            )
+            wait_for_vpc_interfaces(cfg, region, by_subnet=True)
+            completed = subprocess.run(command, cwd=str(ctx.root / "foundation"), env=env, check=False)
+    if completed.returncode != 0:
         raise WorkshopError(
             f"cdk destroy exited {completed.returncode} after {(time.monotonic() - started) / 60:.1f} min; read the events "
-            "above and run `workshop cleanup --stacks` again"
+            "above. A Network stack in DELETE_FAILED usually still holds network interfaces (aws ec2 describe-network-interfaces "
+            "--filters Name=vpc-id,Values=<vpc id> shows whose); a leftover harness runtime (aws bedrock-agentcore-control "
+            "list-agent-runtimes) holds them too. Wait for them to go, then run `workshop cleanup --stacks` again"
         )
     ok(f"stacks destroyed in {(time.monotonic() - started) / 60:.1f} min")
     head("sweep: scripts/cleanup.py --yes (secrets in their recovery window, recreated log groups, orphan buckets)")

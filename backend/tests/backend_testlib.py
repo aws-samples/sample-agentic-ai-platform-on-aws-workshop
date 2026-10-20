@@ -15,19 +15,11 @@ from platform_sdk.agentcore import AgentCoreError, InvokeResult
 SRC = Path(__file__).resolve().parents[1] / "src"
 ACCOUNT = "123456789012"
 REGION = "us-east-1"
+# the approved aliases, mirroring foundation.config.MODELS (four aliases, three vendors; hr-assistant enables two of them)
 MODELS = [
-    {
-        "alias": "claude-sonnet-5-5",
-        "modelId": "us.anthropic.claude-sonnet-5-5",
-        "provider": "bedrock",
-        "tier": "premium",
-    },
-    {
-        "alias": "claude-haiku-4-5",
-        "modelId": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
-        "provider": "bedrock",
-        "tier": "standard",
-    },
+    {"alias": "claude-opus-5", "modelId": "us.anthropic.claude-opus-5", "provider": "bedrock", "tier": "premium"},
+    {"alias": "claude-sonnet-5", "modelId": "us.anthropic.claude-sonnet-5", "provider": "bedrock", "tier": "standard"},
+    {"alias": "gpt-6-1-sol", "modelId": "us.openai.gpt-6.1-sol", "provider": "bedrock", "tier": "standard"},
     {"alias": "nova-2-lite", "modelId": "us.amazon.nova-2-lite-v1:0", "provider": "bedrock", "tier": "economy"},
 ]
 CONFIG = {

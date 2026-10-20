@@ -61,7 +61,7 @@ def test_routes_methods_paths_and_bodies():
     c.get_domain("people-ops")
     c.delete_domain("people-ops")
     c.list_projects("people-ops")
-    c.create_project({"projectId": "hr-assistant", "domainId": "people-ops"}, models=["claude-sonnet-5-5"])
+    c.create_project({"projectId": "hr-assistant", "domainId": "people-ops"}, models=["claude-sonnet-5"])
     c.get_project("hr-assistant")
     c.update_project("hr-assistant", maxBudget=10)
     c.delete_project("hr-assistant", force=True)
@@ -91,14 +91,14 @@ def test_routes_methods_paths_and_bodies():
     c.reject_release("rel-1", "no")
     c.promote_release("rel-1")
     c.list_keys("hr-assistant")
-    c.create_key("hr-assistant", "dev", "claude-sonnet-5-5", max_budget=0.01, budget_duration="1d")
+    c.create_key("hr-assistant", "dev", "claude-sonnet-5", max_budget=0.01, budget_duration="1d")
     c.create_key(
         "hr-assistant",
         "dev",
-        "claude-sonnet-5-5",
+        "claude-sonnet-5",
         adopt={"litellmKeyId": "hash", "credentialProviderArn": "arn", "maxBudget": 1, "budgetDuration": "1d"},
     )
-    c.update_key("hr-assistant", "dev", "claude-sonnet-5-5", max_budget=1.0, status="active")
+    c.update_key("hr-assistant", "dev", "claude-sonnet-5", max_budget=1.0, status="active")
     c.list_catalogue(status="APPROVED")
     c.search_catalogue("leave policy")
     c.get_catalogue_record("rec1")
@@ -132,7 +132,7 @@ def test_routes_methods_paths_and_bodies():
             "POST",
             "/projects",
             None,
-            {"projectId": "hr-assistant", "domainId": "people-ops", "models": ["claude-sonnet-5-5"]},
+            {"projectId": "hr-assistant", "domainId": "people-ops", "models": ["claude-sonnet-5"]},
         ),
         ("GET", "/projects/hr-assistant", None, None),
         ("PATCH", "/projects/hr-assistant", None, {"maxBudget": 10}),
@@ -181,7 +181,7 @@ def test_routes_methods_paths_and_bodies():
             "POST",
             "/projects/hr-assistant/keys",
             None,
-            {"env": "dev", "model": "claude-sonnet-5-5", "maxBudget": 0.01, "budgetDuration": "1d"},
+            {"env": "dev", "model": "claude-sonnet-5", "maxBudget": 0.01, "budgetDuration": "1d"},
         ),
         (
             "POST",
@@ -189,7 +189,7 @@ def test_routes_methods_paths_and_bodies():
             None,
             {
                 "env": "dev",
-                "model": "claude-sonnet-5-5",
+                "model": "claude-sonnet-5",
                 "adopt": {
                     "litellmKeyId": "hash",
                     "credentialProviderArn": "arn",
@@ -198,7 +198,7 @@ def test_routes_methods_paths_and_bodies():
                 },
             },
         ),
-        ("PATCH", "/projects/hr-assistant/keys/dev/claude-sonnet-5-5", None, {"maxBudget": 1.0, "status": "active"}),
+        ("PATCH", "/projects/hr-assistant/keys/dev/claude-sonnet-5", None, {"maxBudget": 1.0, "status": "active"}),
         ("GET", "/catalogue", {"status": "APPROVED"}, None),
         ("GET", "/catalogue/search", {"q": "leave policy"}, None),
         ("GET", "/catalogue/rec1", None, None),

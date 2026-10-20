@@ -27,8 +27,8 @@ module_3:
     domain: people-ops
     project: hr-assistant
     owner: margaret.chen@anycompany.example
-    models: [claude-sonnet-5-5, claude-haiku-4-5]
-    model: claude-sonnet-5-5                    # the alias the agent uses (one of models)
+    models: [claude-sonnet-5, gpt-6-1-sol]           # two vendors for this project; claude-opus-5 and nova-2-lite stay approved only
+    model: claude-sonnet-5                      # the alias the agent uses (one of models)
     budget: {usd: 5, period: 7d, tpm: 200000, rpm: 200}
   decisions:
     tenancy:    {workshop: templates,               my_call: "..."}

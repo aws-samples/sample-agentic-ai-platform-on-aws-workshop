@@ -114,13 +114,21 @@ def run(ctx: Context) -> None:
         )
         choice = (blocked.get("choices") or [{}])[0]
         say(f"  guardrail: finish_reason={choice.get('finish_reason')} -> {_answer_text(blocked)!r}")
-        other_alias = next((a for a in cfg.model_aliases if a != model_alias), None)
+        # The other alias: preferably one the project's team allows, so the refusal comes from the key alone (the team would
+        # have let it through); any other approved alias otherwise.
+        project_models = [m for m in (ctx.inputs(3).get("models") or []) if m != model_alias]
+        other_alias = next(iter(project_models), None) or next((a for a in cfg.model_aliases if a != model_alias), None)
         if other_alias:
+            why = (
+                f"the key is restricted to {model_alias} (the team allows {other_alias}, the key does not)"
+                if other_alias in project_models
+                else f"the key is restricted to {model_alias}"
+            )
             try:
                 proxy.chat_completion(raw_key, other_alias, [{"role": "user", "content": "hi"}], max_tokens=5)
                 warn(f"{other_alias} with this key was ALLOWED (unexpected)")
             except litellm.LiteLLMError as exc:
-                ok(f"{other_alias} with this key -> HTTP {exc.status}: the key is restricted to {model_alias}")
+                ok(f"{other_alias} with this key -> HTTP {exc.status}: {why}")
 
         head("store the key in the AgentCore Identity token vault")
         provider_arn = identity.store_api_key(

@@ -83,8 +83,8 @@ def test_match_static_and_parameters_with_url_decoding():
         "type": "policy",
         "name": "hr_assistant_dev_allow_hrtools___get_leave_balance",
     }
-    _, params = router.match("PATCH", "/projects/hr-assistant/keys/dev/claude%2Dhaiku%2D4%2D5")
-    assert params["model"] == "claude-haiku-4-5"
+    _, params = router.match("PATCH", "/projects/hr-assistant/keys/dev/gpt%2D6%2D1%2Dsol")
+    assert params["model"] == "gpt-6-1-sol"
     # static segments win over parameters
     assert router.match("GET", "/catalogue/search")[0].handler.__name__ == "search"
     assert router.match("GET", "/catalogue/M4RiHABnVjG5")[0].handler.__name__ == "get_record"

@@ -134,7 +134,7 @@ def ready(fakes, monkeypatch):
             "projectId": "hr-assistant",
             "domainId": "people-ops",
             "name": "HR Assistant",
-            "models": ["claude-sonnet-5-5", "claude-haiku-4-5"],
+            "models": ["claude-sonnet-5", "gpt-6-1-sol"],
             "allowedToolArns": [HR_LAMBDA],
             "knowledgeBaseIds": ["KB123"],
         },

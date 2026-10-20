@@ -1149,7 +1149,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
           <p class="lead">
             Every module: Explain 10 min · Design 10 min · Hands-on 20 min.
             <code>workshop apply N</code> reads <code>design-record.yaml</code>
-            (<code>model: claude-sonnet-5-5</code> under
+            (<code>model: claude-sonnet-5</code> under
             <code>module_3.inputs</code>) and is idempotent: a re-run says
             <code>exists</code>. Start the long deployments as the module begins
             (the Start now boxes on the course pages). Pages:
@@ -1183,7 +1183,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                     ECR), then prints the eight stack rows, the VPC (six isolated
                     subnets, nine interface endpoints and the S3 gateway
                     endpoint, "private posture"), <code>GET /health/liveliness</code>
-                    through the relay with the three aliases and guardrail
+                    through the relay with the four aliases and guardrail
                     <code>hr-baseline</code>, the SSM table under
                     <code>/agent-platform/</code>, the doctor (personas "not
                     created": expected). "did not answer yet": wait a minute,
@@ -1245,7 +1245,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                     Record: domain <code>people-ops</code>, project
                     <code>hr-assistant</code>, owner
                     <code>margaret.chen@anycompany.example</code>, models
-                    claude-sonnet-5-5 + claude-haiku-4-5, budget 5 USD/7d,
+                    claude-sonnet-5 + gpt-6-1-sol, budget 5 USD/7d,
                     200 000 tpm, 200 rpm. <code>workshop record</code> validates
                     (no AWS). <code>workshop apply 3</code>,
                     <span class="pill wait">under 1 min</span>: domains
@@ -1370,21 +1370,21 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                   <td>
                     Record: <code>key_cap: {usd: 1.00, period: 7d}</code>.
                     <code>workshop apply 5</code>: the governance summary
-                    (aliases claude-sonnet-5-5, claude-haiku-4-5, nova-2-lite,
+                    (aliases claude-opus-5, claude-sonnet-5, gpt-6-1-sol, nova-2-lite,
                     each with hr-baseline; team spend against budget); creates
-                    the Dev key <code>hr-assistant-dev-claude-sonnet-5-5</code>
+                    the Dev key <code>hr-assistant-dev-claude-sonnet-5</code>
                     (cap 1 USD/7d, one model) and makes three raw-key calls: a
                     normal answer with the <code>x-litellm-response-cost</code>
                     header, the guardrail's
-                    <code>finish_reason=content_filter</code>, the other alias
-                    &rarr; HTTP 403; stores the key in the token vault, adopts
+                    <code>finish_reason=content_filter</code>, the other allowed
+                    alias gpt-6-1-sol &rarr; HTTP 403; stores the key in the token vault, adopts
                     it into the Keys tab, waits for the first spend.
                     <code>workshop cap --dev low</code> &rarr;
                     <code>OK BUDGET_EXCEEDED</code>, HTTP 422 (still passes: the
                     proxy writes spend every 10 s, run it once more); then
                     <code>workshop cap --dev restore</code> before module 6.
                     Catalogue: filter Pending approval, approve
-                    hr-assistant-tools, kb-hr-policies, model-claude-sonnet-5-5
+                    hr-assistant-tools, kb-hr-policies, model-claude-sonnet-5
                     (fallback <code>workshop approve catalogue</code>).
                     <code>workshop inventory</code> ends with "platform
                     complete".
@@ -1406,7 +1406,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
               <li>Catalogue <code>agent_platform_catalogue</code> with three APPROVED records</li>
               <li>Policy engine with its Cedar policies; four gateways: HR Dev, HR Prod, Finance Dev and <code>hr-assistant-dev-gw-obo</code></li>
               <li>An agent and gateway role pair per project and environment; the model-gateway team with its caps</li>
-              <li>The Dev key <code>hr-assistant-dev-claude-sonnet-5-5</code> in the token vault and on the Keys tab, cap restored to 1 USD/7d</li>
+              <li>The Dev key <code>hr-assistant-dev-claude-sonnet-5</code> in the token vault and on the Keys tab, cap restored to 1 USD/7d</li>
               <li>Three credential providers in AgentCore Identity: the Dev key's API-key provider, <code>kc-hr-agent</code>, <code>kc-hr-obo-gateway</code></li>
             </ol>
             Check: <code>workshop inventory</code> ends with
@@ -1447,7 +1447,9 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                     180-second telemetry delay, scoring by four evaluators)
                     &rarr; BLOCKED: Correctness 0.7 (&ge; 0.8), GoalSuccessRate
                     0.7 (&ge; 0.9), TrajectoryInOrderMatch 0.625 (&ge; 0.9),
-                    Harmfulness harm rate 0.0 (&le; 0.0).
+                    Harmfulness harm rate 0.0 (&le; 0.0). Scores from the 8 Oct
+                    2026 dry runs with the previous aliases Claude Sonnet 5.5 /
+                    Haiku 4.5; the rehearsal with claude-sonnet-5 is pending.
                   </td>
                   <td>
                     <span class="pill ui">Releases</span>: release 1 BLOCKED
@@ -1490,7 +1492,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                     <code>workshop approve release</code> then
                     <code>workshop promote</code>; developer and admin get 403).
                     The worker creates the Prod key
-                    <code>hr-assistant-prod-claude-sonnet-5-5</code>, the Prod
+                    <code>hr-assistant-prod-claude-sonnet-5</code>, the Prod
                     harness, pins <code>live</code> and registers
                     <code>hr_assistant_prod_online_eval</code>; the first Prod
                     deployment can take minutes. Playground · Prod: cold start
@@ -1554,7 +1556,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
               <li>Dev harness <code>hr_assistant_dev</code> with versions v1 and v2; the on-behalf-of twin <code>hr_assistant_dev_obo</code></li>
               <li>Prod harness <code>hr_assistant_prod</code> with <code>live</code> pinned to the approved v2</li>
               <li>Two releases: release 1 BLOCKED, release 2 PROMOTED</li>
-              <li>Prod key <code>hr-assistant-prod-claude-sonnet-5-5</code> (created at promotion) and online evaluation <code>hr_assistant_prod_online_eval</code></li>
+              <li>Prod key <code>hr-assistant-prod-claude-sonnet-5</code> (created at promotion) and online evaluation <code>hr_assistant_prod_online_eval</code></li>
               <li>Overview (Prod): the three seeded plus ten conversations, one thumbs-up, online scores 8-11 min after the traffic</li>
               <li>Spend reading: Prod key spend &divide; answered conversations is the unit cost</li>
               <li><code>design-record.yaml</code>: every module's decisions and the backlog filled in</li>
@@ -1614,9 +1616,12 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                   leaves (secrets in recovery, recreated log groups, orphan
                   buckets). <code>cdk destroy --all</code>,
                   <span class="pill wait">about 13 min</span>, then the sweep,
-                  about 1 min; the ModelGateway and Network stacks can wait
-                  <span class="pill wait">up to 20 min</span> for the relay
-                  Lambda's network interfaces. Optional in an event account.
+                  about 1 min; the Network and ModelGateway stacks can wait
+                  <span class="pill wait">up to 20 min</span> for the network
+                  interfaces of the deleted harnesses (AgentCore releases them
+                  15-30 min later; the command waits for them first and retries
+                  once after a DELETE_FAILED) and of the relay Lambda. Optional
+                  in an event account.
                   <pre
                     class="code-dark"
                   ><code>workshop cleanup --stacks   <span class="c"># answer yes to each prompt</span>
@@ -1914,13 +1919,26 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                   </td>
                 </tr>
                 <tr>
+                  <td>Harness network interfaces</td>
+                  <td>15-30 min after the harnesses are gone</td>
+                  <td>clean up, before <code>cdk destroy</code></td>
+                  <td>
+                    AgentCore releases the VPC interfaces of the deleted
+                    harnesses in the background. <code>workshop cleanup
+                    --stacks</code> waits for them (a count every minute)
+                    before it destroys, and destroys once more after a
+                    DELETE_FAILED; a second run picks up where CloudFormation
+                    stopped.
+                  </td>
+                </tr>
+                <tr>
                   <td><code>workshop cleanup --stacks</code></td>
                   <td>about 13 min, plus up to 20 min</td>
                   <td>clean up, own account</td>
                   <td>
-                    <code>cdk destroy --all</code> then the sweep; the relay
-                    Lambda's network interfaces can hold ModelGateway and
-                    Network.
+                    <code>cdk destroy --all</code> then the sweep; the network
+                    interfaces of the harnesses and of the relay Lambda can hold
+                    Network and ModelGateway.
                   </td>
                 </tr>
               </tbody>
@@ -2174,8 +2192,27 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                   <td>
                     Normal: 2-8 min of background deletion; most of the ten
                     minutes is AgentCore deleting. If it stops, run it again.
-                    <code>--stacks</code>: ModelGateway and Network can wait up
-                    to about 20 min for the relay Lambda's network interfaces.
+                    <code>--stacks</code>: Network and ModelGateway can wait up
+                    to about 20 min for the network interfaces of the harnesses
+                    and of the relay Lambda; the command waits and retries once.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>workshop cleanup --stacks</code>: AgentPlatform-Network
+                    DELETE_FAILED, "subnet has dependencies" or "security
+                    group has a dependent object"
+                  </td>
+                  <td>
+                    The deleted harnesses' network interfaces are still being
+                    released (15-30 min); the command waits for them and retries
+                    once. If it still fails, see what is left and who holds it:
+                    <pre
+                      class="code-dark"
+                    ><code>aws ec2 describe-network-interfaces --filters Name=group-id,Values=&lt;harness security group&gt;
+aws bedrock-agentcore-control list-agent-runtimes   <span class="c"># a harness_* runtime left READY holds its interfaces: delete it</span></code></pre>
+                    then run <code>workshop cleanup --stacks</code> again:
+                    CloudFormation retries only the resources that failed.
                   </td>
                 </tr>
                 <tr>
@@ -2212,7 +2249,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
             class="code-dark"
           ><code><span class="c"># (a) keep the platform: about 10 min; the modules run again (workshop apply 1 and 2 find their stacks)</span>
 workshop cleanup
-<span class="c"># (b) back to the pre-day state: about 13 min (+ up to 20 min for the relay ENIs), then about 12 min</span>
+<span class="c"># (b) back to the pre-day state: about 13 min (+ up to 20-30 min for the harness and relay ENIs), then about 12 min</span>
 workshop cleanup --stacks
 workshop deploy pre-day</code></pre>
           <p>

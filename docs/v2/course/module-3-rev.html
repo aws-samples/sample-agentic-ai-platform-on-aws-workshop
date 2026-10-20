@@ -425,15 +425,15 @@
     <span class="in">domain</span>:  <span class="s">people-ops</span>
     <span class="in">project</span>: <span class="s">hr-assistant</span>
     <span class="in">owner</span>:   <span class="s">margaret.chen@anycompany.example</span>
-    <span class="in">models</span>:  <span class="s">[claude-sonnet-5-5, claude-haiku-4-5]</span>
-    <span class="in">model</span>:   <span class="s">claude-sonnet-5-5</span>                      <span class="c"># the alias the agent uses (one of models)</span>
+    <span class="in">models</span>:  <span class="s">[claude-sonnet-5, gpt-6-1-sol]</span>         <span class="c"># two vendors; claude-opus-5 and nova-2-lite stay approved, not allowed here</span>
+    <span class="in">model</span>:   <span class="s">claude-sonnet-5</span>                        <span class="c"># the alias the agent uses (one of models)</span>
     <span class="in">budget</span>:  <span class="s">{usd: 5, period: 7d, tpm: 200000, rpm: 200}</span>
   <span class="k">decisions</span>:
     <span class="k">tenancy</span>:    {<span class="k">workshop</span>: <span class="s">templates</span>,               <span class="k">my_call</span>: <span class="s">"..."</span>}
     <span class="k">governance</span>: {<span class="k">workshop</span>: <span class="s">layered</span>,                 <span class="k">my_call</span>: <span class="s">"..."</span>}
     <span class="k">approvals</span>:  {<span class="k">workshop</span>: <span class="s">admin + domain-approver</span>, <span class="k">my_call</span>: <span class="s">"..."</span>}
     <span class="k">registry</span>:   {<span class="k">workshop</span>: <span class="s">one-registry</span>,            <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># every persona reads; the admin approves</span></code></pre>
-          <p class="caption"><strong>Bold keys are apply inputs.</strong> Finance's domain and project are fixed: module 4 uses them to test isolation.</p>
+          <p class="caption"><strong>Bold keys are apply inputs.</strong> Finance's domain and project are fixed: module 4 uses them to test isolation. The platform approves four aliases from three vendors (module 5 lists them); this project may use two, <code>claude-sonnet-5</code>, the model its agent runs on, and <code>gpt-6-1-sol</code>, while <code>claude-opus-5</code> and <code>nova-2-lite</code> stay approved platform-wide but outside the project's list. Approval is the platform's decision; which approved models a project may use is the project's.</p>
         </section>
 
         <section id="hands-on">
@@ -457,7 +457,7 @@ record .../design-record.yaml
   created project hr-assistant in 3.1 s: a model-gateway team and 4 IAM roles
   created project invoice-helper in 2.9 s: a model-gateway team and 4 IAM roles
 == what the platform stamped for the HR project
-  model-gateway team hr-assistant: models ['claude-sonnet-5-5', 'claude-haiku-4-5'], budget 5 USD per 7d
+  model-gateway team hr-assistant: models ['claude-sonnet-5', 'gpt-6-1-sol'], budget 5 USD per 7d
   dev   agent role   agent-platform-proj-hr-assistant-dev-agent
         gateway role agent-platform-proj-hr-assistant-dev-gateway
   prod  agent role   agent-platform-proj-hr-assistant-prod-agent

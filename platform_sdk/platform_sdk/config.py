@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from functools import lru_cache
 
@@ -70,7 +71,7 @@ class PlatformConfig:
 
     @property
     def model_gateway_url(self) -> str:
-        return self.require("model-gateway/url").rstrip("/")
+        return https_url(self.require("model-gateway/url"))
 
     @property
     def model_gateway_openai_base(self) -> str:
@@ -179,6 +180,15 @@ class PlatformConfig:
 
     def scenario_table(self, name: str) -> str:
         return self.require(f"scenario/tables/{name}")
+
+
+_SCHEMES = re.compile(r"^(?:https?://)+", re.IGNORECASE)
+
+
+def https_url(value: str) -> str:
+    """`https://<host>` with one scheme and no trailing slash. The ECS Express `Endpoint` attribute came back with its scheme
+    already in some accounts (2026-10-20), so an SSM value of `https://https://ag-...` must still work everywhere."""
+    return "https://" + _SCHEMES.sub("", value.strip()).rstrip("/")
 
 
 def _flag(value: str | None) -> bool:

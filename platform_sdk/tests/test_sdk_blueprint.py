@@ -8,14 +8,14 @@ from platform_sdk import blueprint, names
 ACCOUNT = "123456789012"
 GATEWAY_ARN = f"arn:aws:bedrock-agentcore:us-east-1:{ACCOUNT}:gateway/hr-assistant-dev-gw-abc123"
 MEMORY_ARN = f"arn:aws:bedrock-agentcore:us-east-1:{ACCOUNT}:memory/hr_assistant_dev_memory-xyz789"
-PROVIDER_ARN = f"arn:aws:bedrock-agentcore:us-east-1:{ACCOUNT}:token-vault/default/apikeycredentialprovider/litellm-hr-assistant-dev-claude-sonnet-5-5"
+PROVIDER_ARN = f"arn:aws:bedrock-agentcore:us-east-1:{ACCOUNT}:token-vault/default/apikeycredentialprovider/litellm-hr-assistant-dev-claude-sonnet-5"
 
 
 def project(**overrides):
     base = {
         "projectId": "hr-assistant",
         "domainId": "people-ops",
-        "litellm": {"teamId": "hr-assistant", "models": ["claude-sonnet-5-5", "claude-haiku-4-5"]},
+        "litellm": {"teamId": "hr-assistant", "models": ["claude-sonnet-5", "gpt-6-1-sol"]},
         "roles": {
             "dev": {
                 "agentRoleArn": f"arn:aws:iam::{ACCOUNT}:role/agent-platform-proj-hr-assistant-dev-agent",
@@ -71,7 +71,7 @@ def test_load_resolves_the_prompt_file_and_exposes_the_metadata(hr_blueprint, sc
     bp = hr_blueprint
     assert bp.api_version == "platform/v1" and bp.kind == "AgentBlueprint"
     assert bp.project_id == "hr-assistant" and bp.domain == "people-ops" and bp.version == 1
-    assert bp.model_alias == "claude-sonnet-5-5"
+    assert bp.model_alias == "claude-sonnet-5"
     assert bp.system_prompt == (scenario_dir / "blueprint" / "prompts" / "hr-assistant-v1.md").read_text()
     assert bp.memory_strategies() == ["SUMMARIZATION", "USER_PREFERENCE"]
     assert bp.thresholds == {
@@ -100,7 +100,7 @@ def test_render_golden_create_harness_payload(hr_blueprint, cfg):
         "executionRoleArn": f"arn:aws:iam::{ACCOUNT}:role/agent-platform-proj-hr-assistant-dev-agent",
         "model": {
             "liteLlmModelConfig": {
-                "modelId": "openai/claude-sonnet-5-5",
+                "modelId": "openai/claude-sonnet-5",
                 "apiBase": "https://llm.example.test/v1",
                 "apiKeyArn": PROVIDER_ARN,
                 "maxTokens": 2048,
@@ -169,7 +169,11 @@ def test_render_without_memory_tools_or_limits_uses_defaults(hr_blueprint, cfg):
 
 @pytest.mark.parametrize(
     "drop_type,module_hint,missing",
-    [("gateway", "module 4", "gateway"), ("memory", "module 6", "memory"), ("gateway_target", "module 4", "gateway_target")],
+    [
+        ("gateway", "module 4", "gateway"),
+        ("memory", "module 6", "memory"),
+        ("gateway_target", "module 4", "gateway_target"),
+    ],
 )
 def test_render_unresolved_resource_names_the_module(hr_blueprint, cfg, drop_type, module_hint, missing):
     remaining = [r for r in resources() if r["type"] != drop_type]
@@ -184,7 +188,7 @@ def test_render_unresolved_key_and_roles(hr_blueprint, cfg):
     with pytest.raises(blueprint.BlueprintError) as excinfo:
         blueprint.render(hr_blueprint, "dev", project(), resources(), cfg, None)
     assert excinfo.value.code == "BLUEPRINT_UNRESOLVED" and "module 5" in str(excinfo.value)
-    assert "litellm-hr-assistant-dev-claude-sonnet-5-5" in str(excinfo.value)
+    assert "litellm-hr-assistant-dev-claude-sonnet-5" in str(excinfo.value)
     with pytest.raises(blueprint.BlueprintError) as excinfo:
         blueprint.render(hr_blueprint, "dev", project(roles={}), resources(), cfg, PROVIDER_ARN)
     assert excinfo.value.code == "BLUEPRINT_UNRESOLVED" and "project creation" in str(excinfo.value)
@@ -249,15 +253,15 @@ def test_render_takes_the_key_from_the_registered_credential_provider(hr_bluepri
             "projectId": "hr-assistant",
             "env": "dev",
             "type": "credential_provider",
-            "name": "litellm-hr-assistant-dev-claude-sonnet-5-5",
+            "name": "litellm-hr-assistant-dev-claude-sonnet-5",
             "arn": PROVIDER_ARN,
-            "attributes": {"model": "claude-sonnet-5-5"},
+            "attributes": {"model": "claude-sonnet-5"},
         }
     ]
     spec = blueprint.render(hr_blueprint, "dev", project(), rows, cfg)
     assert spec["model"]["liteLlmModelConfig"]["apiKeyArn"] == PROVIDER_ARN
     with pytest.raises(blueprint.BlueprintError, match="module 5"):  # a provider for another model does not count
-        rows[-1]["attributes"] = {"model": "claude-haiku-4-5"}
+        rows[-1]["attributes"] = {"model": "gpt-6-1-sol"}
         blueprint.render(hr_blueprint, "dev", project(), rows, cfg)
 
 
@@ -279,7 +283,7 @@ def test_load_from_dict_with_inline_text_and_validation_errors():
         "apiVersion": "platform/v1",
         "kind": "AgentBlueprint",
         "metadata": {"domain": "people-ops", "project": "hr-assistant", "version": 1},
-        "spec": {"model": {"ref": "model/claude-haiku-4-5"}, "systemPrompt": {"text": "Be brief."}},
+        "spec": {"model": {"ref": "model/gpt-6-1-sol"}, "systemPrompt": {"text": "Be brief."}},
     }
     bp = blueprint.load(doc)
     assert bp.system_prompt == "Be brief." and bp.memory_strategies() == []
@@ -314,7 +318,7 @@ def test_load_from_dict_with_inline_text_and_validation_errors():
 def test_missing_prompt_file_is_reported(tmp_path):
     (tmp_path / "bp.yaml").write_text(
         "apiVersion: platform/v1\nkind: AgentBlueprint\nmetadata: {domain: d, project: hr-assistant, version: 1}\n"
-        "spec:\n  model: {ref: model/claude-haiku-4-5}\n  systemPrompt: {file: prompts/missing.md}\n"
+        "spec:\n  model: {ref: model/gpt-6-1-sol}\n  systemPrompt: {file: prompts/missing.md}\n"
     )
     with pytest.raises(blueprint.BlueprintError, match="prompts/missing.md"):
         blueprint.load(tmp_path / "bp.yaml")

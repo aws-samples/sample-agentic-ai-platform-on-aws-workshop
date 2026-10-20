@@ -17,7 +17,7 @@ HARNESS = {
     "executionRoleArn": f"arn:aws:iam::{ACCOUNT}:role/agent-platform-proj-hr-assistant-dev-agent",
     "createdAt": 1,
     "updatedAt": 2,
-    "model": {"liteLlmModelConfig": {"modelId": "openai/claude-sonnet-5-5"}},
+    "model": {"liteLlmModelConfig": {"modelId": "openai/claude-sonnet-5"}},
     "systemPrompt": [{"text": "hi"}],
     "tools": [],
     "skills": [],
@@ -115,7 +115,7 @@ def test_parse_stream_budget_exceeded_runtime_client_error():
         {"contentBlockDelta": {"contentBlockIndex": 0, "delta": {"text": "Let me check"}}},
         {
             "runtimeClientError": {
-                "message": "litellm.BudgetExceededError: Budget has been exceeded! Key=hr-assistant-dev-claude-sonnet-5-5 Current cost: 0.0121, Max budget: 0.01"
+                "message": "litellm.BudgetExceededError: Budget has been exceeded! Key=hr-assistant-dev-claude-sonnet-5 Current cost: 0.0121, Max budget: 0.01"
             }
         },
     ]
@@ -128,7 +128,7 @@ def test_parse_stream_budget_exceeded_runtime_client_error():
         "currentCost": 0.0121,
         "maxBudget": 0.01,
         "subjectType": "key",
-        "subject": "hr-assistant-dev-claude-sonnet-5-5",
+        "subject": "hr-assistant-dev-claude-sonnet-5",
     }
     assert agentcore.is_budget_exceeded({"runtimeClientError": {"message": "budget_exceeded"}})
     assert not agentcore.is_budget_exceeded("ThrottlingException: rate exceeded")
@@ -208,7 +208,7 @@ def test_create_or_update_harness_updates_existing_with_wrapped_memory(control, 
         "executionRoleArn": HARNESS["executionRoleArn"],
         "model": {
             "liteLlmModelConfig": {
-                "modelId": "openai/claude-sonnet-5-5",
+                "modelId": "openai/claude-sonnet-5",
                 "apiBase": "https://llm/v1",
                 "apiKeyArn": "arn:cp",
                 "maxTokens": 2048,

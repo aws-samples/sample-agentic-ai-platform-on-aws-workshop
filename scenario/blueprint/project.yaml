@@ -11,7 +11,7 @@ spec:
     Employee-facing HR assistant for AnyCompany's People Operations domain: leave balances and requests, public
     holidays, employee directory look-ups and HR policy questions answered from the HR policy knowledge base.
   owner: margaret.chen@anycompany.example            # VP People Operations (E1005), the domain's business owner and approver
-  models: [claude-sonnet-5-5, claude-haiku-4-5]      # approved model aliases this project may use in the model gateway
+  models: [claude-sonnet-5, gpt-6-1-sol]             # approved model aliases this project may use in the model gateway
   caps:                                              # LiteLLM team for the project
     maxBudget: 5                                     # USD per budgetDuration
     budgetDuration: 7d                               # LiteLLM resets at the period end in UTC: 7d keeps a one-day event clear of a reset

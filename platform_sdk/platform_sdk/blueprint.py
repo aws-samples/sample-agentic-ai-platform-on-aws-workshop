@@ -198,7 +198,7 @@ def _resolve_prompt(spec: dict, base: Path) -> str:
 
 
 def _ref_name(ref: Any, kind: str) -> str:
-    """`model/claude-sonnet-5-5` -> `claude-sonnet-5-5` (raises on the wrong prefix)."""
+    """`model/claude-sonnet-5` -> `claude-sonnet-5` (raises on the wrong prefix)."""
     if not isinstance(ref, str) or not ref.startswith(kind + "/") or len(ref) <= len(kind) + 1:
         raise BlueprintError("BLUEPRINT_INVALID", f"expected a reference of the form {kind}/<name>, got {ref!r}")
     return ref[len(kind) + 1 :]

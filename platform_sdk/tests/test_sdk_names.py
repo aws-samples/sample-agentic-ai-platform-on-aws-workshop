@@ -20,8 +20,8 @@ def test_all_derived_names_for_dev_and_prod():
         == "arn:aws:iam::123456789012:role/agent-platform-proj-hr-assistant-dev-agent"
     )
     assert dev.team == "hr-assistant"
-    assert dev.key_alias("claude-sonnet-5-5") == "hr-assistant-dev-claude-sonnet-5-5"
-    assert dev.credential_provider("claude-sonnet-5-5") == "litellm-hr-assistant-dev-claude-sonnet-5-5"
+    assert dev.key_alias("claude-sonnet-5") == "hr-assistant-dev-claude-sonnet-5"
+    assert dev.credential_provider("claude-sonnet-5") == "litellm-hr-assistant-dev-claude-sonnet-5"
     assert dev.registry_record_tools == "hr-assistant-tools"
     assert names.POLICY_ENGINE_NAME == "agent_platform_policy_engine"
     assert names.REGISTRY_NAME == "agent_platform_catalogue"

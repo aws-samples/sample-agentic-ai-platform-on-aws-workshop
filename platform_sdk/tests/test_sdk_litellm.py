@@ -16,27 +16,27 @@ TEAM_INFO = {
         "max_budget": 5.0,
         "budget_duration": "1d",
         "budget_reset_at": "2026-10-09T00:00:00Z",
-        "models": ["claude-sonnet-5-5"],
+        "models": ["claude-sonnet-5"],
         "tpm_limit": 200000,
         "rpm_limit": 200,
     },
     "keys": [
         {
-            "key_alias": "hr-assistant-dev-claude-sonnet-5-5",
+            "key_alias": "hr-assistant-dev-claude-sonnet-5",
             "token": "hash1",
             "spend": 0.4,
             "max_budget": 1.0,
             "budget_reset_at": "2026-10-09T00:00:00Z",
-            "models": ["claude-sonnet-5-5"],
+            "models": ["claude-sonnet-5"],
             "blocked": False,
             "metadata": {"env": "dev"},
         },
         {
-            "key_alias": "hr-assistant-prod-claude-sonnet-5-5",
+            "key_alias": "hr-assistant-prod-claude-sonnet-5",
             "token": "hash2",
             "spend": 0.02,
             "max_budget": 1.0,
-            "models": ["claude-sonnet-5-5"],
+            "models": ["claude-sonnet-5"],
             "blocked": True,
         },
     ],
@@ -71,7 +71,7 @@ def test_create_team_is_idempotent_on_already_exists():
     team = admin(handler).create_team(
         "hr-assistant",
         "hr-assistant",
-        ["claude-sonnet-5-5"],
+        ["claude-sonnet-5"],
         5.0,
         "1d",
         200000,
@@ -83,7 +83,7 @@ def test_create_team_is_idempotent_on_already_exists():
     assert body == {
         "team_id": "hr-assistant",
         "team_alias": "hr-assistant",
-        "models": ["claude-sonnet-5-5"],
+        "models": ["claude-sonnet-5"],
         "max_budget": 5.0,
         "budget_duration": "1d",
         "tpm_limit": 200000,
@@ -126,14 +126,14 @@ def test_service_account_key_generate_with_fallback_and_hash():
         raise AssertionError(call)
 
     key = admin(handler).create_service_account_key(
-        "hr-assistant", "hr-assistant-dev-claude-sonnet-5-5", ["claude-sonnet-5-5"], 1.0, "1d", {"env": "dev"}
+        "hr-assistant", "hr-assistant-dev-claude-sonnet-5", ["claude-sonnet-5"], 1.0, "1d", {"env": "dev"}
     )
     assert key["key"] == "sk-abc" and key["token"] == "hashed-abc"
     assert [c["url"].split(BASE)[1] for c in calls] == ["/key/service-account/generate", "/key/generate"]
     assert calls[0]["json"] == {
         "team_id": "hr-assistant",
-        "key_alias": "hr-assistant-dev-claude-sonnet-5-5",
-        "models": ["claude-sonnet-5-5"],
+        "key_alias": "hr-assistant-dev-claude-sonnet-5",
+        "models": ["claude-sonnet-5"],
         "max_budget": 1.0,
         "budget_duration": "1d",
         "metadata": {"env": "dev"},
@@ -164,7 +164,7 @@ def test_budget_exceeded_error_mapping_from_chat_completion():
 
     with pytest.raises(litellm.LiteLLMError) as excinfo:
         admin(handler).chat_completion(
-            "sk-virtual", "claude-sonnet-5-5", [{"role": "user", "content": "hi"}], max_tokens=5
+            "sk-virtual", "claude-sonnet-5", [{"role": "user", "content": "hi"}], max_tokens=5
         )
     err = excinfo.value
     assert err.status == 422 and err.budget_exceeded and "Max budget: 0.003" in err.message
@@ -191,7 +191,7 @@ def test_key_admin_calls_and_team_spend_summary():
                 {
                     "key": "hash1",
                     "info": {
-                        "key_alias": "hr-assistant-dev-claude-sonnet-5-5",
+                        "key_alias": "hr-assistant-dev-claude-sonnet-5",
                         "spend": 0.4,
                         "max_budget": 1.0,
                         "blocked": False,
@@ -204,10 +204,10 @@ def test_key_admin_calls_and_team_spend_summary():
             return FakeResponse(200, TEAM_INFO)
         if path == "/spend/logs":
             return FakeResponse(
-                200, [{"model": "bedrock/converse/us.anthropic.claude-sonnet-5-5", "spend": 0.001, "total_tokens": 900}]
+                200, [{"model": "bedrock/converse/us.anthropic.claude-sonnet-5", "spend": 0.001, "total_tokens": 900}]
             )
         if path == "/v1/models":
-            return FakeResponse(200, {"data": [{"id": "claude-sonnet-5-5"}, {"id": "claude-haiku-4-5"}]})
+            return FakeResponse(200, {"data": [{"id": "claude-sonnet-5"}, {"id": "gpt-6-1-sol"}]})
         raise AssertionError(path)
 
     a = admin(handler)
@@ -215,7 +215,7 @@ def test_key_admin_calls_and_team_spend_summary():
     assert info["spend"] == 0.4 and info["token"] == "hash1"
     assert a.update_key("hash1", max_budget=2.0)["max_budget"] == 2.0
     assert a.block_key("hash1")["key"] == "hash1" and a.unblock_key("hash1")["key"] == "hash1"
-    assert a.update_team("hr-assistant", models=["claude-sonnet-5-5", "nova-2-lite"])["team_id"] == "hr-assistant"
+    assert a.update_team("hr-assistant", models=["claude-sonnet-5", "nova-2-lite"])["team_id"] == "hr-assistant"
     logs = a.spend_logs(api_key="hash1", start_date="2026-10-01", end_date="2026-10-08")
     assert logs[0]["total_tokens"] == 900
     assert [c for c in calls if c["url"].endswith("/spend/logs")][0]["params"] == {
@@ -223,12 +223,12 @@ def test_key_admin_calls_and_team_spend_summary():
         "start_date": "2026-10-01",
         "end_date": "2026-10-08",
     }
-    assert a.models() == ["claude-sonnet-5-5", "claude-haiku-4-5"]
+    assert a.models() == ["claude-sonnet-5", "gpt-6-1-sol"]
     summary = a.team_spend_summary("hr-assistant")
     assert (
         summary["spend"] == 0.42 and summary["maxBudget"] == 5.0 and summary["budgetResetAt"] == "2026-10-09T00:00:00Z"
     )
-    assert summary["keys"][0]["alias"] == "hr-assistant-dev-claude-sonnet-5-5" and summary["keys"][0]["spend"] == 0.4
+    assert summary["keys"][0]["alias"] == "hr-assistant-dev-claude-sonnet-5" and summary["keys"][0]["spend"] == 0.4
     assert summary["keys"][1]["blocked"] is True and summary["keys"][1]["budgetResetAt"] is None
 
 
@@ -255,13 +255,13 @@ def test_chat_completion_success_and_streaming_fold():
     a = admin(handler)
     assert a.last_response_headers == {}
     assert (
-        a.chat_completion("sk-v", "claude-haiku-4-5", [{"role": "user", "content": "Say OK"}])["choices"][0]["message"][
+        a.chat_completion("sk-v", "gpt-6-1-sol", [{"role": "user", "content": "Say OK"}])["choices"][0]["message"][
             "content"
         ]
         == "OK"
     )
     assert a.last_response_headers["x-litellm-response-cost"] == "0.000123"  # lower-cased, what module 5 prints
-    streamed = a.chat_completion("sk-v", "claude-haiku-4-5", [{"role": "user", "content": "hi"}], stream=True)
+    streamed = a.chat_completion("sk-v", "gpt-6-1-sol", [{"role": "user", "content": "hi"}], stream=True)
     assert streamed == {"text": "Hello", "usage": {"prompt_tokens": 5, "completion_tokens": 2}, "chunks": 3}
     assert a.last_response_headers == {"content-type": "text/event-stream"}
     assert a.transport == "direct" and not a.via_relay
@@ -375,7 +375,7 @@ def test_relay_errors_from_the_proxy_are_litellm_errors_with_the_cost_header_kep
 
     a, _ = relay_admin(handler)
     with pytest.raises(litellm.LiteLLMError) as excinfo:
-        a.chat_completion("sk-virtual", "claude-haiku-4-5", [{"role": "user", "content": "hi"}], max_tokens=5)
+        a.chat_completion("sk-virtual", "gpt-6-1-sol", [{"role": "user", "content": "hi"}], max_tokens=5)
     assert excinfo.value.status == 422 and excinfo.value.budget_exceeded
     assert a.last_response_headers == {"content-type": "application/json"}
 
@@ -412,7 +412,7 @@ def test_relay_streaming_chat_completion_folds_the_buffered_sse_body():
         return {"status": 200, "headers": {"content-type": "text/event-stream"}, "body": SSE_BODY}
 
     a, _ = relay_admin(handler)
-    streamed = a.chat_completion("sk-v", "claude-haiku-4-5", [{"role": "user", "content": "hi"}], stream=True)
+    streamed = a.chat_completion("sk-v", "gpt-6-1-sol", [{"role": "user", "content": "hi"}], stream=True)
     assert streamed == {"text": "Hello", "usage": {"prompt_tokens": 5, "completion_tokens": 2}, "chunks": 3}
     assert a.last_response_headers == {"content-type": "text/event-stream"}
 
@@ -426,7 +426,7 @@ def test_relay_non_streaming_chat_completion_and_response_helpers():
         }
 
     a, _ = relay_admin(handler)
-    payload = a.chat_completion("sk-v", "claude-haiku-4-5", [{"role": "user", "content": "Say OK"}])
+    payload = a.chat_completion("sk-v", "gpt-6-1-sol", [{"role": "user", "content": "Say OK"}])
     assert payload["choices"][0]["message"]["content"] == "OK"
     assert a.last_response_headers["x-litellm-response-cost"] == "0.0007"
     response = litellm.RelayResponse(200, {}, "a\r\nb\nc")
@@ -484,7 +484,7 @@ def test_local_relay_proxy_serves_the_relay_on_localhost():
                     "transfer-encoding": "chunked",
                     "x-litellm-version": "1",
                 },
-                "body": json.dumps({"data": [{"id": "claude-haiku-4-5"}]}),
+                "body": json.dumps({"data": [{"id": "gpt-6-1-sol"}]}),
             }
         if event["path"] == "/v1/chat/completions":
             return {"status": 200, "headers": {"content-type": "text/event-stream"}, "body": SSE_BODY}
@@ -496,14 +496,14 @@ def test_local_relay_proxy_serves_the_relay_on_localhost():
     with litellm.LocalRelayProxy(session) as proxy:
         assert proxy.base_url.startswith("http://127.0.0.1:")
         r = requests.get(proxy.base_url + "/v1/models?x=1", headers={"Authorization": "Bearer sk-v"}, timeout=5)
-        assert r.status_code == 200 and r.json() == {"data": [{"id": "claude-haiku-4-5"}]}
+        assert r.status_code == 200 and r.json() == {"data": [{"id": "gpt-6-1-sol"}]}
         assert r.headers["x-litellm-version"] == "1" and r.headers["Content-Length"] == str(len(r.content))
         assert seen[0]["method"] == "GET" and seen[0]["path"] == "/v1/models" and seen[0]["query"] == {"x": "1"}
         assert seen[0]["headers"]["Authorization"] == "Bearer sk-v" and "Host" not in seen[0]["headers"]
         assert seen[0]["body"] is None
         r = requests.post(
             proxy.base_url + "/v1/chat/completions",
-            json={"model": "claude-haiku-4-5", "stream": True},
+            json={"model": "gpt-6-1-sol", "stream": True},
             headers={"Authorization": "Bearer sk-v"},
             timeout=5,
             stream=True,
@@ -511,7 +511,7 @@ def test_local_relay_proxy_serves_the_relay_on_localhost():
         assert r.status_code == 200 and r.headers["content-type"] == "text/event-stream"
         lines = [line for line in r.iter_lines(decode_unicode=True) if line]
         assert lines[-1] == "data: [DONE]" and len(lines) == 4
-        assert json.loads(seen[1]["body"]) == {"model": "claude-haiku-4-5", "stream": True}
+        assert json.loads(seen[1]["body"]) == {"model": "gpt-6-1-sol", "stream": True}
         assert seen[1]["headers"]["Content-Type"] == "application/json"
         r = requests.get(proxy.base_url + "/boom", timeout=5)
         assert r.status_code == 502 and r.json()["error"]["type"] == "relay_error" and "relay crashed" in r.text

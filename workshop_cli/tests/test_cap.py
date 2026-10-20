@@ -16,19 +16,19 @@ class FakeAdmin:
         return [
             {
                 "env": "dev",
-                "model": "claude-sonnet-5-5",
-                "alias": "hr-assistant-dev-claude-sonnet-5-5",
+                "model": "claude-sonnet-5",
+                "alias": "hr-assistant-dev-claude-sonnet-5",
                 "maxBudget": 1.0,
             }
         ]
 
     def spend(self, project_id, env):
-        return {"keys": [{"alias": "hr-assistant-dev-claude-sonnet-5-5", "spend": 0.001}]}
+        return {"keys": [{"alias": "hr-assistant-dev-claude-sonnet-5", "spend": 0.001}]}
 
     def update_key(self, project_id, env, model_alias, max_budget):
         self.updated.append(max_budget)
         return {
-            "alias": "hr-assistant-dev-claude-sonnet-5-5",
+            "alias": "hr-assistant-dev-claude-sonnet-5",
             "maxBudget": max_budget,
             "budgetDuration": "7d",
             "status": "active",
@@ -40,7 +40,7 @@ class FakeSecrets:
         return {
             "SecretList": [
                 {
-                    "Name": "bedrock-agentcore-identity!default/apikey/litellm-hr-assistant-dev-claude-sonnet-5-5-078f",
+                    "Name": "bedrock-agentcore-identity!default/apikey/litellm-hr-assistant-dev-claude-sonnet-5-078f",
                     "ARN": "arn:secret",
                 }
             ]
@@ -65,7 +65,7 @@ class RefusingProxy:
 def make_ctx(admin):
     return SimpleNamespace(
         admin=admin,
-        model_alias="claude-sonnet-5-5",
+        model_alias="claude-sonnet-5",
         project_id="hr-assistant",
         inputs=lambda module: {"key_cap": {"usd": 1.0, "period": "7d"}},
         ui_url="https://ui.example.test",
@@ -77,7 +77,7 @@ def make_ctx(admin):
 
 def test_dev_key_from_vault_reads_the_api_key_value():
     ctx = make_ctx(FakeAdmin())
-    key = tools.dev_key_from_vault(ctx, "litellm-hr-assistant-dev-claude-sonnet-5-5", secrets_client=FakeSecrets())
+    key = tools.dev_key_from_vault(ctx, "litellm-hr-assistant-dev-claude-sonnet-5", secrets_client=FakeSecrets())
     assert key == "sk-test-key"
 
 
@@ -88,7 +88,7 @@ def test_cap_low_lowers_the_cap_and_shows_the_refusal(monkeypatch, capsys):
     monkeypatch.setattr(litellm, "read_master_key", lambda cfg, secrets_client=None: "sk-master")
     assert tools.cap(make_ctx(admin), "low") == 0
     assert admin.updated == [0.0005]  # half the spend so far
-    assert proxy.calls == [("sk-test-key", "claude-sonnet-5-5")]
+    assert proxy.calls == [("sk-test-key", "claude-sonnet-5")]
     out = capsys.readouterr().out
     assert "BUDGET_EXCEEDED, gracefully" in out and "workshop cap --dev restore" in out
 

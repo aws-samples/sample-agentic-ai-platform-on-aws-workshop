@@ -2950,9 +2950,9 @@
                       <tspan x="1224" dy="0">Amazon Bedrock models</tspan>
                     </text>
                     <text x="1224" y="837" class="node-copy">
-                      <tspan x="1224" dy="0">Claude Sonnet 5.5, Claude</tspan>
+                      <tspan x="1224" dy="0">Claude Opus 5 and Sonnet 5,</tspan>
                       <tspan x="1224" dy="18">
-                        Haiku 4.5, Amazon Nova 2 Lite
+                        GPT-6.1 Sol and Nova 2 Lite
                       </tspan>
                       <tspan x="1224" dy="18">(inference profiles)</tspan>
                     </text>
@@ -5397,7 +5397,7 @@
 <span class="y-key">kind</span><span class="y-punc">:</span> <span class="y-str">AgentBlueprint</span>
 <span class="y-key">metadata</span><span class="y-punc">:</span> <span class="y-punc">{</span><span class="y-key">domain</span><span class="y-punc">:</span> <span class="y-str">people-ops</span><span class="y-punc">,</span> <span class="y-key">project</span><span class="y-punc">:</span> <span class="y-str">hr-assistant</span><span class="y-punc">,</span> <span class="y-key">version</span><span class="y-punc">:</span> <span class="y-num">1</span><span class="y-punc">}</span>
 <span class="y-key">spec</span><span class="y-punc">:</span>
-  <span class="y-key">model</span><span class="y-punc">:</span> <span class="y-punc">{</span><span class="y-key">ref</span><span class="y-punc">:</span> <span class="y-str">model/claude-sonnet-5-5</span><span class="y-punc">}</span>                  <span class="y-comment"># approved alias in the model gateway (baseline guardrail included)</span>
+  <span class="y-key">model</span><span class="y-punc">:</span> <span class="y-punc">{</span><span class="y-key">ref</span><span class="y-punc">:</span> <span class="y-str">model/claude-sonnet-5</span><span class="y-punc">}</span>                    <span class="y-comment"># approved alias in the model gateway (baseline guardrail included)</span>
   <span class="y-key">systemPrompt</span><span class="y-punc">:</span> <span class="y-punc">{</span><span class="y-key">file</span><span class="y-punc">:</span> <span class="y-str">prompts/hr-assistant-v1.md</span><span class="y-punc">}</span>       <span class="y-comment"># relative to this file; the API stores the resolved text</span>
   <span class="y-key">tools</span><span class="y-punc">:</span> <span class="y-punc">[{</span><span class="y-key">ref</span><span class="y-punc">:</span> <span class="y-str">tool/hr-core</span><span class="y-punc">}]</span>                           <span class="y-comment"># the environment's gateway: hrtools___* Lambda tools + hrkb___Retrieve</span>
   <span class="y-key">knowledge</span><span class="y-punc">:</span> <span class="y-punc">[{</span><span class="y-key">ref</span><span class="y-punc">:</span> <span class="y-str">kb/hr-policies</span><span class="y-punc">}]</span>                     <span class="y-comment"># knowledge-base connector target on the same gateway (department == HR)</span>
@@ -5612,7 +5612,7 @@
                 </td>
                 <td>Model inference</td>
                 <td>
-                  Claude Sonnet 5.5, Claude Haiku 4.5 and Amazon Nova 2 Lite via
+                  Claude Opus 5, Claude Sonnet 5, OpenAI GPT-6.1 Sol and Amazon Nova 2 Lite via
                   cross-region inference profiles; reached only through the
                   model gateway
                 </td>
@@ -6070,8 +6070,8 @@
           <ul>
             <li>
               An AWS account with administrator access in us-east-1 and Amazon
-              Bedrock model access for Anthropic Claude and Amazon Nova (a
-              one-time use-case form for Anthropic models).
+              Bedrock model access for Anthropic Claude, OpenAI and Amazon Nova
+              models (a one-time use-case form for Anthropic models).
             </li>
             <li>
               A terminal (PowerShell on Windows), Git, <code>uv</code>, Node.js
@@ -6440,8 +6440,9 @@ exports/             optional Strands Agents or LangGraph exports</pre
               "MCP",
               "Cedar",
               "Anthropic Claude",
-              "Claude Sonnet 5.5",
-              "Claude Haiku 4.5",
+              "Claude Opus 5",
+              "Claude Sonnet 5",
+              "GPT-6.1 Sol",
               "Anthropic",
               "OpenAI-compatible",
               "OpenAI",

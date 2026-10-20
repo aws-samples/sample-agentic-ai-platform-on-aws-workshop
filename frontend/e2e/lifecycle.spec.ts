@@ -79,7 +79,7 @@ test("admin: lists, project tabs, governance, catalogue, Overview equals the API
   await page.getByRole("option", { name: new RegExp(LT_DOMAIN) }).first().click();
   await dialog.getByPlaceholder("HR Assistant").fill("UI e2e throwaway");
   await dialog.locator('button[aria-haspopup="listbox"]').nth(1).click(); // Allowed models (multiselect)
-  await page.getByRole("option", { name: /claude-haiku-4-5/ }).first().click();
+  await page.getByRole("option", { name: /claude-sonnet-5/ }).first().click();
   await page.keyboard.press("Escape");
   await shot(page, "admin-create-project-modal");
   await dialog.getByTestId("create-project-submit").click();
@@ -140,7 +140,7 @@ test("admin: lists, project tabs, governance, catalogue, Overview equals the API
   // --- Governance: models, guardrail, policy engine, lt gateways (toggle and restore), registry, settings round trip
   await nav(page, "/governance");
   await expect(page.getByText("Approved models").first()).toBeVisible();
-  await expect(page.getByText("claude-sonnet-5-5").first()).toBeVisible();
+  await expect(page.getByText("claude-sonnet-5").first()).toBeVisible();
   await expect(page.getByText("hr-baseline").first()).toBeVisible();
   await expect(page.getByText("Policy engine and gateways").first()).toBeVisible();
   // Section guidance sits behind the round (i) icon next to each heading: click pins it in a popover, Escape closes it.

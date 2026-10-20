@@ -28,7 +28,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 DOMAIN, PROJECT = "lt-ops", "lt-hr-assistant"
-MODEL, MODEL2 = "claude-haiku-4-5", "claude-sonnet-5-5"
+MODEL, MODEL2 = "claude-sonnet-5", "gpt-6-1-sol"
 TIMINGS: list[tuple[str, float]] = []
 STATE: dict = {}
 
