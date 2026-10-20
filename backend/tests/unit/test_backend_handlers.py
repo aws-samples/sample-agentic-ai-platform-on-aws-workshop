@@ -44,7 +44,7 @@ def project_body(project_id="hr-assistant", domain_id="people-ops", **extra):
         "domainId": domain_id,
         "name": "HR Assistant",
         "description": "Employee-facing HR assistant",
-        "models": ["claude-sonnet-5-5", "claude-haiku-4-5"],
+        "models": ["claude-sonnet-5", "gpt-6-1-sol"],
         "maxBudget": 5,
         "budgetDuration": "7d",
         "tpmLimit": 200000,
@@ -188,8 +188,8 @@ def test_domain_lifecycle(fakes):
 def test_create_project_validation(fakes):
     create_domain()
     cases = [
-        ({"projectId": "HR", "domainId": "people-ops", "models": ["claude-haiku-4-5"]}, "kebab-case"),
-        ({"projectId": "hr-assistant", "domainId": "missing", "models": ["claude-haiku-4-5"]}, "does not exist"),
+        ({"projectId": "HR", "domainId": "people-ops", "models": ["gpt-6-1-sol"]}, "kebab-case"),
+        ({"projectId": "hr-assistant", "domainId": "missing", "models": ["gpt-6-1-sol"]}, "does not exist"),
         ({"projectId": "hr-assistant", "domainId": "people-ops", "models": ["gpt-4"]}, "not approved"),
         ({"projectId": "hr-assistant", "domainId": "people-ops", "models": []}, "at least one"),
         ({"projectId": "hr-assistant", "domainId": "people-ops"}, "models is required"),
@@ -228,7 +228,7 @@ def test_create_project_provisions_team_roles_and_item(fakes):
         "budgetDuration": "7d",
         "tpmLimit": 200000,
         "rpmLimit": 200,
-        "models": ["claude-sonnet-5-5", "claude-haiku-4-5"],
+        "models": ["claude-sonnet-5", "gpt-6-1-sol"],
     }
     assert project["roles"] == {
         "dev": {
@@ -245,7 +245,7 @@ def test_create_project_provisions_team_roles_and_item(fakes):
     team = fakes.litellm.teams["hr-assistant"]
     assert team["team_alias"] == "hr-assistant" and team["max_budget"] == 5 and team["budget_duration"] == "7d"
     assert team["tpm_limit"] == 200000 and team["rpm_limit"] == 200
-    assert team["models"] == ["claude-sonnet-5-5", "claude-haiku-4-5"]
+    assert team["models"] == ["claude-sonnet-5", "gpt-6-1-sol"]
     assert team["metadata"] == {"domain": "people-ops", "project": "hr-assistant"}
     assert [c["env"] for c in fakes.roles.calls] == ["dev", "prod"]
     assert fakes.roles.calls[0] == {"project": "hr-assistant", "env": "dev", "tools": [HR_LAMBDA], "kbs": ["KB123"]}
@@ -307,19 +307,19 @@ def test_patch_project_updates_team_and_roles(fakes):
     create_domain()
     create_project()
     status, body = call(
-        "PATCH", "/projects/hr-assistant", body={"maxBudget": 8, "models": ["claude-haiku-4-5"], "rpmLimit": 50}
+        "PATCH", "/projects/hr-assistant", body={"maxBudget": 8, "models": ["gpt-6-1-sol"], "rpmLimit": 50}
     )
     assert status == 200
-    assert body["litellm"]["maxBudget"] == 8 and body["litellm"]["models"] == ["claude-haiku-4-5"]
+    assert body["litellm"]["maxBudget"] == 8 and body["litellm"]["models"] == ["gpt-6-1-sol"]
     assert body["litellm"]["rpmLimit"] == 50 and body["litellm"]["tpmLimit"] == 200000
     assert body["updatedBy"] == "admin"
     team = fakes.litellm.teams["hr-assistant"]
-    assert team["max_budget"] == 8 and team["models"] == ["claude-haiku-4-5"] and team["rpm_limit"] == 50
+    assert team["max_budget"] == 8 and team["models"] == ["gpt-6-1-sol"] and team["rpm_limit"] == 50
     assert team["tpm_limit"] == 200000
     update_calls = [c for c in fakes.litellm.calls if c[1] == "/team/update"]
     assert update_calls[-1][2] == {
         "team_id": "hr-assistant",
-        "models": ["claude-haiku-4-5"],
+        "models": ["gpt-6-1-sol"],
         "max_budget": 8,
         "rpm_limit": 50,
     }
@@ -358,14 +358,12 @@ def test_delete_project_removes_team_keys_providers_roles_and_items(fakes):
         )[0]
         == 200
     )
-    assert call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "claude-haiku-4-5"})[0] == 201
+    assert call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "gpt-6-1-sol"})[0] == 201
     assert fakes.litellm.keys and fakes.identity.providers
     status, body = call("DELETE", "/projects/hr-assistant")
     assert status == 200
     assert body["deleted"] == "hr-assistant" and body["team"] is True and len(body["roles"]) == 4
-    assert body["keys"] == [
-        {"alias": "hr-assistant-dev-claude-haiku-4-5", "litellmKey": True, "credentialProvider": True}
-    ]
+    assert body["keys"] == [{"alias": "hr-assistant-dev-gpt-6-1-sol", "litellmKey": True, "credentialProvider": True}]
     assert body["items"] == 3  # META + resource + key
     assert fakes.litellm.teams == {} and fakes.litellm.keys == {}
     assert fakes.identity.providers == {} and fakes.roles.roles == {}
@@ -474,74 +472,64 @@ def test_key_create_patch_and_adopt(fakes):
     create_domain()
     create_project()
     status, body = call(
-        "POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "claude-haiku-4-5"}, persona="developer"
+        "POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "gpt-6-1-sol"}, persona="developer"
     )
     assert status == 201, body
-    assert (
-        body["alias"] == "hr-assistant-dev-claude-haiku-4-5"
-        and body["env"] == "dev"
-        and body["model"] == "claude-haiku-4-5"
-    )
-    assert body["litellmKeyId"] == hashed("hr-assistant-dev-claude-haiku-4-5")
-    assert body["credentialProviderName"] == "litellm-hr-assistant-dev-claude-haiku-4-5"
-    assert body["credentialProviderArn"].endswith("/apikeycredentialprovider/litellm-hr-assistant-dev-claude-haiku-4-5")
+    assert body["alias"] == "hr-assistant-dev-gpt-6-1-sol" and body["env"] == "dev" and body["model"] == "gpt-6-1-sol"
+    assert body["litellmKeyId"] == hashed("hr-assistant-dev-gpt-6-1-sol")
+    assert body["credentialProviderName"] == "litellm-hr-assistant-dev-gpt-6-1-sol"
+    assert body["credentialProviderArn"].endswith("/apikeycredentialprovider/litellm-hr-assistant-dev-gpt-6-1-sol")
     assert body["maxBudget"] == 1 and body["budgetDuration"] == "7d" and body["status"] == "active"
     assert body["adopted"] is False and body["createdBy"] == "developer" and "key" not in body
     row = fakes.litellm.keys[body["litellmKeyId"]]
-    assert row["team_id"] == "hr-assistant" and row["models"] == ["claude-haiku-4-5"] and row["max_budget"] == 1
+    assert row["team_id"] == "hr-assistant" and row["models"] == ["gpt-6-1-sol"] and row["max_budget"] == 1
     assert row["metadata"] == {
         "domain": "people-ops",
         "project": "hr-assistant",
         "agent": "hr_assistant_dev",
         "env": "dev",
-        "model": "claude-haiku-4-5",
+        "model": "gpt-6-1-sol",
     }
-    assert fakes.identity.keys["litellm-hr-assistant-dev-claude-haiku-4-5"] == raw_key(
-        "hr-assistant-dev-claude-haiku-4-5"
-    )
+    assert fakes.identity.keys["litellm-hr-assistant-dev-gpt-6-1-sol"] == raw_key("hr-assistant-dev-gpt-6-1-sol")
 
-    status, body = call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "claude-haiku-4-5"})
+    status, body = call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "gpt-6-1-sol"})
     assert status == 409 and body["error"]["code"] == "CONFLICT"
     assert call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "nova-2-lite"})[0] == 400
-    assert call("POST", "/projects/hr-assistant/keys", body={"env": "qa", "model": "claude-haiku-4-5"})[0] == 400
+    assert call("POST", "/projects/hr-assistant/keys", body={"env": "qa", "model": "gpt-6-1-sol"})[0] == 400
     assert (
-        call("POST", "/projects/hr-assistant/keys", body={"env": "prod", "model": "claude-haiku-4-5", "maxBudget": -1})[
-            0
-        ]
+        call("POST", "/projects/hr-assistant/keys", body={"env": "prod", "model": "gpt-6-1-sol", "maxBudget": -1})[0]
         == 400
     )
     assert (
-        call(
-            "POST", "/projects/hr-assistant/keys", body={"env": "prod", "model": "claude-haiku-4-5"}, persona="approver"
-        )[0]
+        call("POST", "/projects/hr-assistant/keys", body={"env": "prod", "model": "gpt-6-1-sol"}, persona="approver")[0]
         == 403
     )
-    assert call("POST", "/projects/nope/keys", body={"env": "dev", "model": "claude-haiku-4-5"})[0] == 404
+    assert call("POST", "/projects/nope/keys", body={"env": "dev", "model": "gpt-6-1-sol"})[0] == 404
 
-    status, body = call("PATCH", "/projects/hr-assistant/keys/dev/claude-haiku-4-5", body={"status": "suspended"})
+    status, body = call("PATCH", "/projects/hr-assistant/keys/dev/gpt-6-1-sol", body={"status": "suspended"})
     assert status == 200 and body["status"] == "suspended" and row["blocked"] is True
-    status, body = call("PATCH", "/projects/hr-assistant/keys/dev/claude-haiku-4-5", body={"maxBudget": 0.01})
+    status, body = call("PATCH", "/projects/hr-assistant/keys/dev/gpt-6-1-sol", body={"maxBudget": 0.01})
     assert status == 200 and body["maxBudget"] == 0.01 and row["max_budget"] == 0.01 and body["status"] == "suspended"
     status, body = call(
-        "PATCH", "/projects/hr-assistant/keys/dev/claude-haiku-4-5", body={"status": "active", "maxBudget": 2}
+        "PATCH", "/projects/hr-assistant/keys/dev/gpt-6-1-sol", body={"status": "active", "maxBudget": 2}
     )
     assert status == 200 and body["status"] == "active" and row["blocked"] is False and row["max_budget"] == 2
-    assert call("PATCH", "/projects/hr-assistant/keys/dev/claude-haiku-4-5", body={})[0] == 400
-    assert call("PATCH", "/projects/hr-assistant/keys/dev/claude-haiku-4-5", body={"status": "paused"})[0] == 400
+    assert call("PATCH", "/projects/hr-assistant/keys/dev/gpt-6-1-sol", body={})[0] == 400
+    assert call("PATCH", "/projects/hr-assistant/keys/dev/gpt-6-1-sol", body={"status": "paused"})[0] == 400
     assert call("PATCH", "/projects/hr-assistant/keys/dev/nova-2-lite", body={"maxBudget": 1})[0] == 404
     assert (
-        call("PATCH", "/projects/hr-assistant/keys/dev/claude-haiku-4-5", body={"maxBudget": 1}, persona="developer")[0]
+        call("PATCH", "/projects/hr-assistant/keys/dev/gpt-6-1-sol", body={"maxBudget": 1}, persona="developer")[0]
         == 403
     )
 
     # module 5: the attendee creates the LiteLLM key and the credential provider by hand, then the platform adopts the pair
     made = fakes.admin.create_service_account_key(
-        "hr-assistant", "hr-assistant-prod-claude-sonnet-5-5", ["claude-sonnet-5-5"], 1, "7d", {}
+        "hr-assistant", "hr-assistant-prod-claude-sonnet-5", ["claude-sonnet-5"], 1, "7d", {}
     )
-    provider_arn = fakes.identity.store_api_key("litellm-hr-assistant-prod-claude-sonnet-5-5", made["key"])
+    provider_arn = fakes.identity.store_api_key("litellm-hr-assistant-prod-claude-sonnet-5", made["key"])
     adopt = {
         "env": "prod",
-        "model": "claude-sonnet-5-5",
+        "model": "claude-sonnet-5",
         "adopt": {
             "litellmKeyId": made["token"],
             "credentialProviderArn": provider_arn,
@@ -551,28 +539,28 @@ def test_key_create_patch_and_adopt(fakes):
     }
     status, body = call("POST", "/projects/hr-assistant/keys", body=adopt, persona="developer")
     assert status == 201 and body["adopted"] is True and body["litellmKeyId"] == made["token"]
-    assert body["credentialProviderName"] == "litellm-hr-assistant-prod-claude-sonnet-5-5"
-    assert body["credentialProviderArn"] == provider_arn and body["alias"] == "hr-assistant-prod-claude-sonnet-5-5"
+    assert body["credentialProviderName"] == "litellm-hr-assistant-prod-claude-sonnet-5"
+    assert body["credentialProviderArn"] == provider_arn and body["alias"] == "hr-assistant-prod-claude-sonnet-5"
     assert len(fakes.litellm.keys) == 2  # nothing created by the adoption
     status, body = call("POST", "/projects/hr-assistant/keys", body=adopt)  # adopting twice is an upsert
     assert status == 201 and "updatedAt" in body
     status, body = call(
         "POST",
         "/projects/hr-assistant/keys",
-        body={"env": "prod", "model": "claude-sonnet-5-5", "adopt": {"maxBudget": 1}},
+        body={"env": "prod", "model": "claude-sonnet-5", "adopt": {"maxBudget": 1}},
     )
     assert status == 400 and "litellmKeyId" in body["error"]["message"]
     keys = call("GET", "/projects/hr-assistant/keys", persona="approver")[1]
-    assert [k["alias"] for k in keys] == ["hr-assistant-dev-claude-haiku-4-5", "hr-assistant-prod-claude-sonnet-5-5"]
+    assert [k["alias"] for k in keys] == ["hr-assistant-dev-gpt-6-1-sol", "hr-assistant-prod-claude-sonnet-5"]
 
 
 def test_key_adopt_validates_ownership_and_never_stores_a_raw_key(fakes):
     create_domain()
     create_project()
-    alias, provider_name = "hr-assistant-dev-claude-sonnet-5-5", "litellm-hr-assistant-dev-claude-sonnet-5-5"
-    made = fakes.admin.create_service_account_key("hr-assistant", alias, ["claude-sonnet-5-5"], 0.5, "7d", {})
+    alias, provider_name = "hr-assistant-dev-claude-sonnet-5", "litellm-hr-assistant-dev-claude-sonnet-5"
+    made = fakes.admin.create_service_account_key("hr-assistant", alias, ["claude-sonnet-5"], 0.5, "7d", {})
     provider_arn = fakes.identity.store_api_key(provider_name, made["key"])
-    path, base = "/projects/hr-assistant/keys", {"env": "dev", "model": "claude-sonnet-5-5"}
+    path, base = "/projects/hr-assistant/keys", {"env": "dev", "model": "claude-sonnet-5"}
 
     def adopt(**fields):
         return call("POST", path, body={**base, "adopt": {"credentialProviderArn": provider_arn, **fields}})
@@ -585,7 +573,7 @@ def test_key_adopt_validates_ownership_and_never_stores_a_raw_key(fakes):
     for route, query in (("/projects/hr-assistant/keys", None), ("/spend", {"projectId": "hr-assistant"})):
         status, listed = call("GET", route, query=query, persona="approver")
         assert status == 200 and "sk-" not in json.dumps(listed), listed
-    assert "sk-" not in json.dumps(db.get(db.key_key("hr-assistant", "dev", "claude-sonnet-5-5")))
+    assert "sk-" not in json.dumps(db.get(db.key_key("hr-assistant", "dev", "claude-sonnet-5")))
 
     # a blocked key is adopted as suspended; explicit caps are validated
     fakes.litellm.keys[made["token"]]["blocked"] = True
@@ -623,9 +611,9 @@ def test_key_adopt_validates_ownership_and_never_stores_a_raw_key(fakes):
 
     # the key must belong to this project's team under the contract alias; the provider must exist in Identity
     create_domain("finance-ops")
-    create_project("invoice-helper", "finance-ops", models=["claude-sonnet-5-5"])
+    create_project("invoice-helper", "finance-ops", models=["claude-sonnet-5"])
     foreign = fakes.admin.create_service_account_key(
-        "invoice-helper", "invoice-helper-dev-claude-sonnet-5-5", ["claude-sonnet-5-5"], 1, "7d", {}
+        "invoice-helper", "invoice-helper-dev-claude-sonnet-5", ["claude-sonnet-5"], 1, "7d", {}
     )
     status, body = adopt(litellmKeyId=foreign["token"])
     assert status == 400 and "belongs to team 'invoice-helper'" in body["error"]["message"]
@@ -640,10 +628,10 @@ def test_key_create_adopts_existing_alias_with_provider_and_recreates_orphans(fa
     create_domain()
     create_project()
     made = fakes.admin.create_service_account_key(
-        "hr-assistant", "hr-assistant-dev-claude-haiku-4-5", ["claude-haiku-4-5"], 0.5, "7d", {}
+        "hr-assistant", "hr-assistant-dev-gpt-6-1-sol", ["gpt-6-1-sol"], 0.5, "7d", {}
     )
-    fakes.identity.store_api_key("litellm-hr-assistant-dev-claude-haiku-4-5", made["key"])
-    status, body = call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "claude-haiku-4-5"})
+    fakes.identity.store_api_key("litellm-hr-assistant-dev-gpt-6-1-sol", made["key"])
+    status, body = call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "gpt-6-1-sol"})
     assert status == 201 and body["adopted"] is True and body["litellmKeyId"] == made["token"]
     assert body["maxBudget"] == 0.5 and body["status"] == "active"
     assert (
@@ -651,20 +639,20 @@ def test_key_create_adopts_existing_alias_with_provider_and_recreates_orphans(fa
     )  # only the hand-made one
 
     fakes.admin.create_service_account_key(
-        "hr-assistant", "hr-assistant-prod-claude-haiku-4-5", ["claude-haiku-4-5"], 0.5, "7d", {}
+        "hr-assistant", "hr-assistant-prod-gpt-6-1-sol", ["gpt-6-1-sol"], 0.5, "7d", {}
     )
-    status, body = call("POST", "/projects/hr-assistant/keys", body={"env": "prod", "model": "claude-haiku-4-5"})
+    status, body = call("POST", "/projects/hr-assistant/keys", body={"env": "prod", "model": "gpt-6-1-sol"})
     assert status == 201 and body["adopted"] is False and body["maxBudget"] == 1  # recreated with the default cap
-    assert "litellm-hr-assistant-prod-claude-haiku-4-5" in fakes.identity.providers
+    assert "litellm-hr-assistant-prod-gpt-6-1-sol" in fakes.identity.providers
     deletes = [c for c in fakes.litellm.calls if c[1] == "/key/delete"]
-    assert deletes and deletes[-1][2] == {"keys": [hashed("hr-assistant-prod-claude-haiku-4-5")]}
+    assert deletes and deletes[-1][2] == {"keys": [hashed("hr-assistant-prod-gpt-6-1-sol")]}
 
 
 def test_key_create_rolls_back_when_identity_fails(fakes):
     create_domain()
     create_project()
     fakes.identity.fail = True
-    status, body = call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "claude-haiku-4-5"})
+    status, body = call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "gpt-6-1-sol"})
     assert status == 502 and body["error"]["code"] == "PROVISIONING_FAILED"
     assert "credential_provider" in body["error"]["message"]
     assert fakes.litellm.keys == {} and call("GET", "/projects/hr-assistant/keys")[1] == []
@@ -674,21 +662,21 @@ def test_key_create_rolls_back_when_identity_fails(fakes):
 def test_spend_summary(fakes):
     create_domain()
     create_project()
-    key = call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "claude-haiku-4-5"})[1]
+    key = call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "gpt-6-1-sol"})[1]
     token, alias = key["litellmKeyId"], key["alias"]
     fakes.litellm.keys[token]["spend"] = 0.0168
     fakes.litellm.logs[token] = [
         {
             "request_id": "r1",
             "startTime": "2026-10-08T10:00:00",
-            "model": "claude-haiku-4-5",
+            "model": "gpt-6-1-sol",
             "spend": 0.001,
             "prompt_tokens": 100,
             "completion_tokens": 10,
             "total_tokens": 110,
             "metadata": {"user_api_key_alias": alias},
         },
-        {"request_id": "r2", "startTime": "2026-10-08T11:00:00", "model": "claude-haiku-4-5", "spend": 0.002},
+        {"request_id": "r2", "startTime": "2026-10-08T11:00:00", "model": "gpt-6-1-sol", "spend": 0.002},
     ]
     status, body = call("GET", "/spend", query={"projectId": "hr-assistant", "env": "dev"}, persona="developer")
     assert status == 200 and body["projectId"] == "hr-assistant" and body["env"] == "dev"
@@ -732,8 +720,8 @@ def test_upstream_errors_map_to_502(fakes):
 def test_spend_tolerates_an_odd_cap_value(fakes):
     create_domain()
     create_project()
-    key = call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "claude-haiku-4-5"})[1]
-    item = db.get(db.key_key("hr-assistant", "dev", "claude-haiku-4-5"))
+    key = call("POST", "/projects/hr-assistant/keys", body={"env": "dev", "model": "gpt-6-1-sol"})[1]
+    item = db.get(db.key_key("hr-assistant", "dev", "gpt-6-1-sol"))
     item["maxBudget"] = "lots"  # written behind the API's back; /key/info fails too, so the row keeps the stored value
     db.put(item)
     fakes.litellm.keys.pop(key["litellmKeyId"])
@@ -814,10 +802,11 @@ def test_governance_summary(fakes, monkeypatch):
 
     status, body = call("GET", "/governance", persona="approver")
     assert status == 200
-    assert [m["alias"] for m in body["models"]] == ["claude-sonnet-5-5", "claude-haiku-4-5", "nova-2-lite"]
-    sonnet = body["models"][0]
-    assert sonnet["source"] == "litellm" and sonnet["modelId"] == "us.anthropic.claude-sonnet-5-5"
-    assert sonnet["litellmModel"] == "bedrock/converse/us.anthropic.claude-sonnet-5-5" and sonnet["tier"] == "premium"
+    assert [m["alias"] for m in body["models"]] == ["claude-opus-5", "claude-sonnet-5", "gpt-6-1-sol", "nova-2-lite"]
+    assert body["models"][0]["tier"] == "premium"
+    sonnet = body["models"][1]
+    assert sonnet["source"] == "litellm" and sonnet["modelId"] == "us.anthropic.claude-sonnet-5"
+    assert sonnet["litellmModel"] == "bedrock/converse/us.anthropic.claude-sonnet-5" and sonnet["tier"] == "standard"
     assert sonnet["guardrail"] == {"id": "gr123", "version": "2", "name": "hr-baseline"}
     assert sonnet["inputCostPerToken"] == 1e-06
     assert (
@@ -844,8 +833,8 @@ def test_governance_summary(fakes, monkeypatch):
 
     fakes.litellm.fail.add("/model/info")
     body = call("GET", "/governance")[1]
-    assert len(body["models"]) == 3 and all(m["source"] == "ssm" for m in body["models"])
-    assert body["models"][1]["alias"] == "claude-haiku-4-5"
+    assert len(body["models"]) == 4 and all(m["source"] == "ssm" for m in body["models"])
+    assert body["models"][2]["alias"] == "gpt-6-1-sol"
 
 
 def test_governance_without_anything_configured(fakes, monkeypatch):
@@ -987,8 +976,9 @@ def test_governance_models_resolve_other_guardrail_names(fakes, monkeypatch):
     monkeypatch.setattr(clients, "bedrock", lambda: NamedBedrock())
     body = call("GET", "/governance")[1]
     by_alias = {m["alias"]: m for m in body["models"]}
-    assert by_alias["claude-sonnet-5-5"]["guardrail"] is None
-    assert by_alias["claude-haiku-4-5"]["guardrail"] == {"id": "gr-finance", "version": "1", "name": "finance-strict"}
+    assert by_alias["claude-opus-5"]["guardrail"] is None
+    assert by_alias["claude-sonnet-5"]["guardrail"] == {"id": "gr-finance", "version": "1", "name": "finance-strict"}
+    assert by_alias["gpt-6-1-sol"]["guardrail"]["name"] == "finance-strict"
     assert by_alias["nova-2-lite"]["guardrail"]["name"] == "finance-strict"
     assert calls == [("gr123", "2"), ("gr-finance", "1")]  # the baseline once, the second guardrail once (cached)
 

@@ -38,8 +38,8 @@ DEFAULTS: dict[str, dict[str, Any]] = {
         "domain_description": "HR services for AnyCompany employees",
         "project": "hr-assistant",
         "owner": "margaret.chen@anycompany.example",
-        "models": ["claude-sonnet-5-5", "claude-haiku-4-5"],
-        "model": "claude-sonnet-5-5",
+        "models": ["claude-sonnet-5", "gpt-6-1-sol"],
+        "model": "claude-sonnet-5",
         "budget": {"usd": 5, "period": "7d", "tpm": 200000, "rpm": 200},
     },
     "module_4": {
@@ -72,7 +72,7 @@ FINANCE = {
         "Accounts-payable assistant of the Finance domain: supplier invoice status. One tool, no agent: it exists to "
         "prove project isolation."
     ),
-    "models": ["claude-haiku-4-5"],
+    "models": ["nova-2-lite"],
     "budget": {"usd": 1, "period": "7d", "tpm": 50000, "rpm": 50},
 }
 

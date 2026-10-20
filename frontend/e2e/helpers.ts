@@ -8,7 +8,8 @@ export const BASE_URL = (process.env.BASE_URL ?? "http://localhost:5173").replac
 export const SCREENSHOT_DIR = resolve(process.env.SCREENSHOT_DIR ?? "../.claude/docs/ui-screenshots");
 export const LT_PROJECT = "lt-hr-assistant";
 export const LT_DOMAIN = "lt-ops";
-export const LT_DEV_KEY = `${LT_PROJECT}-dev-claude-haiku-4-5`;
+// the Dev key scripts/lifecycle_test.py creates for its blueprint model (its --model default; keep the two in step)
+export const LT_DEV_KEY = `${LT_PROJECT}-dev-claude-sonnet-5`;
 export const LT_DEV_GATEWAY = `${LT_PROJECT}-dev-gw`;
 
 mkdirSync(SCREENSHOT_DIR, { recursive: true });

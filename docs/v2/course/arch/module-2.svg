@@ -254,7 +254,7 @@
 <text x="960.0" y="1004" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">invoices</text>
 <use href="#sym-bedrock" x="1137" y="902" width="56" height="56"/>
 <text x="1165.0" y="974" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">Amazon Bedrock</text>
-<text x="1165.0" y="989" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">Claude Sonnet 5.5 · Claude Haiku 4.5</text>
+<text x="1165.0" y="989" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">Claude Opus 5 · Sonnet 5 · GPT-6.1 Sol</text>
 <text x="1165.0" y="1004" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">Nova 2 Lite · Knowledge Base · HR policies</text>
 <text x="1165.0" y="1019" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">guardrail hr-baseline · stack SharedServices</text>
 <use href="#sym-s3" x="717" y="1018" width="56" height="56"/>

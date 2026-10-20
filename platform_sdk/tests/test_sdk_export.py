@@ -15,7 +15,7 @@ PROMPT = '# AnyCompany HR Assistant\n\nUse the tools. Quote the policy ("accordi
 GATEWAY_ARN = f"arn:aws:bedrock-agentcore:us-east-1:{ACCOUNT}:gateway/hr-assistant-dev-gw-tprllkjtys"
 PROVIDER_ARN = (
     f"arn:aws:bedrock-agentcore:us-east-1:{ACCOUNT}:token-vault/default/apikeycredentialprovider/"
-    "litellm-hr-assistant-dev-claude-sonnet-5-5"
+    "litellm-hr-assistant-dev-claude-sonnet-5"
 )
 MEMORY_ARN = f"arn:aws:bedrock-agentcore:us-east-1:{ACCOUNT}:memory/hr_assistant_dev_memory-enx4hYBx2S"
 ROLE_ARN = f"arn:aws:iam::{ACCOUNT}:role/agent-platform-proj-hr-assistant-dev-agent"
@@ -30,7 +30,7 @@ GET_HARNESS = {  # the shape GetHarness returns (verified live 9 Oct 2026)
         "executionRoleArn": ROLE_ARN,
         "model": {
             "liteLlmModelConfig": {
-                "modelId": "openai/claude-sonnet-5-5",
+                "modelId": "openai/claude-sonnet-5",
                 "apiKeyArn": PROVIDER_ARN,
                 "apiBase": "https://llm.example.test/v1",
                 "maxTokens": 2048,
@@ -59,7 +59,7 @@ RENDER = {  # GET /projects/{id}/blueprints/{v}/render (CreateHarness kwargs + t
     "executionRoleArn": ROLE_ARN,
     "model": {
         "liteLlmModelConfig": {
-            "modelId": "openai/claude-haiku-4-5",
+            "modelId": "openai/gpt-6-1-sol",
             "apiBase": "https://llm.example.test/v1",
             "apiKeyArn": PROVIDER_ARN,
             "maxTokens": 1024,
@@ -115,8 +115,8 @@ def test_summarize_reads_the_get_harness_shape(cfg):
     assert summary["name"] == "hr_assistant_dev" and summary["version"] == "6"
     assert summary["executionRoleArn"] == ROLE_ARN and summary["region"] == "us-east-1"
     assert summary["model"] == {
-        "alias": "claude-sonnet-5-5",
-        "modelId": "openai/claude-sonnet-5-5",
+        "alias": "claude-sonnet-5",
+        "modelId": "openai/claude-sonnet-5",
         "apiBase": "https://llm.example.test/v1",
         "apiKeyArn": PROVIDER_ARN,
         "maxTokens": 2048,
@@ -135,7 +135,7 @@ def test_summarize_reads_the_get_harness_shape(cfg):
 
 def test_summarize_reads_the_render_payload_with_an_explicit_allow_list(cfg):
     summary = export.summarize(RENDER, cfg)
-    assert summary["version"] is None and summary["model"]["alias"] == "claude-haiku-4-5"
+    assert summary["version"] is None and summary["model"]["alias"] == "gpt-6-1-sol"
     assert summary["model"]["temperature"] == 0.2 and summary["model"]["maxTokens"] == 1024
     assert summary["allowedTools"] == ["hrtools___get_leave_balance", "hrkb___Retrieve"]
     assert summary["memoryArn"] is None and summary["limits"] == {"maxIterations": 10}
@@ -161,7 +161,7 @@ def test_to_strands_compiles_imports_and_mirrors_the_configuration(cfg, tmp_path
     )
     assert "2026-10-09T05:00:00+00:00" in source
     module = load_generated(source, tmp_path)
-    assert module.MODEL_ALIAS == "claude-sonnet-5-5"
+    assert module.MODEL_ALIAS == "claude-sonnet-5"
     assert module.MODEL_GATEWAY_BASE == "https://llm.example.test/v1" and module.MODEL_MAX_TOKENS == 2048
     assert module.API_KEY_ENV == "MODEL_GATEWAY_API_KEY" and module.CREDENTIAL_PROVIDER_ARN == PROVIDER_ARN
     assert module.GATEWAY_ARN == GATEWAY_ARN and module.ALLOWED_TOOLS is None
@@ -226,7 +226,7 @@ def test_generated_module_reads_model_gateway_base_from_the_environment(cfg, tmp
 def test_to_strands_filters_the_allow_list_and_passes_model_parameters(cfg, tmp_path, monkeypatch):
     module = load_generated(export.to_strands(RENDER, cfg), tmp_path)
     assert module.ALLOWED_TOOLS == ["hrtools___get_leave_balance", "hrkb___Retrieve"]
-    assert module.MODEL_ALIAS == "claude-haiku-4-5" and module.MODEL_MAX_TOKENS == 1024
+    assert module.MODEL_ALIAS == "gpt-6-1-sol" and module.MODEL_MAX_TOKENS == 1024
     monkeypatch.setattr(module.mcp, "list_tools", lambda url, session=None, region=None, **kw: GATEWAY_TOOLS)
     assert [t.tool_name for t in module.gateway_tools()] == ["hrtools___get_leave_balance", "hrkb___Retrieve"]
     assert "disabled on the harness" in export.to_strands(RENDER, cfg)  # memory comment
@@ -272,7 +272,7 @@ def test_to_langgraph_compiles_imports_and_mirrors_the_configuration(cfg, tmp_pa
     )
     assert "2026-10-14T05:00:00+00:00" in source and "create_agent" in source
     module = load_generated(source, tmp_path, "hr_assistant_dev_langgraph_agent.py")
-    assert module.MODEL_ALIAS == "claude-sonnet-5-5"
+    assert module.MODEL_ALIAS == "claude-sonnet-5"
     assert module.MODEL_GATEWAY_BASE == "https://llm.example.test/v1" and module.MODEL_MAX_TOKENS == 2048
     assert module.API_KEY_ENV == "MODEL_GATEWAY_API_KEY" and module.CREDENTIAL_PROVIDER_ARN == PROVIDER_ARN
     assert module.GATEWAY_ARN == GATEWAY_ARN and module.ALLOWED_TOOLS is None
@@ -316,7 +316,7 @@ def test_to_langgraph_filters_the_allow_list_and_passes_model_parameters(cfg, tm
     source = export.to_langgraph(RENDER, cfg)
     module = load_generated(source, tmp_path, "render_langgraph_agent.py")
     assert module.ALLOWED_TOOLS == ["hrtools___get_leave_balance", "hrkb___Retrieve"]
-    assert module.MODEL_ALIAS == "claude-haiku-4-5" and module.MODEL_MAX_TOKENS == 1024
+    assert module.MODEL_ALIAS == "gpt-6-1-sol" and module.MODEL_MAX_TOKENS == 1024
     monkeypatch.setattr(module.mcp, "list_tools", lambda url, session=None, region=None, **kw: GATEWAY_TOOLS)
     assert [t.name for t in module.gateway_tools()] == ["hrtools___get_leave_balance", "hrkb___Retrieve"]
     assert "disabled on the harness" in source and "temperature=0.2" in source

@@ -22,6 +22,7 @@ from aws_cdk import (
     CfnTag,
     CustomResource,
     Duration,
+    Fn,
     RemovalPolicy,
     Stack,
 )
@@ -444,9 +445,13 @@ class ModelGatewayStack(Stack):
 
     @staticmethod
     def _https_url(endpoint: str) -> str:
-        """Full https URL (no trailing slash) from the Express `Endpoint` attribute.
+        """Full https URL (no trailing slash) from the Express `Endpoint` attribute, whatever shape it comes in.
 
-        Verified 2026-10-08: the attribute is the bare host name `ag-<hex>.ecs.us-east-1.on.aws` (no scheme, no slash). With
-        private subnets the load balancer is internal: the same name resolves to private addresses (VPC residents only).
+        Verified 2026-10-08 as the bare host name `ag-<hex>.ecs.us-east-1.on.aws`; on 2026-10-20 a fresh account returned it
+        with the scheme already (`https://ag-<hex>...`), which doubled the scheme in SSM and in the relay's environment and
+        broke every call to the proxy. The attribute is a deploy-time token, so the URL is rebuilt with CloudFormation
+        functions: the part after the one `ag-` marker (the id is hex, so the marker occurs exactly once in either shape)
+        behind a fixed `https://ag-`. With private subnets the load balancer is internal: the name resolves to private
+        addresses (VPC residents only). The SDK and the relay normalise the value again on their side (platform_sdk.config).
         """
-        return f"https://{endpoint}"
+        return Fn.join("", ["https://ag-", Fn.select(1, Fn.split("ag-", endpoint))])

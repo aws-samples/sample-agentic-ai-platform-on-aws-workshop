@@ -24,7 +24,7 @@ def test_key_builders_follow_contract_section_3():
     assert db.blueprint_key("hr-assistant", "12")["SK"] == "BLUEPRINT#0012"
     assert db.release_key("hr-assistant", "01J")["SK"] == "RELEASE#01J"
     assert db.release_gsi("2026-10-08T10:00:00Z", "01J") == {"GSI1PK": "RELEASE", "GSI1SK": "2026-10-08T10:00:00Z#01J"}
-    assert db.key_key("hr-assistant", "dev", "claude-haiku-4-5")["SK"] == "KEY#dev#claude-haiku-4-5"
+    assert db.key_key("hr-assistant", "dev", "gpt-6-1-sol")["SK"] == "KEY#dev#gpt-6-1-sol"
     assert db.job_key("j1") == {"PK": "JOB#j1", "SK": "META"}
     assert db.job_gsi("t", "j1") == {"GSI1PK": "JOB", "GSI1SK": "t#j1"}
     assert db.feedback_key("hr-assistant", "t", "s", "u1") == {"PK": "FEEDBACK#hr-assistant", "SK": "t#s#u1"}

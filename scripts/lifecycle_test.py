@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Scripted project lifecycle against the deployed platform API (Phase 2A exit criterion), with its own AgentCore resources.
 
-Project `lt-hr-assistant` in domain `lt-ops` (never `hr-assistant`: the learning path owns that one), model `claude-haiku-4-5`:
+Project `lt-hr-assistant` in domain `lt-ops` (never `hr-assistant`: the learning path owns that one), model `claude-sonnet-5`:
 
   1. domain + project through the API (LiteLLM team + four roles)        module 3
   2. gateways lt-hr-assistant-{dev,prod}-gw with hrtools + hrkb targets,
@@ -61,7 +61,8 @@ PROMPTS = [
     "Thanks. And how many sick days do I have left?",
 ]
 PROD_PROMPT = "Which public holidays are there in November 2026?"
-# Dry-run numbers of 8 Oct 2026 (dryrun-results/hr-assistant-v1-claude-haiku-4-5.json): prompt v1 misses three thresholds
+# Dry-run numbers of 8 Oct 2026 (dryrun-results/hr-assistant-v1-claude-haiku-4-5.json, Claude Haiku 4.5; the aliases changed on
+# 2026-10-20, re-measure with claude-sonnet-5): prompt v1 misses three thresholds
 BLOCKED_SCORES = {
     "Correctness": {"mean": 0.7, "min": 0.0, "max": 1.0, "passRate": 0.7, "count": 10, "errors": 0, "failed": 0},
     "GoalSuccessRate": {"mean": 0.7, "min": 0.0, "max": 1.0, "passRate": 0.7, "count": 10, "errors": 0, "failed": 0},
@@ -291,7 +292,7 @@ def sweep(ctx: Context, label: str = "cleanup") -> list[str]:
         out = []
         for env in names.ENVIRONMENTS:
             n = ctx.n(env)
-            for alias in {ctx.model, "claude-sonnet-5-5", "claude-haiku-4-5", "nova-2-lite"}:
+            for alias in {ctx.model, "claude-opus-5", "claude-sonnet-5", "gpt-6-1-sol", "nova-2-lite"}:
                 key = ctx.admin.find_key(n.key_alias(alias))
                 if key:
                     ctx.admin.delete_key(key.get("token") or key.get("token_id"))
@@ -357,7 +358,7 @@ def inventory(ctx: Context) -> list[str]:
     if ctx.admin.find_team(PROJECT):
         left.append(f"LiteLLM team {PROJECT}")
     for env in names.ENVIRONMENTS:
-        for alias in (ctx.model, "claude-sonnet-5-5", "claude-haiku-4-5", "nova-2-lite"):
+        for alias in (ctx.model, "claude-opus-5", "claude-sonnet-5", "gpt-6-1-sol", "nova-2-lite"):
             if ctx.admin.find_key(ctx.n(env).key_alias(alias)):
                 left.append(f"LiteLLM key {ctx.n(env).key_alias(alias)}")
     table = boto3.resource("dynamodb", region_name=region).Table(ctx.cfg.table_name)
@@ -729,7 +730,7 @@ def run(ctx: Context) -> None:
 # ---- main ------------------------------------------------------------------------------------------------------------
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--model", default="claude-haiku-4-5", help="approved model alias (default: claude-haiku-4-5)")
+    parser.add_argument("--model", default="claude-sonnet-5", help="approved model alias (default: claude-sonnet-5)")
     parser.add_argument("--keep", action="store_true", help="leave everything running (skip the cleanup)")
     parser.add_argument("--only-cleanup", action="store_true", help="delete what an earlier run left and exit")
     parser.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS_DIR, help="where the run record is written")

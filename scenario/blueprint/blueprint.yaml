@@ -7,7 +7,7 @@ apiVersion: platform/v1
 kind: AgentBlueprint
 metadata: {domain: people-ops, project: hr-assistant, version: 1}
 spec:
-  model: {ref: model/claude-sonnet-5-5}                  # approved alias in the model gateway (baseline guardrail included)
+  model: {ref: model/claude-sonnet-5}                    # approved alias in the model gateway (baseline guardrail included)
   systemPrompt: {file: prompts/hr-assistant-v1.md}       # relative to this file; the API stores the resolved text
   tools: [{ref: tool/hr-core}]                           # the environment's gateway: hrtools___* Lambda tools + hrkb___Retrieve
   knowledge: [{ref: kb/hr-policies}]                     # knowledge-base connector target on the same gateway (department == HR)

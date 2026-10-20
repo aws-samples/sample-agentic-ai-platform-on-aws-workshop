@@ -28,6 +28,17 @@ def relay(monkeypatch):
     return module
 
 
+def test_base_url_keeps_one_scheme(monkeypatch):
+    """The Express endpoint attribute arrived with its scheme already in a fresh account (2026-10-20): `https://https://...`
+    in MODEL_GATEWAY_URL made every relay call fail; the module normalises the value at import."""
+    for value in (BASE, BASE + "/", "https://" + BASE, "https://" + BASE + "/", BASE.removeprefix("https://")):
+        monkeypatch.setenv("MODEL_GATEWAY_URL", value)
+        spec = importlib.util.spec_from_file_location("model_gateway_relay_scheme", HANDLER)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        assert module.BASE_URL == BASE, value
+
+
 def message(headers: dict[str, str]) -> Message:
     msg = Message()
     for name, value in headers.items():

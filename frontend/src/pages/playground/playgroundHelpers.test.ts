@@ -11,7 +11,7 @@ const resource = (over: Partial<Resource>): Resource => ({
   arn: "arn:aws:bedrock-agentcore:us-east-1:990851549965:harness/lt_hr_assistant_dev-abc",
   id: "lt_hr_assistant_dev-abc",
   url: null,
-  attributes: { version: "2", blueprintVersion: 2, model: "claude-haiku-4-5", endpoint: "DEFAULT" },
+  attributes: { version: "2", blueprintVersion: 2, model: "claude-sonnet-5", endpoint: "DEFAULT" },
   registeredAt: "2026-10-09T03:00:00Z",
   registeredBy: "developer",
   ...over,
@@ -39,7 +39,7 @@ describe("harnessByEnv", () => {
   it("finds the registered harness per environment and names the endpoint the playground reaches", () => {
     const rows = [resource({}), resource({ env: "prod", name: "lt_hr_assistant_prod", attributes: { version: "1", blueprintVersion: 2, endpoint: "live" } }), resource({ type: "gateway", name: "gw" })];
     const by = harnessByEnv(rows);
-    expect(by.dev).toMatchObject({ name: "lt_hr_assistant_dev", version: "2", blueprintVersion: "2", model: "claude-haiku-4-5", qualifier: "DEFAULT" });
+    expect(by.dev).toMatchObject({ name: "lt_hr_assistant_dev", version: "2", blueprintVersion: "2", model: "claude-sonnet-5", qualifier: "DEFAULT" });
     expect(by.prod).toMatchObject({ name: "lt_hr_assistant_prod", version: "1", qualifier: "live", model: null });
   });
 
@@ -59,10 +59,10 @@ describe("usage and budget parsing", () => {
   it("extracts cap, spend and reset time from a BUDGET_EXCEEDED error only", () => {
     const details = budgetDetails({
       code: "BUDGET_EXCEEDED",
-      message: "Budget has been exceeded! Key=lt-hr-assistant-dev-claude-haiku-4-5 Current cost: 0.0446, Max budget: 0.01",
-      details: { alias: "lt-hr-assistant-dev-claude-haiku-4-5", maxBudget: 0.01, spend: 0.0446512, budgetResetAt: "2026-10-12T00:00:00Z", currentCost: 0.0446512 },
+      message: "Budget has been exceeded! Key=lt-hr-assistant-dev-claude-sonnet-5 Current cost: 0.0446, Max budget: 0.01",
+      details: { alias: "lt-hr-assistant-dev-claude-sonnet-5", maxBudget: 0.01, spend: 0.0446512, budgetResetAt: "2026-10-12T00:00:00Z", currentCost: 0.0446512 },
     });
-    expect(details).toMatchObject({ alias: "lt-hr-assistant-dev-claude-haiku-4-5", maxBudget: 0.01, spend: 0.0446512, budgetResetAt: "2026-10-12T00:00:00Z" });
+    expect(details).toMatchObject({ alias: "lt-hr-assistant-dev-claude-sonnet-5", maxBudget: 0.01, spend: 0.0446512, budgetResetAt: "2026-10-12T00:00:00Z" });
     expect(budgetDetails({ code: "INVOKE_FAILED", message: "boom" })).toBeNull();
     expect(budgetDetails(null)).toBeNull();
   });

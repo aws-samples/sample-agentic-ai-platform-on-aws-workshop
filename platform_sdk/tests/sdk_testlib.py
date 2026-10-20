@@ -20,20 +20,22 @@ CONFIG = {
     "backend/worker-function-name": "agent-platform-worker",
     "model-gateway/url": "https://llm.example.test",
     "model-gateway/master-key-secret-arn": f"arn:aws:secretsmanager:{REGION}:{ACCOUNT}:secret:agent-platform/litellm-master-key-XyZ",
+    # the approved aliases, mirroring foundation.config.MODELS (four aliases, three vendors)
     "model-gateway/models": json.dumps(
         [
             {
-                "alias": "claude-sonnet-5-5",
-                "modelId": "us.anthropic.claude-sonnet-5-5",
+                "alias": "claude-opus-5",
+                "modelId": "us.anthropic.claude-opus-5",
+                "provider": "bedrock",
+                "tier": "premium",
+            },
+            {
+                "alias": "claude-sonnet-5",
+                "modelId": "us.anthropic.claude-sonnet-5",
                 "provider": "bedrock",
                 "tier": "standard",
             },
-            {
-                "alias": "claude-haiku-4-5",
-                "modelId": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
-                "provider": "bedrock",
-                "tier": "fast",
-            },
+            {"alias": "gpt-6-1-sol", "modelId": "us.openai.gpt-6.1-sol", "provider": "bedrock", "tier": "standard"},
             {"alias": "nova-2-lite", "modelId": "us.amazon.nova-2-lite-v1:0", "provider": "bedrock", "tier": "economy"},
         ]
     ),

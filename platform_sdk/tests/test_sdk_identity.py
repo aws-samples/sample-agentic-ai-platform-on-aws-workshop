@@ -4,7 +4,7 @@ from botocore.stub import ANY, Stubber
 
 from platform_sdk import identity
 
-NAME = "litellm-hr-assistant-dev-claude-sonnet-5-5"
+NAME = "litellm-hr-assistant-dev-claude-sonnet-5"
 ARN = f"arn:aws:bedrock-agentcore:us-east-1:123456789012:token-vault/default/apikeycredentialprovider/{NAME}"
 SECRET = {
     "secretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:bedrock-agentcore-identity!default/apikey/"

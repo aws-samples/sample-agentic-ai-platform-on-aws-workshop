@@ -5,8 +5,8 @@ Spend and budgets come from `/team/info`, `/key/info` and `/spend/logs` (verifie
 no openai dependency: `chat_completion` exists for smoke tests only.
 
     admin = litellm.LiteLLMAdmin(cfg.model_gateway_url, master_key)
-    admin.create_team("hr-assistant", "hr-assistant", ["claude-sonnet-5-5"], 5.0, "1d", 200000, 200, {"domain": "people-ops"})
-    key = admin.create_service_account_key("hr-assistant", "hr-assistant-dev-claude-sonnet-5-5", ["claude-sonnet-5-5"], 1.0, "1d", {...})
+    admin.create_team("hr-assistant", "hr-assistant", ["claude-sonnet-5"], 5.0, "1d", 200000, 200, {"domain": "people-ops"})
+    key = admin.create_service_account_key("hr-assistant", "hr-assistant-dev-claude-sonnet-5", ["claude-sonnet-5"], 1.0, "1d", {...})
     key["key"]    # raw sk-... key: store it in AgentCore Identity and forget it
     key["token"]  # hashed token id: keep it in DynamoDB for /key/info, /key/update, /key/block, /spend/logs?api_key=
 

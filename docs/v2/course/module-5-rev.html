@@ -50,10 +50,10 @@
               <defs><marker id="arr5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
               <rect class="d-box d-aws" x="20" y="40" width="210" height="48"/>
               <text class="d-text" x="125" y="59" text-anchor="middle">HR assistant · Dev</text>
-              <text class="d-text d-small" x="125" y="77" text-anchor="middle">key · claude-sonnet-5-5</text>
+              <text class="d-text d-small" x="125" y="77" text-anchor="middle">key · claude-sonnet-5</text>
               <rect class="d-box d-aws" x="20" y="110" width="210" height="48"/>
               <text class="d-text" x="125" y="129" text-anchor="middle">HR assistant · Prod</text>
-              <text class="d-text d-small" x="125" y="147" text-anchor="middle">key · claude-sonnet-5-5</text>
+              <text class="d-text d-small" x="125" y="147" text-anchor="middle">key · claude-sonnet-5</text>
               <rect class="d-box d-aws" x="20" y="180" width="210" height="48"/>
               <text class="d-text" x="125" y="199" text-anchor="middle">Any other project</text>
               <text class="d-text d-small" x="125" y="217" text-anchor="middle">its own team and keys</text>
@@ -70,10 +70,11 @@
               <path class="d-arrow" d="M560 134 L628 134" marker-end="url(#arr5)"/>
               <rect class="d-box d-aws" x="630" y="60" width="180" height="150"/>
               <text class="d-text d-title" x="720" y="84" text-anchor="middle">Amazon Bedrock</text>
-              <text class="d-text" x="720" y="112" text-anchor="middle">Claude Sonnet 5.5</text>
-              <text class="d-text" x="720" y="136" text-anchor="middle">Claude Haiku 4.5</text>
-              <text class="d-text" x="720" y="160" text-anchor="middle">Nova 2 Lite</text>
-              <text class="d-text d-small" x="720" y="188" text-anchor="middle">cross-Region inference profiles</text>
+              <text class="d-text" x="720" y="106" text-anchor="middle">Claude Opus 5</text>
+              <text class="d-text" x="720" y="126" text-anchor="middle">Claude Sonnet 5</text>
+              <text class="d-text" x="720" y="146" text-anchor="middle">GPT-6.1 Sol</text>
+              <text class="d-text" x="720" y="166" text-anchor="middle">Nova 2 Lite</text>
+              <text class="d-text d-small" x="720" y="190" text-anchor="middle">three vendors · us. profiles</text>
               <path class="d-arrow" d="M410 238 L410 250 L880 250 L880 222" marker-end="url(#arr5)"/>
               <text class="d-text d-small" x="640" y="264" text-anchor="middle">spend logs</text>
               <rect class="d-box d-blue" x="830" y="180" width="110" height="40"/>
@@ -163,7 +164,7 @@
             </table>
             <p class="note">Option C is a product category rather than one product. Self-hosted gateways such as LiteLLM, used here, or Portkey's open-source gateway run inside your VPC and keep model traffic on the private path of decision 1.2; hosted routers such as OpenRouter or Portkey's hosted service can reach Bedrock, but they do so from outside your account over the public internet, so they do not fit an endpoints-only network. Anthropic's Claude apps gateway is the same idea for developer tooling: it sits between developers' Claude Code clients and the model provider, and has no service-token flow for unattended workloads, so it is not a path for agents.</p>
             <div class="ours-box">
-              <p><strong>This workshop.</strong> LiteLLM runs on ECS Express Mode with RDS for keys and spend records. Its <strong>three approved aliases</strong> inherit the baseline guardrail.</p>
+              <p><strong>This workshop.</strong> LiteLLM runs on ECS Express Mode with RDS for keys and spend records. Its <strong>four approved aliases</strong>, from three vendors (Anthropic, OpenAI and Amazon), inherit the baseline guardrail; the HR project's team may use two of them, <code>claude-sonnet-5</code> and <code>gpt-6-1-sol</code>, and its Dev key one.</p>
               <p class="also">LiteLLM is a proxy server: it receives each model request and passes it on to Bedrock. Model gateway, LiteLLM and proxy therefore name one service. The proxy is private and has <strong>two access paths</strong>:</p>
 <ul class="concept-list">
   <li><strong>Agents in the VPC:</strong> reach its internal load balancer directly.</li>
@@ -193,7 +194,7 @@
                 <text class="d-text d-small" x="176" y="80" text-anchor="middle">budget 5 USD / 7 d</text>
                 <text class="d-text d-small" x="176" y="94" text-anchor="middle">200 000 tokens and 200 requests per minute</text>
                 <rect class="d-box" x="40" y="104" width="272" height="44"/>
-                <text class="d-text d-small" x="176" y="122" text-anchor="middle" style="fill:#16191f">Key hr-assistant-dev-claude-sonnet-5-5</text>
+                <text class="d-text d-small" x="176" y="122" text-anchor="middle" style="fill:#16191f">Key hr-assistant-dev-claude-sonnet-5</text>
                 <text class="d-text d-small" x="176" y="138" text-anchor="middle">cap 1 USD / 7 d</text>
                 <path class="d-arrow d-deny" d="M312 126 L358 126" marker-end="url(#fig5-d2-deny)"/>
                 <rect class="d-box" x="360" y="96" width="226" height="58" style="stroke:#b4471f;fill:#fcf1ec"/>
@@ -407,7 +408,7 @@
               </tbody>
             </table>
             <div class="ours-box">
-              <p><strong>This workshop.</strong> All <strong>three aliases</strong> map to <code>us.</code> profiles. Calls enter <code>us-east-1</code> and may run elsewhere in the US geography. Other platform resources stay in one Region.</p>
+              <p><strong>This workshop.</strong> All <strong>four aliases</strong> map to <code>us.</code> profiles. Calls enter <code>us-east-1</code> and may run elsewhere in the US geography. Other platform resources stay in one Region.</p>
               <p class="also">Routing follows <strong>three rules</strong>:</p>
 <ul class="concept-list">
   <li><strong>Platform choice:</strong> the alias map sets the route; agents choose aliases, not Regions.</li>
@@ -440,35 +441,36 @@
             <p class="caption">The proxy has run since module 1. This module adds its governed Dev key and approves the catalogue records. CLI proxy calls use the relay.</p>
             <ol class="steps">
               <li><div><span class="pill tag record">record</span>Set the key cap in <code>design-record.yaml</code>.</div></li>
-              <li><div><span class="pill tag command">command</span><code>workshop apply 5</code>: it first prints the governance summary (the three aliases, each with the <code>hr-baseline</code> guardrail, the policy engine, the gateways) and the project team's spend against its budget. It then creates the Dev key, capped as your module 5 input says and restricted to the model you chose in module 3 (<code>model</code> under <code>module_3.inputs</code>), and makes three calls with the raw key before putting it away: a normal question, where you read the answer, the token usage and the cost header <code>x-litellm-response-cost</code>; a question about suing a manager, which the guardrail stops with <code>finish_reason=content_filter</code> and the blocked message; and a call with the other alias, which the proxy refuses with HTTP 403 because the key may use one model only. Only then does it store the key in the AgentCore Identity token vault (this creates the key's API key credential provider), register that provider with the platform and adopt the key, which now appears in the project's <strong>Keys</strong> tab, and wait for the first spend to be recorded. On a re-run the key and provider already exist, so the command reuses them and skips the three calls.</div></li>
+              <li><div><span class="pill tag command">command</span><code>workshop apply 5</code>: it first prints the governance summary (the four aliases, each with the <code>hr-baseline</code> guardrail, the policy engine, the gateways) and the project team's spend against its budget. It then creates the Dev key, capped as your module 5 input says and restricted to the model you chose in module 3 (<code>model</code> under <code>module_3.inputs</code>), and makes three calls with the raw key before putting it away: a normal question, where you read the answer, the token usage and the cost header <code>x-litellm-response-cost</code>; a question about suing a manager, which the guardrail stops with <code>finish_reason=content_filter</code> and the blocked message; and a call with the project's other allowed alias, <code>gpt-6-1-sol</code>, which the proxy refuses with HTTP 403 because the key may use one model only. Only then does it store the key in the AgentCore Identity token vault (this creates the key's API key credential provider), register that provider with the platform and adopt the key, which now appears in the project's <strong>Keys</strong> tab, and wait for the first spend to be recorded. On a re-run the key and provider already exist, so the command reuses them and skips the three calls.</div></li>
               <li><div><span class="pill tag command">command</span><code>workshop cap --dev low</code>: as the Platform admin it lowers the Dev key's cap to half of what the key has spent so far (never more than 0.01 USD; 0.01 when no spend is recorded yet) and makes one more call through the proxy, which refuses it before any model runs: <code>OK BUDGET_EXCEEDED, gracefully: HTTP 422, Budget has been exceeded! Key=… Current cost: …, Max budget: …</code>. The text after the comma is LiteLLM's own wording (its error type is the lower-case <code>budget_exceeded</code>); <code>BUDGET_EXCEEDED</code> is the platform's code for the same refusal, which <code>workshop ask</code> prints and the Playground shows as its "Spending cap reached" alert from module 6 on. If the call still passes, the spend the command read had not been written yet (the proxy writes spend in batches every 10 seconds), so the cap it set is still above the real spend: run the command once more. Then <code>workshop cap --dev restore</code> writes your record's cap back before module 6.</div></li>
-              <li><div><span class="pill tag screen">screen</span>Switch to Platform admin: every persona can read the catalogue, but only the admin may change a record's status. In <strong>Catalogue</strong>, filter on <em>Pending approval</em> and approve the three records that <code>workshop apply 4</code> submitted: <code>hr-assistant-tools</code> (the MCP server of the HR Dev gateway), <code>kb-hr-policies</code> (the HR policy knowledge base) and <code>model-claude-sonnet-5-5</code> (the model alias named in your record). Approved records become searchable. If the screen is unavailable, <code>workshop approve catalogue</code> approves every pending record from the command line.</div></li>
+              <li><div><span class="pill tag screen">screen</span>Switch to Platform admin: every persona can read the catalogue, but only the admin may change a record's status. In <strong>Catalogue</strong>, filter on <em>Pending approval</em> and approve the three records that <code>workshop apply 4</code> submitted: <code>hr-assistant-tools</code> (the MCP server of the HR Dev gateway), <code>kb-hr-policies</code> (the HR policy knowledge base) and <code>model-claude-sonnet-5</code> (the model alias named in your record). Approved records become searchable. If the screen is unavailable, <code>workshop approve catalogue</code> approves every pending record from the command line.</div></li>
               <li><div><span class="pill tag command">command</span><code>workshop inventory</code>: verify the shared platform resources.</div></li>
               <li><div><span class="pill tag record">record</span>Write your four module 5 decisions.</div></li>
             </ol>
 <pre class="code-dark"><code><span class="c"># workshop apply 5, first run (lines shortened; numbers vary)</span>
 == governance: approved models, guardrail, engine, gateways
-  model claude-sonnet-5-5    guardrail {'id': '...', 'version': '...', 'name': 'hr-baseline'}
-  model claude-haiku-4-5     guardrail {'id': '...', 'version': '...', 'name': 'hr-baseline'}
+  model claude-opus-5        guardrail {'id': '...', 'version': '...', 'name': 'hr-baseline'}
+  model claude-sonnet-5      guardrail {'id': '...', 'version': '...', 'name': 'hr-baseline'}
+  model gpt-6-1-sol          guardrail {'id': '...', 'version': '...', 'name': 'hr-baseline'}
   model nova-2-lite          guardrail {'id': '...', 'version': '...', 'name': 'hr-baseline'}
   guardrail hr-baseline  policy engine True  gateways [('hr-assistant', 'dev', 'ENFORCE'), ...]
 == the project's team in the model gateway
-  team hr-assistant: spend 0.0 of 5.0 USD per 7d, tpm 200000, rpm 200, models ['claude-sonnet-5-5', 'claude-haiku-4-5'], keys 0
-== the Dev key for claude-sonnet-5-5: cap 1.0 USD per 7d
-  created key hr-assistant-dev-claude-sonnet-5-5: cap 1.0 USD per 7d, restricted to claude-sonnet-5-5; raw key sk-1a2b...9z8y (shown once)
+  team hr-assistant: spend 0.0 of 5.0 USD per 7d, tpm 200000, rpm 200, models ['claude-sonnet-5', 'gpt-6-1-sol'], keys 0
+== the Dev key for claude-sonnet-5: cap 1.0 USD per 7d
+  created key hr-assistant-dev-claude-sonnet-5: cap 1.0 USD per 7d, restricted to claude-sonnet-5; raw key sk-1a2b...9z8y (shown once)
   hashed key id 1a2b3c4d5e6f7a8b...  spend 0.0 of 1.0 USD, resets ...
 == first calls through the model gateway with the raw key
   the proxy is private (internal load balancer): the call goes through relay agent-platform-model-gateway-relay, a Lambda inside the VPC that forwards the HTTP request as is; the key travels in the Authorization header, the relay adds nothing
   [2.6 s] An HR assistant can help an employee with ...
   usage 25/48 tokens; cost header x-litellm-response-cost: 0.00058
   guardrail: finish_reason=content_filter -&gt; "Sorry, I can't help with that topic. Please contact HR directly."
-OK   claude-haiku-4-5 with this key -&gt; HTTP 403: the key is restricted to claude-sonnet-5-5
+OK   gpt-6-1-sol with this key -&gt; HTTP 403: the key is restricted to claude-sonnet-5 (the team allows gpt-6-1-sol, the key does not)
 == store the key in the AgentCore Identity token vault
-  credential provider arn:aws:bedrock-agentcore:us-east-1:...:token-vault/default/apikeycredentialprovider/litellm-hr-assistant-dev-claude-sonnet-5-5
+  credential provider arn:aws:bedrock-agentcore:us-east-1:...:token-vault/default/apikeycredentialprovider/litellm-hr-assistant-dev-claude-sonnet-5
 == the platform adopts the key
-  adopted: {"alias": "hr-assistant-dev-claude-sonnet-5-5", "env": "dev", "model": "claude-sonnet-5-5", "maxBudget": 1.0, "budgetDuration": "7d", "status": "active"}
+  adopted: {"alias": "hr-assistant-dev-claude-sonnet-5", "env": "dev", "model": "claude-sonnet-5", "maxBudget": 1.0, "budgetDuration": "7d", "status": "active"}
 == spend
-  key hr-assistant-dev-claude-sonnet-5-5: spend 0.00058 USD of 1.0
+  key hr-assistant-dev-claude-sonnet-5: spend 0.00058 USD of 1.0
   team hr-assistant: spend 0.00058 of 5.0 USD per 7d
 OK   model access built
 
@@ -500,7 +502,7 @@ next: `workshop cap --dev low` (the cap drops below the spend and one more call 
             <dl>
               <dt>Model gateway</dt><dd>Controls model access, rates, spend and guardrails. Here it is the LiteLLM proxy.</dd>
               <dt>Proxy</dt><dd>The LiteLLM server that is this workshop's model gateway; model gateway, LiteLLM and proxy name one service.</dd>
-              <dt>Alias</dt><dd>Stable model name, such as <code>claude-sonnet-5-5</code>, mapped to a Bedrock model or inference profile.</dd>
+              <dt>Alias</dt><dd>Stable model name, such as <code>claude-sonnet-5</code>, mapped to a Bedrock model or inference profile.</dd>
               <dt>Team</dt><dd>A project's allowed models, rate limits and budget in LiteLLM.</dd>
               <dt>Virtual key</dt><dd>Model-gateway credential per agent, environment and model, with its own cap.</dd>
               <dt>Cap</dt><dd>Enforced dollar limit that resets each period.</dd>

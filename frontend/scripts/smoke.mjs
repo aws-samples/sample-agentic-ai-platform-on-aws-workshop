@@ -116,7 +116,7 @@ try {
   const isAdmin = USERNAME === "admin";
   if (isAdmin) {
     await expectText(page, "Approved models", "Governance screen renders");
-    await expectText(page, "claude-sonnet-5-5", "models table shows claude-sonnet-5-5");
+    await expectText(page, "claude-sonnet-5", "models table shows claude-sonnet-5");
     await expectText(page, "hr-baseline", "guardrail panel shows hr-baseline");
     await expectText(page, "Policy engine and gateways", "policy engine section renders");
     await expectText(page, "Default limits and caps", "settings form renders");
@@ -170,7 +170,7 @@ try {
   await expectText(page, "harness", "resources include the harness");
   await shot(page, "project-resources");
   await page.goto(`${BASE_URL}/projects/${LT_PROJECT}?tab=keys`, { waitUntil: "networkidle" });
-  await expectText(page, `${LT_PROJECT}-dev-claude-haiku-4-5`, "Keys tab lists the dev key");
+  await expectText(page, `${LT_PROJECT}-dev-claude-sonnet-5`, "Keys tab lists the dev key");
   const raiseCapVisible = await page.getByTestId("raise-cap").isVisible().catch(() => false);
   const createKeyVisible = await page.getByTestId("create-key").isVisible().catch(() => false);
   record("key actions follow the role (Raise cap admin-only, Create key dev + admin)", raiseCapVisible === isAdmin && createKeyVisible, `raise cap ${raiseCapVisible}, create key ${createKeyVisible}`);
@@ -230,7 +230,7 @@ try {
     }
     // 8b. keys: raise cap of the lt dev key to 1.5 then back to 1
     await page.goto(`${BASE_URL}/projects/${LT_PROJECT}?tab=keys`, { waitUntil: "networkidle" });
-    const keyRow = page.getByRole("row", { name: new RegExp(`${LT_PROJECT}-dev-claude-haiku-4-5`) }).first();
+    const keyRow = page.getByRole("row", { name: new RegExp(`${LT_PROJECT}-dev-claude-sonnet-5`) }).first();
     await keyRow.waitFor({ timeout: 30_000 });
     await keyRow.getByRole("radio").first().check();
     await page.getByTestId("raise-cap").click();
@@ -247,7 +247,7 @@ try {
     await page.getByRole("button", { name: "Suspend", exact: true }).click();
     await page.getByTestId("confirm").click();
     await expectText(page, "suspended (blocked in LiteLLM)", "lt dev key suspended", 30_000);
-    await page.getByRole("row", { name: new RegExp(`${LT_PROJECT}-dev-claude-haiku-4-5`) }).first().getByRole("radio").first().check();
+    await page.getByRole("row", { name: new RegExp(`${LT_PROJECT}-dev-claude-sonnet-5`) }).first().getByRole("radio").first().check();
     await page.getByRole("button", { name: "Resume", exact: true }).click();
     await page.getByTestId("confirm").click();
     await expectText(page, "resumed", "lt dev key resumed", 30_000);

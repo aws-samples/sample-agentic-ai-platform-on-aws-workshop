@@ -221,7 +221,7 @@ def main(argv: list[str] | None = None) -> int:
             "LiteLLM master key",
             "LiteLLM liveliness",
             "LiteLLM /v1/models",
-            "LiteLLM chat completion (claude-haiku-4-5)",
+            "LiteLLM chat completion (claude-sonnet-5)",
             "Guardrail blocks legal advice",
             "Guardrail blocks prompt attack",
             "X-Ray trace destination",
@@ -267,7 +267,7 @@ def main(argv: list[str] | None = None) -> int:
         def completion():
             t0 = time.time()
             body = admin.chat_completion(
-                master_key, "claude-haiku-4-5", [{"role": "user", "content": "Say OK"}], max_tokens=5
+                master_key, "claude-sonnet-5", [{"role": "user", "content": "Say OK"}], max_tokens=5
             )
             usage = body.get("usage", {})
             cost = admin.last_response_headers.get("x-litellm-response-cost", "?")
@@ -276,11 +276,11 @@ def main(argv: list[str] | None = None) -> int:
                 f"tokens {usage.get('prompt_tokens')}/{usage.get('completion_tokens')}, cost {cost} USD"
             )
 
-        report.run("LiteLLM chat completion (claude-haiku-4-5)", with_admin(completion))
+        report.run("LiteLLM chat completion (claude-sonnet-5)", with_admin(completion))
 
         def guardrail():
             body = admin.chat_completion(
-                master_key, "claude-haiku-4-5", [{"role": "user", "content": LEGAL_PROMPT}], max_tokens=200
+                master_key, "claude-sonnet-5", [{"role": "user", "content": LEGAL_PROMPT}], max_tokens=200
             )
             choice = body["choices"][0]
             text = (choice["message"].get("content") or "").strip()
@@ -294,7 +294,7 @@ def main(argv: list[str] | None = None) -> int:
 
         def prompt_attack():
             body = admin.chat_completion(
-                master_key, "claude-haiku-4-5", [{"role": "user", "content": INJECTION_PROMPT}], max_tokens=120
+                master_key, "claude-sonnet-5", [{"role": "user", "content": INJECTION_PROMPT}], max_tokens=120
             )
             choice = body["choices"][0]
             text = (choice["message"].get("content") or "").strip()
@@ -533,7 +533,7 @@ def render(report: Report, cfg, personas: dict | None = None, show_passwords: bo
     console.print(table)
     console.print(f"UI:            {cfg.get('ui/url')}")
     console.print(f"API:           {cfg.get('api/url')}")
-    gateway = cfg.get("model-gateway/url")
+    gateway = cfg.model_gateway_url if cfg.get("model-gateway/url") else None
     if gateway and cfg.model_gateway_private:
         console.print(
             f"Model gateway: {gateway}  (private: reachable only from inside the VPC; the platform API, the CLI and this doctor "

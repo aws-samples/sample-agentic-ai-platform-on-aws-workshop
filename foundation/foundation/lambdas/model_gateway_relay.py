@@ -14,11 +14,16 @@ HTTP 4xx/5xx come back the same way; transport failures (DNS, refused, timeout) 
 """
 
 import os
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
 
-BASE_URL = os.environ["MODEL_GATEWAY_URL"].rstrip("/")
+# One scheme, no trailing slash: the Express endpoint attribute arrived with its scheme already in some accounts (2026-10-20),
+# and `https://https://host` fails inside urlopen with a misleading OS error.
+BASE_URL = "https://" + re.sub(
+    r"^(?:https?://)+", "", os.environ["MODEL_GATEWAY_URL"].strip(), flags=re.IGNORECASE
+).rstrip("/")
 MAX_TIMEOUT = 110  # below the function's 120 s, so a slow proxy yields an error payload instead of a Lambda timeout
 
 
