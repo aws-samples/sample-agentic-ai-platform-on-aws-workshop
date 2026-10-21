@@ -421,6 +421,27 @@ def traffic(ctx: Context, count: int = 3) -> int:
     return 0
 
 
+def register_agents(ctx: Context) -> int:
+    """The Catalogue's Agents tab for agents promoted before the promote job wrote AGENT records, or after a registry failure:
+    POST /catalogue/agents/sync as the Platform admin (the same step the promote job runs), one line per project."""
+    head("[Platform admin] register the promoted Prod agents in the catalogue")
+    outcomes = ctx.admin.sync_catalogue_agents()
+    for entry in outcomes:
+        if entry.get("skipped"):
+            state = f"skipped: {entry['skipped']}"
+        elif entry.get("error"):
+            state = f"ERROR: {entry['error']}"
+        else:
+            state = f"{entry.get('status')} ({entry.get('action')}, record {entry.get('recordId')}, version {entry.get('recordVersion')})"
+            if entry.get("warning"):
+                state += f"; {entry['warning']}"
+        say(f"  {str(entry.get('projectId', '?')):<20} {str(entry.get('name', '')):<28} {state}")
+    registered = sum(1 for e in outcomes if e.get("recordId"))
+    ok(f"{registered} agent record(s) registered")
+    look("Catalogue screen", f"{ctx.ui_url}/catalogue?tab=agent")
+    return 0
+
+
 def scores(ctx: Context) -> int:
     from .apply_7 import prod_rows
 

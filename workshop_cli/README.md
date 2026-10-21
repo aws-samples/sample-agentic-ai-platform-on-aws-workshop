@@ -32,6 +32,7 @@ workshop apply 6                   # memory, blueprint v1, Dev agent, release 1 
 #   set prompt_version: v2 in design-record.yaml
 workshop apply 6                   # blueprint v2, release 2 + evaluation (PENDING_APPROVAL)
 workshop approve release && workshop promote        # or the Releases screen as Domain approver
+workshop register-agents           # catch-up: promoted agents into the Catalogue's Agents tab (the promote job does it from now on)
 workshop traffic --prod 3
 workshop apply 7                   # Prod traffic, metrics, feedback, online evaluation
 workshop scores

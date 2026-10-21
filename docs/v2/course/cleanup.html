@@ -3,26 +3,26 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Clean up · Leave the account as you found it</title>
+    <title>Clean up</title>
     <link rel="stylesheet" href="course.css" />
   </head>
   <body>
     <header class="hero">
       <div class="hero-inner">
         <h1>Clean up</h1>
-        <p>Tear down in the reverse order of building. Stacks delete only what they created; everything else you remove yourself.</p>
-        <div class="meta"><span>After module 7</span><span>35 min, mostly waiting</span><span>order</span><span>cost</span><span>reset</span></div>
+        <p>Tear down in the reverse order of building. Stacks delete only what they created; everything the labs created at run time you remove first, and external Okta objects separately.</p>
+        <div class="meta"><span>After Module 5</span><span>35 min, mostly waiting</span><span>order</span><span>cost</span><span>reset</span></div>
       </div>
     </header>
 
     <div class="wrap">
-      <nav class="pager"><a href="module-7-rev.html">←&nbsp;Module 7 · Operate and observe</a><a href="index.html">The&nbsp;path&nbsp;→</a></nav>
+      <nav class="pager" aria-label="Previous and next page"><a href="handoff.html">←&nbsp;Handoff</a><a href="index.html">The path&nbsp;→</a></nav>
       <main>
-        <section id="explain">
-          <h2>Two layers, one order <span class="time">Explain · 5 min</span></h2>
-          <p class="lead">By the end of the day your account holds two kinds of things. The first kind is the stacks, which CloudFormation created. The second kind is what the modules created at run time through the platform: agents, gateways, policies, memories, keys and projects. CloudFormation deletes only the first kind, because no stack knows about an object that an API call created later. So the order matters: we remove the run-time objects first, while the platform API is still there to do it, and take the stacks down after that.</p>
 
-          <div class="glossary">
+<section id="explain">
+<h2>Two layers, one order <span class="time">Explain · 5 min</span></h2>
+<p class="lead">By the end of the day your account holds two kinds of things. The first kind is the stacks, which CloudFormation created. The second kind is what the modules created at run time through the platform: agents, gateways, policies, memories, keys and projects. CloudFormation deletes only the first kind, because no stack knows about an object that an API call created later. So the order matters: we remove the run-time objects first, while the platform API is still there to do it, and take the stacks down after that.</p>
+<div class="glossary">
             <strong>Glossary</strong>
             <dl>
               <dt>Stack</dt><dd>one CloudFormation unit of resources, created and deleted together. <em>Think: a prefab module of the building.</em></dd>
@@ -33,27 +33,26 @@
               <dt>Sweep</dt><dd>the script that removes what CloudFormation leaves behind: secrets in their recovery window, log groups recreated by late log delivery, orphan buckets.</dd>
             </dl>
           </div>
-
-          <figure>
-            <svg viewBox="0 0 960 300" role="img" aria-labelledby="fc-title">
-              <title id="fc-title">Three steps of the clean-up and what stays</title>
-              <defs><marker id="fc-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+<figure>
+            <svg viewBox="0 0 960 300" role="img" aria-labelledby="cu-fc-title">
+              <title id="cu-fc-title">Three steps of the clean-up and what stays</title>
+              <defs><marker id="cu-fc-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
               <rect class="d-box d-account" x="10" y="20" width="290" height="206"/>
               <text class="d-text d-title" x="24" y="44">1 · What you built</text>
-              <text class="d-text d-small" x="24" y="62">modules 3 to 7 · workshop cleanup · ~10 min</text>
+              <text class="d-text d-small" x="24" y="62">2.3.1 to Module 5 · workshop cleanup · ~10 min</text>
               <rect class="d-box d-aws" x="24" y="74" width="262" height="24"/><text class="d-text d-small" x="155" y="90" text-anchor="middle">online evaluation · live endpoint · agents</text>
               <rect class="d-box d-aws" x="24" y="102" width="262" height="24"/><text class="d-text d-small" x="155" y="118" text-anchor="middle">gateways and targets · policies · engine</text>
               <rect class="d-box d-aws" x="24" y="130" width="262" height="24"/><text class="d-text d-small" x="155" y="146" text-anchor="middle">memories · catalogue records · registry</text>
               <rect class="d-box d-aws" x="24" y="158" width="262" height="24"/><text class="d-text d-small" x="155" y="174" text-anchor="middle">keys · providers · roles · projects · domains</text>
               <rect class="d-box d-aws" x="24" y="186" width="262" height="24"/><text class="d-text d-small" x="155" y="202" text-anchor="middle">log groups · filed leave requests · state file</text>
-              <path class="d-arrow" d="M300 120 L336 120" marker-end="url(#fc-arr)"/>
+              <path class="d-arrow" d="M300 120 L336 120" marker-end="url(#cu-fc-arr)"/>
               <rect class="d-box d-account" x="338" y="20" width="290" height="206"/>
               <text class="d-text d-title" x="352" y="44">2 · The stacks</text>
-              <text class="d-text d-small" x="352" y="62">pre-day, modules 1-2 · --stacks · ~13 min</text>
+              <text class="d-text d-small" x="352" y="62">pre-day + foundation · --stacks · ~13 min</text>
               <rect class="d-box d-platform" x="352" y="74" width="262" height="40"/><text class="d-text" x="483" y="91" text-anchor="middle">Landing zone</text><text class="d-text d-small" x="483" y="106" text-anchor="middle">Network · SharedServices · ModelGateway</text>
               <rect class="d-box d-platform" x="352" y="122" width="262" height="40"/><text class="d-text" x="483" y="139" text-anchor="middle">Control plane</text><text class="d-text d-small" x="483" y="154" text-anchor="middle">Web · Auth · Platform</text>
               <rect class="d-box d-platform" x="352" y="170" width="262" height="40"/><text class="d-text" x="483" y="187" text-anchor="middle">Sample data</text><text class="d-text d-small" x="483" y="202" text-anchor="middle">Scenario</text>
-              <path class="d-arrow" d="M628 120 L664 120" marker-end="url(#fc-arr)"/>
+              <path class="d-arrow" d="M628 120 L664 120" marker-end="url(#cu-fc-arr)"/>
               <rect class="d-box d-account" x="666" y="20" width="284" height="206"/>
               <text class="d-text d-title" x="680" y="44">3 · The sweep</text>
               <text class="d-text d-small" x="680" y="62">inside --stacks · ~1 min</text>
@@ -68,32 +67,31 @@
             </svg>
             <figcaption>Read the figure from left to right, which is also the order of the clean-up: first the run-time objects you built, then the eight stacks, and finally the sweep. The strip at the bottom is what stays on purpose, because no step removes it.</figcaption>
           </figure>
-
-          <h3>What goes when</h3>
-          <table class="options">
+<h3>What goes when</h3>
+<table class="options">
             <thead><tr><th>Object</th><th>Created in</th><th>Removed by</th></tr></thead>
             <tbody>
-              <tr><td>Online evaluation config; the <code>live</code> endpoint; the Dev and Prod harnesses</td><td>module 6 (deploy, promote)</td><td><code>workshop cleanup</code>, step 1; the endpoint and the harnesses are waited for in step 4</td></tr>
-              <tr><td>Gateways with their targets; the Cedar policies; the shared policy engine</td><td>module 4</td><td>step 2; the engine only when nothing else uses it</td></tr>
-              <tr><td>Memories</td><td>module 6</td><td>step 3; waited for in step 4</td></tr>
-              <tr><td>Catalogue records; the shared registry</td><td>module 4</td><td>step 5; the registry under the same rule as the engine</td></tr>
-              <tr><td>Credential providers; keys and teams in the model gateway; the IAM roles; projects and domains; settings</td><td>modules 3 to 5</td><td>step 6, mostly through <code>DELETE /projects/{id}?force=true</code></td></tr>
-              <tr><td>Harness and evaluation log groups; leave requests the agent filed; the state file on your laptop</td><td>modules 6 and 7; the state file by every apply command</td><td>steps 7 and 8</td></tr>
-              <tr><td>The eight stacks</td><td>pre-day, modules 1 and 2</td><td><code>workshop cleanup --stacks</code>: <code>cdk destroy --all</code>; the ECR repository that holds the LiteLLM image is emptied automatically; the network interfaces of the deleted harnesses (AgentCore releases them 15 to 30 minutes later; the command waits for them before it destroys) and of the relay Lambda can delay the Network and ModelGateway stacks by up to about 20 minutes</td></tr>
+              <tr><td>Online evaluation config; the <code>live</code> endpoint; the Dev and Prod harnesses</td><td><a href="m4.html#m4-4">Module 4: deploy and promote</a></td><td><code>workshop cleanup</code>, step 1; the endpoint and the harnesses are waited for in step 4</td></tr>
+              <tr><td>Gateways with their targets; the Cedar policies; the shared policy engine</td><td><a href="m2.html#m2-3-2">Module 2: gateway access fixture</a></td><td>step 2; the engine only when nothing else uses it</td></tr>
+              <tr><td>Memories</td><td><a href="m4.html#m4-4">Module 4: agent deployment</a></td><td>step 3; waited for in step 4</td></tr>
+              <tr><td>Catalogue records; the shared registry</td><td><a href="m2.html#m2-3-1">Module 2: registry and gateway setup</a></td><td>step 5; the registry under the same rule as the engine</td></tr>
+              <tr><td>Credential providers; keys and teams in the model gateway; the IAM roles; projects and domains; settings</td><td>Modules 2 to 4 (including Module 3's scratch workload identity <code>workshop_obo_demo</code>)</td><td>step 6, mostly through <code>DELETE /projects/{id}?force=true</code></td></tr>
+              <tr><td>Harness and evaluation log groups; leave requests the agent filed; the state file on your laptop</td><td>Modules 4 and 5; the state file by every apply command</td><td>steps 7 and 8</td></tr>
+              <tr><td>The eight stacks: seven platform stacks and the Idp stand-in</td><td>pre-day setup and the foundation and identity work in Modules 1 and 2</td><td><code>workshop cleanup --stacks</code>: <code>cdk destroy --all</code>; the ECR repository that holds the LiteLLM image is emptied automatically. AgentCore releases deleted harnesses' network interfaces 15 to 30 minutes later; the command waits for them before it destroys the stacks. The relay Lambda's interfaces can delay the ModelGateway and Network stacks by up to about 20 more minutes.</td></tr>
               <tr><td>Secrets in recovery, recreated log groups, orphan buckets</td><td>by-products of the deletion</td><td>the sweep, <code>scripts/cleanup.py</code>, inside <code>--stacks</code></td></tr>
             </tbody>
           </table>
-          <p class="note">The last step, step 9, lists whatever still carries your names, and that list must be empty. You can run the clean-up more than once without harm, because every step looks before it deletes and tolerates "already gone". So if a run stops halfway, you simply start it again.</p>
-        </section>
-
-        <section id="decisions">
-          <h2>How far to go <span class="time">Discuss · 5 min</span></h2>
-          <p class="lead">You can stop the clean-up at three points. The right one depends on who owns the account and on what happens to it next.</p>
-          <div class="card">
+<p class="note">The last step, step 9, lists whatever still carries your names, and that list must be empty. You can run the clean-up more than once without harm, because every step looks before it deletes and tolerates "already gone". So if a run stops halfway, you simply start it again.</p>
+<p class="note">"Step 1" to "step 9" are the steps <code>workshop cleanup</code> prints, not lesson steps.</p>
+</section>
+<section id="decisions">
+<h2>How far to go <span class="time">Discuss · 5 min</span></h2>
+<p class="lead">You can stop the clean-up at three points. The right one depends on who owns the account and on what happens to it next.</p>
+<div class="card">
             <table class="options">
               <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
               <tbody>
-                <tr><td>Keep the platform, remove what you built: <code>workshop cleanup</code></td><td class="good">ten minutes; the platform is ready for another run of the modules</td><td class="bad">the landing zone keeps costing about 0.28 USD per hour: the model gateway and its database about 0.10, the nine interface endpoints about 0.18</td><td class="when">you will run the modules again this week</td></tr>
+                <tr><td>Keep the platform, remove what you built: <code>workshop cleanup</code></td><td class="good">ten minutes; the platform is ready for another run of the modules</td><td class="bad">the landing zone keeps costing about 0.28 USD per hour (about 0.36 with the corporate IdP): the model gateway and its database about 0.10, the nine interface endpoints about 0.18</td><td class="when">you will run the modules again this week</td></tr>
                 <tr class="ours"><td>Remove everything: <code>workshop cleanup --stacks</code></td><td class="good">nothing left to pay for; the account is as you found it</td><td class="bad">about 25 minutes, and the network interfaces of the harnesses and of the relay Lambda can hold the Network and ModelGateway stacks for up to about 20 more (the command waits for the harness interfaces first and retries once); a later redeploy needs the sweep to have run</td><td class="when">your own account, done with the workshop</td></tr>
                 <tr><td>Let Workshop Studio do it</td><td class="good">nothing to do: the event account is deleted after the event</td><td class="bad">you never see the order, or what a stack does not know about</td><td class="when">an event account, and no time left</td></tr>
               </tbody>
@@ -103,29 +101,45 @@
               <p class="prod"><strong>Production path.</strong> Deletion is written as code. The control plane gets an "offboard project" job that runs the same steps you run today, and the stacks get a stage of their own in the pipeline.</p>
             </div>
           </div>
-        </section>
-
-        <section id="hands-on">
-          <h2>Hands-on <span class="time">25 min · 10 attended</span></h2>
-          <div class="hands-on">
+</section>
+<section id="hands-on">
+<h2>Hands-on <span class="time">25 min · 10 attended</span></h2>
+<div class="hands-on">
             <strong>Reverse the day</strong>
             <ol class="steps">
               <li><span><span class="pill tag command">command</span><code>workshop cleanup --dry-run</code>: the inventory by name. What you built, what is shared, what belongs to others. Nothing is deleted.</span></li>
               <li><span><span class="pill tag command">command</span><code>workshop cleanup</code>, then type <code>yes</code>. Nine steps in reverse order; most of the ten minutes is AgentCore deleting harnesses and memories in the background. If it stops, run it again.</span></li>
               <li><span><span class="pill tag screen">screen</span>Platform UI: Domains and projects is empty; Governance shows no gateways. AgentCore console: no harness, gateway or memory with your names.</span></li>
-              <li><span><span class="pill tag command">command</span><code>workshop cleanup --stacks</code>, answer <code>yes</code> to each prompt: <code>cdk destroy</code> of the eight stacks, the corporate IdP included, about 13 minutes, then the sweep. Your own account; in an event account this step is optional.</span></li>
+              <li><span><span class="pill tag command">command</span><code>workshop cleanup --stacks</code>, answer <code>yes</code> to each prompt: <code>cdk destroy</code> of the eight stacks (seven platform stacks and the Idp stand-in), about 13 minutes, then the sweep. Your own account; in an event account this step is optional.</span></li>
               <li><span><span class="pill tag command">command</span><code>workshop status</code>: eight times <em>not deployed</em>. CloudFormation console: of the workshop's stacks only <code>CDKToolkit</code> is left.</span></li>
-              <li><span><span class="pill tag record">record</span>Add two lines to the module 7 backlog in <code>design-record.yaml</code>: who deletes what in your organisation, and how deletion is tested.</span></li>
+              <li><span><span class="pill tag record">record</span>Add two lines to the <code>module_7</code> backlog in <code>design-record.yaml</code>: who deletes what in your organisation, and how deletion is tested.</span></li>
             </ol>
-            <p class="caption">Once the stacks are gone, the cost stops with them. If the deletion seems to pause on the Network or the ModelGateway stack, nothing is wrong: it is waiting for network interfaces to be released. AgentCore returns the deleted harnesses' interfaces in the harness subnets 15 to 30 minutes after the harnesses are gone, and the relay Lambda's interfaces go with the ModelGateway stack; the command waits for the harness interfaces before it runs <code>cdk destroy</code>, prints a count every minute, and destroys once more after a <code>DELETE_FAILED</code>. If the Network stack is still in <code>DELETE_FAILED</code> afterwards, run <code>workshop cleanup --stacks</code> again: CloudFormation retries only the resources that failed. A few things stay in the account on purpose: the Transaction Search setting, the two AgentCore Runtime service-linked roles (one for the runtime's identity, one for its network interfaces in your VPC), the CDK bootstrap stack, Bedrock model access and the metric history. Of these, only the bootstrap bucket costs anything, and that is cents per month.</p>
+            <p class="caption">Once the stacks are gone, the cost stops with them. If the deletion pauses on the Network or the ModelGateway stack, check whether it is waiting for network interfaces to be released. AgentCore returns the deleted harnesses' interfaces in the harness subnets 15 to 30 minutes after the harnesses are gone, and the relay Lambda's interfaces go with the ModelGateway stack; the command waits for the harness interfaces before it runs <code>cdk destroy</code>, prints a count every minute, and destroys once more after a <code>DELETE_FAILED</code>. If the Network stack is still in <code>DELETE_FAILED</code> afterwards, run <code>workshop cleanup --stacks</code> again: CloudFormation retries only the resources that failed. A few things stay in the account on purpose: the Transaction Search setting, the two AgentCore Runtime service-linked roles (one for the runtime's identity, one for its network interfaces in your VPC), the CDK bootstrap stack, Bedrock model access and the metric history. Of these, only the bootstrap bucket costs anything, and that is cents per month.</p>
           </div>
-          <div class="remember">
+</section>
+<section id="okta">
+<h2>External Okta objects and the editor credential</h2>
+<p>The AWS clean-up does not touch anything outside the account. If your event used the central Okta provisioning flow, remove its objects separately, from the editor, with the same event setting used to create them:</p>
+<pre class="code-dark"><code>source /usr/local/bin/load-central-okta-env
+uv run wks-okta delete --all
+uv run wks-okta verify                  # zero tenant and decoy objects for WKS_OKTA_EVENT
+# organisers only, after every participant: uv run wks-okta delete --all --org</code></pre>
+<p>The organiser revokes the workshop Okta token when the event ends; it is shared by every authorised editor, so the account boundary does not limit what it can do. Never record its value. Keycloak, the employee login used by the labs, lives in the <code>AgentPlatform-Idp</code> stack and goes with the stacks.</p>
+</section>
+<section id="retained">
+<h2>Decide and record what stays</h2>
+<p>Give every created resource a verified deletion state or an authorised retention decision: <strong>deleted and verified</strong>, <strong>retained with authorisation</strong> (owner, reason, review date, access policy, expected cost), <strong>handed to the event or shared owner with acceptance</strong>, or <strong>pending</strong>. Stopping an agent, withdrawing a catalogue record and deleting its data are separate actions; hiding a record does not revoke access.</p>
+<p>Retain a resource only when a consumer, a recovery requirement or a retention obligation needs it. Keeping a whole environment makes later work easier but keeps runtime, storage and telemetry obligations; keeping sanitised evidence alone has a small footprint. In an event account, the event operator's reset is not a deletion receipt for what you created: record what you removed and what you left to the event.</p>
+<p>If a step fails, keep the exact resource, operation state, sanitised error and dependency, and rerun <code>workshop cleanup</code>: every step looks before it deletes. Avoid broad name-based deletion, and never weaken a retention control to make clean-up look complete.</p>
+<div class="remember">
             <strong>Remember.</strong> Whatever you build up, you tear down in reverse order. If deleting turns out to be hard, you built without thinking about how you would leave.
           </div>
-          <p class="note">To read more, see <code>workshop_cli/README.md</code> for the three <code>workshop cleanup</code> forms and their timings, the Time and cost section of <code>foundation/README.md</code> for what <code>cdk destroy</code> and the sweep leave behind, and the CDK guide on <a href="https://docs.aws.amazon.com/cdk/v2/guide/ref-cli-cmd-destroy.html">cdk destroy</a>.</p>
-        </section>
+<p class="note">To read more, see <code>workshop_cli/README.md</code> for the three <code>workshop cleanup</code> forms and their timings, the Time and cost section of <code>foundation/README.md</code> for what <code>cdk destroy</code> and the sweep leave behind, and the CDK guide on <a href="https://docs.aws.amazon.com/cdk/v2/guide/ref-cli-cmd-destroy.html">cdk destroy</a>.</p>
+</section>
+
       </main>
-      <nav class="pager"><a href="module-7-rev.html">←&nbsp;Module 7 · Operate and observe</a><a href="index.html">The&nbsp;path&nbsp;→</a></nav>
+      <nav class="pager" aria-label="Previous and next page"><a href="handoff.html">←&nbsp;Handoff</a><a href="index.html">The path&nbsp;→</a></nav>
+
       <details class="toc-disclosure" id="course-contents">
         <summary class="toc-toggle" aria-label="Table of contents" title="Table of contents" aria-controls="contents-navigation">
           <svg class="toc-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h11M4 12h11M4 19h11m3-10 3 3-3 3" /></svg>
@@ -133,16 +147,15 @@
         </summary>
         <nav class="toc" id="contents-navigation" aria-label="Table of contents">
           <strong>Contents</strong>
-          <a href="index.html">The path</a>
-          <a href="index.html#start">Get started <span class="d">15 min</span></a>
-          <a href="module-1-rev.html">1 · Landing zone <span class="d">40 min</span></a>
-          <a href="module-2-rev.html">2 · Identity <span class="d">40 min</span></a>
-          <a href="module-3-rev.html">3 · Control plane and governance <span class="d">40 min</span></a>
-          <a href="module-4-rev.html">4 · Tool plane <span class="d">40 min</span></a>
-          <a href="module-5-rev.html">5 · Model gateway <span class="d">40 min</span></a>
-          <a href="module-6-rev.html">6 · AgentOps <span class="d">40 min</span></a>
-          <a href="module-7-rev.html">7 · Operate and observe <span class="d">40 min</span></a>
-          <a href="cleanup.html">Clean up <span class="d">35 min</span></a>
+          <a href="index.html">The learning path</a>
+          <a href="intro.html">Introduction</a>
+          <a href="m1.html">Module 1 · Requirements, personas and architecture</a>
+          <a href="m2.html">Module 2 · Build the shared platform</a>
+          <a href="m3.html">Module 3 · Workloads and blueprints</a>
+          <a href="m4.html">Module 4 · Access, governance and AgentOps</a>
+          <a href="m5.html">Module 5 · Operate and improve</a>
+          <a href="handoff.html">Handoff</a>
+          <a href="cleanup.html">Clean up</a>
         </nav>
       </details>
     </div>

@@ -295,6 +295,11 @@ class PlatformClient:
         """status: APPROVED | REJECTED | DEPRECATED."""
         return self._post(f"/catalogue/{record_id}/status", {"status": status, "reason": reason})
 
+    def sync_catalogue_agents(self) -> list:
+        """POST /catalogue/agents/sync (admin): every project's promoted Prod agent as an approved AGENT record of the registry;
+        one outcome per project ({projectId, releaseId?, name, recordId? | skipped | error})."""
+        return _as_list(self._post("/catalogue/agents/sync"), "agents")
+
     def governance(self) -> dict:
         return self._get("/governance")
 

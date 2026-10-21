@@ -28,6 +28,7 @@ from backend_testlib import (  # noqa: E402
     FakeIdentity,
     FakeLambda,
     FakeLiteLLMServer,
+    FakeRegistry,
     FakeRoles,
     FakeSession,
     call,
@@ -35,6 +36,7 @@ from backend_testlib import (  # noqa: E402
 )
 from platform_api import worker_jobs  # noqa: E402
 from platform_api.services import clients  # noqa: E402
+from platform_api.services import registry as registry_service  # noqa: E402
 from platform_sdk.litellm import LiteLLMAdmin  # noqa: E402
 
 from platform_sdk import agentcore, blueprint  # noqa: E402
@@ -60,9 +62,11 @@ def _env(monkeypatch):
 
     db.reset()
     clients.reset()
+    registry_service.reset()
     yield
     db.reset()
     clients.reset()
+    registry_service.reset()
 
 
 @pytest.fixture
@@ -118,13 +122,14 @@ def fakes(monkeypatch, table):
 @pytest.fixture
 def ready(fakes, monkeypatch):
     """Domain, project (both environments registered with gateway, targets and memory) and the AgentCore fakes installed."""
-    fake, fake_lambda = FakeAgentCore(), FakeLambda()
+    fake, fake_lambda, fake_registry = FakeAgentCore(), FakeLambda(), FakeRegistry()
     worker_jobs.register()  # another test module may have unregistered handlers through monkeypatch
     for name in ("create_or_update_harness", "ensure_endpoint", "ensure_online_evaluation", "invoke"):
         monkeypatch.setattr(agentcore, name, getattr(fake, name))
     monkeypatch.setattr(clients, "agentcore_control", lambda: FakeControl(fake))
     monkeypatch.setattr(clients, "lambda_client", lambda: fake_lambda)
     monkeypatch.setattr(clients, "cloudwatch", lambda: None)
+    monkeypatch.setattr(clients, "registry_control", lambda: fake_registry)  # the promote job's AGENT record
     status, _ = call("POST", "/domains", body={"domainId": "people-ops", "name": "People Ops"})
     assert status == 201
     status, project = call(
@@ -172,4 +177,6 @@ def ready(fakes, monkeypatch):
             id=f"{memory_name}-xyz",
         )
     bp = blueprint.load(BLUEPRINT_FILE)
-    return SimpleNamespace(agentcore=fake, lambda_client=fake_lambda, fakes=fakes, project=project, blueprint=bp)
+    return SimpleNamespace(
+        agentcore=fake, lambda_client=fake_lambda, registry=fake_registry, fakes=fakes, project=project, blueprint=bp
+    )

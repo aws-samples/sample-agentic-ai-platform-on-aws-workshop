@@ -173,11 +173,31 @@ figcaption { font-size: 13px; color: var(--gray); margin-top: 6px; }
 .toc-toggle .toc-collapse, .toc-disclosure[open] .toc-expand { display: none; }
 .toc-disclosure[open] .toc-collapse { display: block; }
 .toc-disclosure[open] .toc-toggle { background: var(--orange); color: var(--black); border-color: var(--orange); }
-nav.toc { position: absolute; bottom: calc(100% + 12px); left: 0; width: min(340px, calc(100vw - 40px)); max-height: calc(100dvh - var(--toc-button-size) - 52px); overflow: auto; background: #fff; border: 1px solid #dbe2ea; border-radius: 14px; padding: 20px; font-size: 14px; box-shadow: 0 14px 50px #0f172a26; }
+nav.toc { position: absolute; bottom: calc(100% + 12px); left: 0; width: min(376px, calc(100vw - 40px)); max-height: calc(100dvh - var(--toc-button-size) - 52px); overflow: auto; overscroll-behavior: contain; background: #fff; border: 1px solid #dbe2ea; border-radius: 14px; padding: 20px; font-size: 14px; box-shadow: 0 14px 50px #0f172a26; }
 nav.toc strong { display: block; margin-bottom: 10px; font-size: 16px; }
 nav.toc a { display: flex; justify-content: space-between; gap: 12px; color: var(--black); text-decoration: none; padding: 8px 10px; border-radius: 7px; }
 nav.toc a .d { flex: none; font-size: 12px; color: var(--gray); }
 nav.toc a:hover, nav.toc a.here { background: #fff4e2; color: #804600; }
+nav.toc .toc-row { display: flex; align-items: stretch; gap: 2px; }
+nav.toc .toc-row > a { flex: 1 1 auto; min-width: 0; }
+nav.toc .toc-more { flex: none; display: grid; place-items: center; width: 30px; margin: 0; padding: 0; border: 0; border-radius: 7px; background: none; color: var(--gray); cursor: pointer; }
+nav.toc .toc-more:hover { background: #fff4e2; color: #804600; }
+nav.toc .toc-more svg { width: 18px; height: 18px; transition: transform 0.18s ease; }
+nav.toc .toc-more[aria-expanded="true"] svg { transform: rotate(-90deg); }
+nav.toc .toc-sub { margin: 2px 0 6px 14px; padding-left: 4px; border-left: 2px solid #e9edf1; }
+nav.toc .toc-sub a { justify-content: flex-start; align-items: baseline; gap: 8px; padding: 5px 10px 5px 12px; font-size: 13px; color: #3a4452; }
+nav.toc .toc-sub a:hover { color: #804600; }
+nav.toc .toc-sub a.dec { padding-left: 24px; }
+nav.toc .toc-sub .n { flex: none; font-size: 11px; font-weight: 700; line-height: 1.5; color: #fff; background: var(--black); border-radius: 5px; padding: 0 6px; }
+nav.toc .toc-sub .t { min-width: 0; }
+@media (prefers-reduced-motion: reduce) { nav.toc .toc-more svg { transition: none; } }
+
+/* back to top, the floating button on the right, level with the contents button */
+.to-top { position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); right: max(20px, env(safe-area-inset-right)); z-index: 20; display: grid; place-items: center; width: var(--toc-button-size); height: var(--toc-button-size); background: var(--black); color: #fff; border: 1px solid #64748b; border-radius: 16px; box-shadow: 0 4px 14px #0f172a26; transition: opacity 0.2s, transform 0.2s, visibility 0.2s; }
+.to-top:hover { background: var(--orange); color: var(--black); border-color: var(--orange); }
+.to-top svg { width: 28px; height: 28px; }
+.to-top.at-top { opacity: 0; visibility: hidden; transform: translateY(8px); }
+@media (prefers-reduced-motion: reduce) { .to-top { transition: none; } }
 
 @media (max-width: 900px) {
   .rail { grid-template-columns: repeat(2, 1fr); }
@@ -191,7 +211,7 @@ nav.toc a:hover, nav.toc a.here { background: #fff4e2; color: #804600; }
   figure svg { min-width: 720px; }
   .glossary dl { grid-template-columns: 1fr; }
 }
-@media print { .toc-disclosure, .pager { display: none !important; } }
+@media print { .toc-disclosure, .to-top, .pager { display: none !important; } }
 
 /* Get started: the setup table (number badge, Mac and Windows command lines, what the step does) */
 table.setup { width: 100%; border-collapse: separate; border-spacing: 0; margin: 8px 0 4px; }
@@ -221,7 +241,7 @@ figure.arch svg { min-width: 0; }
 .d-tiny { font-size: 10.5px; fill: var(--gray); }
 @media (max-width: 900px) { figure.arch svg { min-width: 1000px; } }
 figure.arch img { width: 100%; height: auto; display: block; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
-figure.arch a { display: block; }
+figure.arch > a { display: block; }
 
 /* spacing utilities: 0 / 4 / 8 / 16 / 24 / 32 px. Last in the file so they win over component rules */
 .my-0 { margin-top: 0 !important; margin-bottom: 0 !important; }
@@ -286,3 +306,33 @@ figure.arch a { display: block; }
 .mr-3 { margin-right: 16px !important; }
 .mr-4 { margin-right: 24px !important; }
 .mr-5 { margin-right: 32px !important; }
+
+/* five-module rail and grouped contents menu (course pages of this workshop) */
+.rail.five { grid-template-columns: repeat(4, 1fr 0) 1fr; }
+nav.toc .grp { display: block; margin: 12px 0 2px; padding: 0 10px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: var(--gray); }
+nav.toc a.sub { padding-left: 22px; font-size: 14px; }
+.pager span:empty { flex: 1; }
+@media (max-width: 900px) { .rail.five { grid-template-columns: repeat(2, 1fr); } }
+/* setup command table: wrap long commands and keep any remaining width inside the table */
+table.setup td.cmd div { min-width: 0; }
+table.setup td.cmd div code { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 900px) {
+  table.setup { display: block; overflow-x: auto; }
+  table.setup td.cmd { width: auto; min-width: 14em; }
+  .hands-on { overflow-x: auto; }
+  pre.code-dark { max-width: 100%; }
+}
+
+/* consolidated module pages: one block per former lesson, its headings one level down with the same look */
+.lesson { scroll-margin-top: 24px; }
+.lesson + .lesson { margin-top: 36px; }
+header.lesson-hero { background: var(--black); color: #fff; border-radius: 8px; border-bottom: 6px solid var(--orange); padding: 20px var(--section-gutter) 18px; margin: 0 0 22px; }
+header.lesson-hero h2 { color: #fff; border-left: 0; padding-left: 0; margin: 0 0 6px; font-size: 26px; line-height: 1.4; }
+header.lesson-hero p { color: #d5dbdb; margin: 4px 0 12px; max-width: 980px; font-size: 16px; }
+h3.h2 { margin: 0 0 12px; font-size: 24px; color: var(--black); border-left: 5px solid var(--orange); padding-left: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+h3.h2 .time { font-size: 13px; font-weight: 600; color: var(--black); background: #ffe3b3; border-radius: 999px; padding: 2px 10px; margin-left: auto; }
+h3.h2 .sec-no { font-size: 12px; font-weight: 700; color: #fff; background: var(--black); border-radius: 6px; padding: 2px 8px; }
+h4.h3 { margin: 22px 0 8px; font-size: 18px; color: var(--black); }
+h5.q { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; font-size: 17px; color: var(--black); }
+h5.q .id { background: var(--black); color: #fff; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 700; }
+@media (max-width: 900px) { h3.h2 .time { margin-left: 0; } header.lesson-hero h2 { font-size: 22px; } }

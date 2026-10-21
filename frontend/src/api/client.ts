@@ -7,6 +7,7 @@ import type {
   AgentKey,
   Blueprint,
   BlueprintCreate,
+  CatalogueAgentSync,
   CatalogueRecord,
   CatalogueStatusResult,
   DecisionStatus,
@@ -404,6 +405,11 @@ export class PlatformClient {
 
   setCatalogueStatus(recordId: string, status: DecisionStatus, reason = ""): Promise<CatalogueStatusResult> {
     return this.post(`/catalogue/${encodeURIComponent(recordId)}/status`, { status, reason });
+  }
+
+  /** Admin only: register every project's promoted Prod agent as an approved AGENT record (the promote job's catalogue step, again). */
+  syncCatalogueAgents(): Promise<CatalogueAgentSync> {
+    return this.post("/catalogue/agents/sync", {});
   }
 
   governance(signal?: AbortSignal): Promise<Governance> {

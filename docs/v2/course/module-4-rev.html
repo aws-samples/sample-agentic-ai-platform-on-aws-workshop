@@ -524,7 +524,7 @@ OK   on behalf of alex.rivera: the HR API saw sub identical to T0, audience ['hr
           <p class="lead">The tool plane now has <strong>three gateways, one policy engine and three catalogue records</strong>. HR Dev enforces policy; the other gateways remain in LOG_ONLY. Module 6's agents use the VPC's Gateway PrivateLink endpoint. Beside them, the on-behalf-of gateway has one OpenAPI target, the HR API, which lives in module 2's IdP stack outside the landing zone and so outside this figure.</p>
           <figure class="arch">
             <!-- arch-svg:start -->
-            <a href="arch/module-4.svg" target="_blank" rel="noopener"><img src="arch/module-4.svg" alt="AWS architecture after module 4: Module 4 · the tool plane" loading="lazy"/></a>
+            <a href="arch/module-4.svg" target="_blank" rel="noopener"><img src="arch/module-4.svg" width="1600" height="1340" alt="AWS architecture after module 4: Module 4 · the tool plane" loading="lazy"/></a>
             <!-- arch-svg:end -->
             <figcaption><strong>Changed:</strong> AgentCore Gateway (including the on-behalf-of gateway and its OpenAPI target), Policy, Agent Registry, Lambda tools and CloudWatch. The on-behalf-of gateway admits realm tokens instead of IAM roles and is not attached to the policy engine. The KB filter stays at its target. The diagram shows HR Dev after the enforcement test. Click to open full size.</figcaption>
           </figure>
@@ -571,9 +571,11 @@ OK   on behalf of alex.rivera: the HR API saw sub identical to T0, audience ['hr
           <a href="module-6-rev.html">6 · AgentOps <span class="d">40 min</span></a>
           <a href="module-7-rev.html">7 · Operate and observe <span class="d">40 min</span></a>
           <a href="cleanup.html">Clean up <span class="d">35 min</span></a>
-        <a href="#glossary">Glossary</a>
         </nav>
       </details>
+      <a class="to-top at-top" href="#top" aria-label="Back to top" title="Back to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-7 7 7-7 7 7" /></svg>
+      </a>
     </div>
     <script src="course.js"></script>
   </body>

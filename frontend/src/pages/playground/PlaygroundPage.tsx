@@ -28,12 +28,12 @@ import { useMe } from "../../auth/MeContext";
 import { CopyText } from "../../components/CopyText";
 import { EmptyState } from "../../components/EmptyState";
 import { ErrorAlert } from "../../components/ErrorAlert";
-import { InfoFormField } from "../../components/InfoPopover";
+import { InfoFormField, InfoHeader } from "../../components/InfoPopover";
 import { useBreadcrumbs } from "../../layout/breadcrumbs";
 import { formatErrorContent, useNotifications } from "../../layout/notifications";
 import { formatDateTime, formatNumber, formatRelative, formatSeconds, formatUsd } from "../../utils/format";
 import { AnswerMarkdown } from "./AnswerMarkdown";
-import { SUGGESTED_PROMPTS, budgetDetails, expectedSeconds, harnessByEnv, newSessionId, usageSummary, type Turn } from "./playgroundHelpers";
+import { SUGGESTED_PROMPTS, budgetDetails, harnessByEnv, newSessionId, usageSummary, type Turn } from "./playgroundHelpers";
 
 const EMPTY_HINTS: Record<Env, string> = {
   dev: "The deploy job (POST /projects/{id}/deploy, or a release run) puts a blueprint version on Dev; the harness appears here as soon as the job registers it.",
@@ -179,26 +179,46 @@ export function PlaygroundPage() {
             data-testid="playground-project"
           />
         </FormField>
-        <FormField label="Environment" description={harness ? `${harness.name} · version ${harness.version ?? "?"} (blueprint v${harness.blueprintVersion ?? "?"}) · endpoint ${harness.qualifier}` : resources.isLoading ? "Checking the registered harness…" : `No ${envLabel} harness registered`}>
-          <SegmentedControl
-            selectedId={env}
-            options={[
-              { id: "dev", text: harnesses.dev ? "Dev" : "Dev (no harness)" },
-              { id: "prod", text: harnesses.prod ? "Prod" : "Prod (no harness)" },
-            ]}
-            onChange={({ detail }) => update("env", detail.selectedId)}
-          />
-        </FormField>
-        <InfoFormField label="Session" help="One AgentCore runtime session per conversation; memory and context stay within it">
-          <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-            <span data-testid="session-id">
-              <CopyText value={sessionId} max={40} />
-            </span>
-            <Button onClick={() => startSession(`Session ${sessionId.slice(0, 8)}… closed; the next turn starts a fresh microVM (25-35 s).`)} disabled={busy} iconName="refresh" data-testid="new-session">
-              New session
-            </Button>
+        <FormField label="Environment">
+          <SpaceBetween size="xs">
+            <SegmentedControl
+              selectedId={env}
+              options={[
+                { id: "dev", text: harnesses.dev ? "Dev" : "Dev" },
+                { id: "prod", text: harnesses.prod ? "Prod" : "Prod" },
+              ]}
+              onChange={({ detail }) => update("env", detail.selectedId)}
+            />
+            <Box variant="small" color="text-body-secondary">
+               {harness ? (
+                  <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+                    <Badge color="green">{harness.name}</Badge>
+                    <Badge color="blue">Blueprint v{harness.blueprintVersion ?? "?"}</Badge>
+                    <Badge color="grey">endpoint {harness.qualifier}</Badge>
+                  </SpaceBetween>
+                ) : (
+                  <Box variant="small" color="text-body-secondary">
+                    {resources.isLoading ? (
+                      <StatusIndicator type="loading">Checking…</StatusIndicator>
+                    ) : (
+                      <StatusIndicator type="warning">No {envLabel} harness registered</StatusIndicator>
+                    )}
+                  </Box>
+                )}
+            </Box>
           </SpaceBetween>
-        </InfoFormField>
+        </FormField>
+        <SpaceBetween size="xs">
+          <InfoHeader label="Session" help="One AgentCore runtime session per conversation; memory and context stay within it">
+            <Box variant="awsui-key-label" display="inline">Session</Box>
+          </InfoHeader>
+          <span data-testid="session-id">
+            <CopyText value={sessionId} max={40} />
+          </span>
+          <Button onClick={() => startSession(`Session ${sessionId.slice(0, 8)}… closed; the next turn starts a fresh microVM (25-35 s).`)} disabled={busy} iconName="refresh" data-testid="new-session">
+            New session
+          </Button>
+        </SpaceBetween>
       </ColumnLayout>
     </Container>
   );
@@ -236,12 +256,7 @@ export function PlaygroundPage() {
         {projectId && harness ? (
           <Container
             header={
-              <Header
-                variant="h2"
-                description={`${projectId} · ${envLabel} · ${harness.name} (${harness.qualifier})${harness.model ? ` · model ${harness.model} through the model gateway` : ""}`}
-              >
-                Conversation
-              </Header>
+              <InfoHeader help="The first turn of a session takes ~30 s for a fresh microVM to start and load the agent and tools. Subsequent turns answer in far shorter turnaround.">Conversation</InfoHeader>
             }
             footer={
               <SpaceBetween size="xs">
@@ -258,11 +273,6 @@ export function PlaygroundPage() {
                   maxRows={4}
                   data-testid="prompt-input"
                 />
-                <Box variant="small" color="text-body-secondary">
-                  {turns.length === 0
-                    ? "The first turn of a session takes 25-35 s (a fresh microVM starts and the agent loads its tools); later turns answer in about 4 s."
-                    : `Turn ${turns.length + 1} of this session: expect ${expectedSeconds(turns.length)}.`}
-                </Box>
               </SpaceBetween>
             }
           >
@@ -380,7 +390,7 @@ function TurnView({
         {running ? (
           <SpaceBetween size="xxs">
             <Box color="text-body-secondary">
-              {turn.status === "queued" ? "Queued…" : "Thinking…"} {formatSeconds(elapsed)} elapsed; expect {expectedSeconds(index)}.
+              {turn.status === "queued" ? "Queued…" : "Thinking…"} {formatSeconds(elapsed)}
             </Box>
             {turn.jobId ? (
               <Box variant="small" color="text-body-secondary">

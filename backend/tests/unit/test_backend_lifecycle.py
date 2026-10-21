@@ -587,6 +587,7 @@ def test_evaluation_needs_thresholds_on_the_blueprint(ready):
 def test_promote_job_deploys_prod_pins_live_and_enables_online_evaluation(ready):
     create_blueprint(ready)
     deploy(ready, 1)
+    call("PUT", "/settings", body={"registryId": "reg-1", "registryArn": "arn:reg-1"})  # module 4's catalogue registry
     status, release = call(
         "POST", "/projects/hr-assistant/releases", body={"blueprintVersion": 1, "autoRun": False}, persona="developer"
     )
@@ -638,6 +639,28 @@ def test_promote_job_deploys_prod_pins_live_and_enables_online_evaluation(ready)
     assert done["promotion"]["jobId"] == accepted["jobId"] and done["promotion"]["at"].endswith("Z")
     assert done["promotion"]["onlineEvaluationConfigId"] == "hr_assistant_prod_online_eval-id"
 
+    # the Catalogue's Agents tab: the Prod agent is an approved AGENT record (A2A agent card on the live endpoint)
+    entry = done["promotion"]["registryRecord"]
+    assert entry == out["registryRecord"]
+    assert entry["name"] == "hr-assistant-agent" and entry["status"] == "APPROVED" and entry["action"] == "created"
+    assert entry["recordVersion"] == "1" and entry["recordArn"].endswith(f"/record/{entry['recordId']}")
+    assert entry["registryId"] == "reg-1" and "warning" not in entry and "error" not in entry
+    stored = ready.registry.records[entry["recordId"]]
+    assert stored["recordType"] == "AGENT" and stored["displayName"] == "HR Assistant (Prod)"
+    assert stored["tags"] == {"ManagedBy": "platform", "ProjectId": "hr-assistant"}
+    assert "approved by approver and promoted to Prod by approver" in stored["statusReason"]
+    descriptor = stored["descriptors"]["a2aAgentCard"]
+    assert descriptor["dataSchemaVersion"] == "0.3"  # the registry rejects "0.3.0" (AWS docs, 2026-10-21)
+    card = json.loads(descriptor["data"])
+    assert card["protocolVersion"] == "0.3.0" and card["name"] == "HR Assistant" and card["version"] == "1"
+    assert card["url"].startswith("https://bedrock-agentcore.us-east-1.amazonaws.com/harnesses/invoke?harnessArn=")
+    assert card["url"].endswith("&qualifier=live") and "hr_assistant_prod-ABC123" in card["url"]
+    assert card["skills"][0]["id"] == "hr-assistant" and "people-ops" in card["skills"][0]["tags"]
+    assert set(card) >= {"capabilities", "defaultInputModes", "defaultOutputModes", "description", "skills"}
+    assert card["provider"] == {"organization": "people-ops", "url": CONFIG["ui/url"]}
+    # DRAFT -> submitted -> approved, in that order (no auto-approval rules on the registry)
+    assert [kind for kind, _ in ready.registry.calls] == ["list", "create", "get", "submit", "get", "status"]
+
     # AgentCore calls: prod harness, live endpoint on the new version, online evaluation on the live log group
     kinds = [c[0] for c in ready.agentcore.calls]
     assert kinds[-3:] == ["harness", "endpoint", "online"]
@@ -675,9 +698,139 @@ def test_promote_job_deploys_prod_pins_live_and_enables_online_evaluation(ready)
     assert online["id"] == "hr_assistant_prod_online_eval-id" and online["attributes"]["logGroup"] == out["logGroup"]
     assert online["attributes"]["evaluators"] == evaluators
     assert ("credential_provider", "litellm-hr-assistant-prod-claude-sonnet-5") in rows
+    agent_row = rows[("registry_record", "hr-assistant-agent")]
+    assert agent_row["id"] == entry["recordId"] and agent_row["attributes"]["recordType"] == "AGENT"
+    assert agent_row["attributes"]["registryId"] == "reg-1"  # the same shape as the tools record apply 4 registers
+    assert (
+        agent_row["attributes"]["releaseId"] == release["releaseId"] and agent_row["attributes"]["status"] == "APPROVED"
+    )
     assert call("POST", f"/releases/{release['releaseId']}/promote", persona="approver")[0] == 409  # PROMOTED is final
     assert call("DELETE", "/projects/hr-assistant")[0] == 409  # a PROMOTED release exists
     assert call("GET", f"/jobs/{accepted['jobId']}")[1]["status"] == "SUCCEEDED"
+
+
+def test_promoted_agent_record_is_updated_next_time_and_never_fails_the_promotion(ready):
+    """A second promotion updates the project's one AGENT record (a new DRAFT revision: submit and approve again); without a
+    registry the step is skipped; a registry failure is reported on the promotion, never raised."""
+    from platform_api.services import registry as registry_service
+
+    project = {
+        "projectId": "hr-assistant",
+        "name": "HR Assistant",
+        "domainId": "people-ops",
+        "description": "Leave and policy",
+    }
+    promotion = {
+        "harnessArn": f"arn:aws:bedrock-agentcore:{REGION}:{ACCOUNT}:harness/hr_assistant_prod-ABC123",
+        "endpoint": "live",
+    }
+    release = {"releaseId": "R1", "blueprintVersion": 1, "approval": {"by": "approver"}}
+    skipped = registry_service.register_agent(project, {"version": 1}, release, promotion, "approver")
+    assert skipped == {
+        "name": "hr-assistant-agent",
+        "skipped": "no Agent Registry configured (PUT /settings {registryId})",
+    }
+    assert ready.registry.calls == []
+
+    call("PUT", "/settings", body={"registryId": "reg-1", "registryArn": "arn:reg-1"})
+    first = registry_service.register_agent(project, {"version": 1}, release, promotion, "approver")
+    assert first["action"] == "created" and first["status"] == "APPROVED" and first["recordVersion"] == "1"
+    assert first["registryId"] == "reg-1" and "warning" not in first
+    ready.registry.calls.clear()
+    # the live registry answers an update of an APPROVED record with a new DRAFT revision: it is submitted and approved again
+    second = registry_service.register_agent(
+        project, {"version": 2}, {**release, "releaseId": "R2", "blueprintVersion": 2}, promotion, "approver"
+    )
+    assert second["recordId"] == first["recordId"] and second["action"] == "updated" and second["recordVersion"] == "2"
+    assert [kind for kind, _ in ready.registry.calls] == ["list", "update", "get", "submit", "get", "status"]
+    update = dict(ready.registry.calls[1][1])
+    assert update["recordVersion"] == "2" and update["displayName"] == {"optionalValue": "HR Assistant (Prod)"}
+    assert json.loads(update["descriptors"]["optionalValue"]["a2aAgentCard"]["optionalValue"]["data"])["version"] == "2"
+    assert "R2" in update["description"]["optionalValue"]
+    stored = ready.registry.records[first["recordId"]]
+    assert stored["recordVersion"] == "2" and stored["status"] == "APPROVED" and "R2" in stored["statusReason"]
+
+    # a record the registry leaves in a state that cannot be approved is reported, not forced (no status call)
+    ready.registry.after_update_status = "UPDATE_FAILED"
+    ready.registry.calls.clear()
+    stuck = registry_service.register_agent(
+        project, {"version": 3}, {**release, "releaseId": "R3"}, promotion, "approver"
+    )
+    assert [kind for kind, _ in ready.registry.calls] == ["list", "update", "get"]
+    assert stuck["recordId"] == first["recordId"] and stuck["status"] == "UPDATE_FAILED"
+    assert (
+        stuck["warning"] == "record hr-assistant-agent is UPDATE_FAILED and was not approved" and "error" not in stuck
+    )
+    ready.registry.after_update_status = None
+
+    # a deprecated record cannot be edited (terminal): the registry refuses, the promotion reports it and stands
+    stored["status"] = "DEPRECATED"
+    failed = registry_service.register_agent(project, {"version": 4}, release, promotion, "approver")
+    assert failed["name"] == "hr-assistant-agent" and "DEPRECATED record cannot be edited" in failed["error"]
+    assert "recordId" not in failed
+    stored["status"] = "APPROVED"
+
+    ready.registry.fail_on.add("UpdateRegistryRecord")
+    failed = registry_service.register_agent(project, {"version": 5}, release, promotion, "approver")
+    assert failed["name"] == "hr-assistant-agent" and "UpdateRegistryRecord boom" in failed["error"]
+    assert "recordId" not in failed
+
+
+def test_catalogue_agents_sync_registers_agents_promoted_before_the_registry_step(ready):
+    """A release promoted while no registry was configured (or before the promote job wrote AGENT records) has no catalogue
+    entry; POST /catalogue/agents/sync (admin) writes it later, stores the outcome on the release and the resource row, a
+    second run updates the same record, and a project without a promoted release is reported, not an error."""
+    create_blueprint(ready)
+    deploy(ready, 1)
+    done, _ = promoted_release(ready, 1)
+    assert done["promotion"]["registryRecord"]["skipped"].startswith("no Agent Registry configured")
+    assert call("POST", "/catalogue/agents/sync", persona="developer")[0] == 403
+    assert call("POST", "/catalogue/agents/sync", persona="approver")[0] == 403
+    status, body = call("POST", "/catalogue/agents/sync")
+    assert status == 200 and body["agents"][0]["skipped"].startswith("no Agent Registry configured")
+
+    call("PUT", "/settings", body={"registryId": "reg-1", "registryArn": "arn:reg-1"})
+    status, body = call("POST", "/catalogue/agents/sync")
+    assert status == 200 and len(body["agents"]) == 1
+    entry = body["agents"][0]
+    assert entry["projectId"] == "hr-assistant" and entry["releaseId"] == done["releaseId"]
+    assert entry["name"] == "hr-assistant-agent" and entry["action"] == "created" and entry["status"] == "APPROVED"
+    stored = ready.registry.records[entry["recordId"]]
+    assert stored["recordType"] == "AGENT" and stored["recordVersion"] == "1" and stored["status"] == "APPROVED"
+    assert "hr_assistant_prod-ABC123" in json.loads(stored["descriptors"]["a2aAgentCard"]["data"])["url"]
+    assert "approved by approver" in stored["statusReason"] and "promoted to Prod by admin" in stored["statusReason"]
+    release = call("GET", f"/releases/{done['releaseId']}")[1]
+    assert release["status"] == "PROMOTED" and release["promotion"]["registryRecord"]["recordId"] == entry["recordId"]
+    # the rest of the promotion is untouched
+    assert release["promotion"]["harnessArn"] == done["promotion"]["harnessArn"]
+    rows = {
+        (r["type"], r["name"]): r for r in call("GET", "/projects/hr-assistant/resources", query={"env": "prod"})[1]
+    }
+    assert rows[("registry_record", "hr-assistant-agent")]["id"] == entry["recordId"]
+
+    # again: the same record, updated (a new DRAFT revision submitted and approved again); a second project is reported
+    call(
+        "POST",
+        "/projects",
+        body={
+            "projectId": "payroll-helper",
+            "domainId": "people-ops",
+            "name": "Payroll",
+            "models": ["claude-sonnet-5"],
+        },
+    )
+    status, body = call("POST", "/catalogue/agents/sync")
+    by_project = {a["projectId"]: a for a in body["agents"]}
+    assert (
+        by_project["hr-assistant"]["recordId"] == entry["recordId"]
+        and by_project["hr-assistant"]["action"] == "updated"
+    )
+    assert ready.registry.records[entry["recordId"]]["status"] == "APPROVED"
+    assert by_project["payroll-helper"] == {
+        "projectId": "payroll-helper",
+        "name": "payroll-helper-agent",
+        "skipped": "no PROMOTED release",
+    }
 
 
 def test_promote_failure_marks_the_release_failed_and_can_be_retried(ready):

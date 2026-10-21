@@ -1,6 +1,6 @@
 import ProgressBar from "@cloudscape-design/components/progress-bar";
 
-import { formatDateTime, formatRelative, formatUsd, spendPercent, toNumber } from "../utils/format";
+import { formatRelative, formatUsd, spendPercent, toNumber } from "../utils/format";
 
 /** Spend against a LiteLLM cap (team or key) as a meter with the reset time. */
 export function SpendBar({
@@ -22,7 +22,7 @@ export function SpendBar({
   const reached = blocked || (percent !== null && percent >= 100);
   const description = `${formatUsd(used ?? 0)} of ${limit !== null ? formatUsd(limit) : "no cap"}`;
   const additional = resetAt
-    ? `Resets ${formatRelative(resetAt)} (${formatDateTime(resetAt)})`
+    ? `Resets ${formatRelative(resetAt)}`
     : limit === null
       ? "No cap configured"
       : undefined;

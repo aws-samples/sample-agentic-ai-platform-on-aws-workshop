@@ -490,7 +490,7 @@ next: `workshop cap --dev low` (the cap drops below the spend and one more call 
           <p class="lead">The Dev key is in the vault, its cap is enforced and the catalogue records are approved. Tracing (CloudWatch Transaction Search) has been on since module 1 and is waiting for the first agent's traces. <strong>The shared platform is ready.</strong> Agents are added next. Beside the three gateways of module 4, whose callers are IAM roles, stands the on-behalf-of gateway <code>hr-assistant-dev-gw-obo</code>, which admits the realm's JWTs instead; AgentCore Identity holds module 2's two OAuth2 providers next to the model keys. The gateway's target, the HR API, and the corporate IdP that signs employees in both live in module 2's IdP stack, outside the landing zone and so outside this figure; the IdP sits there as a company's Okta or Entra ID would.</p>
           <figure class="arch">
             <!-- arch-svg:start -->
-            <a href="arch/module-5.svg" target="_blank" rel="noopener"><img src="arch/module-5.svg" alt="AWS architecture after module 5: Module 5 · the platform, complete" loading="lazy"/></a>
+            <a href="arch/module-5.svg" target="_blank" rel="noopener"><img src="arch/module-5.svg" width="1600" height="1340" alt="AWS architecture after module 5: Module 5 · the platform, complete" loading="lazy"/></a>
             <!-- arch-svg:end -->
             <figcaption><strong>Changed:</strong> ECS Express Mode, AgentCore Identity, Agent Registry and Bedrock. Model calls now use capped keys and guardrailed aliases, with spend per key. Click to open full size.</figcaption>
           </figure>
@@ -534,9 +534,11 @@ next: `workshop cap --dev low` (the cap drops below the spend and one more call 
           <a href="module-6-rev.html">6 · AgentOps <span class="d">40 min</span></a>
           <a href="module-7-rev.html">7 · Operate and observe <span class="d">40 min</span></a>
           <a href="cleanup.html">Clean up <span class="d">35 min</span></a>
-        <a href="#glossary">Glossary</a>
         </nav>
       </details>
+      <a class="to-top at-top" href="#top" aria-label="Back to top" title="Back to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-7 7 7-7 7 7" /></svg>
+      </a>
     </div>
     <script src="course.js"></script>
   </body>

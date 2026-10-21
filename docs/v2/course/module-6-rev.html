@@ -513,7 +513,7 @@ OK   on behalf of alex.rivera: the HR API saw sub identical to T0, audience ['hr
           <p class="lead">One blueprint now runs in <strong>two environments</strong>: Dev <code>DEFAULT</code> follows its latest version; Prod <code>live</code> pins the approved version. Each has its own memory. Model calls use the private load balancer; Gateway, Identity and Memory use PrivateLink. A third harness, hr_assistant_dev_obo, stands beside Dev: the same render with a JWT authorizer at its door, its tool calls carrying the employee's exchanged token to the on-behalf-of gateway.</p>
           <figure class="arch">
             <!-- arch-svg:start -->
-            <a href="arch/module-6.svg" target="_blank" rel="noopener"><img src="arch/module-6.svg" alt="AWS architecture after module 6: Module 6 · one agent in Dev and Prod, and its on-behalf-of twin" loading="lazy"/></a>
+            <a href="arch/module-6.svg" target="_blank" rel="noopener"><img src="arch/module-6.svg" width="1600" height="1340" alt="AWS architecture after module 6: Module 6 · one agent in Dev and Prod, and its on-behalf-of twin" loading="lazy"/></a>
             <!-- arch-svg:end -->
             <figcaption><strong>Changed:</strong> worker Lambda, DynamoDB, AgentCore Runtime (the Dev and Prod harnesses and, beside Dev, the on-behalf-of twin hr_assistant_dev_obo), Memory and Evaluations; also the Prod key, which promotion created in the model gateway and the token vault, and one inline policy on the Dev agent role. Runtime connects through interfaces in the private app subnets. The release passed its gate; promotion registered online evaluation. Two things the twin depends on are outside the figure: Keycloak, where AgentCore Identity exchanges the employee's token for the harness and again for the on-behalf-of gateway of module 4, and the HR API behind that gateway; both live in module 2's IdP stack outside the landing zone. Export remains optional. Click to open full size.</figcaption>
           </figure>
@@ -557,9 +557,11 @@ OK   on behalf of alex.rivera: the HR API saw sub identical to T0, audience ['hr
           <a href="module-6-rev.html">6 · AgentOps <span class="d">40 min</span></a>
           <a href="module-7-rev.html">7 · Operate and observe <span class="d">40 min</span></a>
           <a href="cleanup.html">Clean up <span class="d">35 min</span></a>
-        <a href="#glossary">Glossary</a>
         </nav>
       </details>
+      <a class="to-top at-top" href="#top" aria-label="Back to top" title="Back to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-7 7 7-7 7 7" /></svg>
+      </a>
     </div>
     <script src="course.js"></script>
   </body>

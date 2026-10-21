@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Module 4: Access, governance and AgentOps</title>
+    <link rel="stylesheet" href="course.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-inner">
+        <h1>Module 4: Access, governance and AgentOps</h1>
+        <p>Grant access to exactly what was requested, cap model spend per key, review isolation with evidence, then take the HR blueprint through a failing and a passing evaluation, an independent approval and a live Prod version.</p>
+        <div class="meta"><span>Module 4 of 5</span><span>about 75 min</span><span>access</span><span>caps</span><span>evaluation</span><span>approval</span><span>Prod</span></div>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <nav class="pager" aria-label="Previous and next page"><a href="m3.html">←&nbsp;Module 3</a><a href="m5.html">Module 5&nbsp;→</a></nav>
+      <main>
+
+
+<section id="m4-overview-overview">
+<h2>From a shared platform to a released agent</h2>
+<p class="lead" id="m4-overview">Module 3 left the HR assistant as a reviewed blueprint and the tool plane proven against it. Before it can run, someone has to grant it what it needs, and before it can reach Prod, someone other than its builder has to accept it. This module follows that path in the order each step depends on: discover the approved resources and record exactly what a consumer requests; scope and cap the model access the agent will use; review isolation against the evidence collected so far; deploy, evaluate and iterate in Dev; and finally obtain independent approval and promote the accepted version.</p>
+<table class="plain"><thead><tr><th>Step</th><th>Persona</th><th>Output</th></tr></thead><tbody>
+<tr><td>Discover and request access</td><td>Platform admin; Agent developer</td><td>Approved catalogue records, a discovery result per persona, a recorded access request and decision; discovery proven not to grant invocation</td></tr>
+<tr><td>Model permissions and caps</td><td>Agent developer; Platform admin</td><td>A Dev key restricted to one model; normal, guardrail and wrong-model results; a budget refusal and restoration; <code>workshop inventory</code> confirming the shared objects</td></tr>
+<tr><td>Isolation review</td><td>Platform admin with the workload owner</td><td>Identity, network, tool, data, memory, metadata and telemetry boundaries reconciled against evidence</td></tr>
+<tr><td>Deploy, evaluate, iterate</td><td>Agent developer</td><td>Blueprint v1 BLOCKED and v2 PENDING_APPROVAL with their scores; the on-behalf-of agent answering for the employee</td></tr>
+<tr><td>Approve, promote and publish</td><td>Domain approver</td><td>Separation of duties proven; the approved version live in Prod; seeded traffic; recovery ownership</td></tr>
+</tbody></table>
+<p>Run 1 of <code>workshop apply 6</code> takes 12 to 15 minutes and needs the Dev cap restored at the end of the key-and-cap step. It starts at the beginning of the deployment step, after the isolation review; work through that step's explanations and decisions during the run.</p>
+</section>
+
+
+
+<section id="m4-1-explain">
+<h2>Discover and request: what a request must name <span class="time">5 min</span></h2>
+<p class="lead" id="m4-1">Before anyone builds another tool, find the approved one. Approve the catalogue records that Module 2 left pending, discover them as different personas, then record exactly what a consumer requests and who decides.</p>
+<p>A useful discovery record tells a consumer what the asset does, who supports it, which version was reviewed and how to request invocation access. A useful access request then names exactly what is wanted, so its owner can decide.</p>
+<table class="plain"><thead><tr><th>Request field</th><th>Example</th></tr></thead><tbody>
+<tr><td>Resource and version</td><td>Catalogue record <code>hr-assistant-tools</code> version 1.0; its endpoint, the HR Dev gateway; the tool <code>hrtools___get_leave_balance</code></td></tr>
+<tr><td>Requester, project and environment</td><td>Finance Operations, project <code>invoice-helper</code>, Dev agent role</td></tr>
+<tr><td>Operation and data scope</td><td>Read only; which employees' balances, and why</td></tr>
+<tr><td>Owner who decides</td><td>People Operations for the tool and its data; the Platform admin for the gateway permit and IAM change</td></tr>
+<tr><td>Decision and evidence</td><td>Granted, refused or narrowed, with the reason; the resulting permission, never the catalogue label</td></tr>
+</tbody></table>
+<p>Keep three things apart. <strong>Catalogue approval</strong> by the Platform admin makes a record discoverable; it is a label and grants nothing. <strong>An owner's grant</strong> is a change to the invoking role's IAM and the gateway's Cedar permits. <strong>Invocation</strong> is decided by the endpoint every time. The implementation has no access-request workflow: a grant here is a recorded decision, and applying it would be a reviewed IAM and policy change by the Platform admin, which this lab does not make.</p>
+<table class="plain"><thead><tr><th>Choice</th><th>Use when</th><th>Trade-off</th></tr></thead><tbody>
+<tr><td>Reuse an approved dependency</td><td>Its schema, data scope, support owner and version fit</td><td>Less maintenance, but another owner controls changes</td></tr>
+<tr><td>Publish a new version</td><td>The workload needs different behaviour the dependency owner accepts</td><td>Extra review and consumer migration; keep the previous version until consumers move</td></tr>
+<tr><td>Keep discovery within the domain</td><td>Metadata is sensitive or support is limited</td><td>Smaller reuse audience; widen only after reviewing visibility and permissions</td></tr>
+</tbody></table>
+<p>Pin the version that was verified. Discovering a newer approved record does not establish compatibility; a dependency refresh needs a new manifest and applicable evidence.</p>
+</section>
+<section id="m4-1-hands-on">
+<h2>Approve, discover, and prove discovery is not invocation <span class="time">15 min</span></h2>
+<div class="hands-on"><strong>Approve, discover, and prove discovery is not invocation</strong>
+<ol class="steps"><li><div><span class="pill tag screen">screen</span>As Agent developer, open <strong>Catalogue</strong> and filter on <em>Pending approval</em>: the two records still pending, <code>kb-hr-policies</code> and <code>model-claude-sonnet-5</code>, are listed, but you cannot change their status (the API's status route accepts only the admin, as you saw in Module 2's registry setup). Search for "HR policy": nothing is found yet, because <code>DRAFT</code> and <code>PENDING_APPROVAL</code> records are not searchable.</div></li>
+<li><div><span class="pill tag screen">screen</span>Switch to Platform admin: every persona can read the catalogue, but only the admin may change a record's status. In <strong>Catalogue</strong>, filter on <em>Pending approval</em> and approve the two records still pending from <code>workshop apply 4</code> (<code>hr-assistant-tools</code>, the MCP server of the HR Dev gateway, was approved in <a href="m2.html#m2-3-3">Module 2</a>), one at a time: select the record (its details open in the split panel), choose <strong>Set status</strong>, then <strong>Approve</strong>, and confirm in the dialog with an optional reason: <code>kb-hr-policies</code> (the HR policy knowledge base) and <code>model-claude-sonnet-5</code> (the model alias named in your record). Approved records become searchable. If the screen is unavailable, <code>workshop approve catalogue</code> approves every pending record from the command line; here that is the same two.</div></li>
+<li><div><span class="pill tag screen">screen</span>Switch back to Agent developer, then to Domain approver, and search again for "HR policy" and "model": <code>kb-hr-policies</code> and <code>model-claude-sonnet-5</code> are now found beside <code>hr-assistant-tools</code>. Allow a short delay for the search index. Open them: <code>kb-hr-policies</code> names the knowledge base and its <code>department</code> filter; the model record names the alias and the model gateway base URL. Neither carries an invocation credential.</div></li>
+<li><div><span class="pill tag command">command</span>The knowledge base is reached as the gateway tool <code>hrkb___Retrieve</code>. As in Module 2's coding-client checks, discovery grants nothing: <code>uv run workshop call --as finance-dev --gateway hr-dev retrieve "remote work"</code> → <code>REFUSED before any policy: HTTP 403 from IAM</code>, while <code>uv run workshop call --as hr-dev retrieve "remote work"</code> returns Remote Work Policy passages. Invocation is decided by IAM at the gateway and by Cedar in it.</div></li>
+<li><div><span class="pill tag record">record</span>Write one access request using the fields above, for example Finance asking to read HR leave balances, and the owner's decision. Record why approving the catalogue record did not answer it, and which IAM statement and Cedar permit would implement a grant.</div></li>
+<li><div><span class="pill tag record">record</span>Complete the discovery inventory: for HR, agent → gateway <code>hr-assistant-dev-gw</code> → targets <code>hrtools</code> and <code>hrkb</code> → knowledge base and filter; for Finance, gateway → <code>fintools</code>. Add owner, version, lifecycle state (approval, deployment and publication separately), intended audience and channel. Return to the IDE acceptance matrix from <a href="m2.html#m2-3-3-hands-on">Module 2</a> and mark its executable rows with these results.</div></li></ol>
+</div>
+<p>Hiding or deprecating a record does not revoke credentials, stop a runtime or update consumers' pinned dependencies; record who can remove invocation access. A Dev candidate remains unpublished until it is approved and promoted at the end of this module. With the consumer's request recorded, the next step scopes the one resource every agent needs: its model key.</p>
+</section>
+
+
+
+<section id="m4-2-explain">
+<h2>Scope and caps: key, cap and restoration <span class="time">5 min</span></h2>
+<p class="lead" id="m4-2">Discovery told the developer which model alias is approved; it did not give the agent a way to call it. Issue the HR agent's Dev key, restricted to one model and capped, and prove each control: a normal answer, a guardrail stop, a wrong-model refusal, a budget refusal and restoration. <a href="m2.html#m2-2">Module 2</a> chose the route and the spend design; this step applies it to one project. Two scopes are enforced: the project team (5 USD per 7 days, 200,000 tokens and 200 requests per minute, set at the control plane in Module 2) and the agent key (1 USD per 7 days per agent, environment and model). Caps follow keys, not users.</p>
+<ul class="concept-list">
+<li><strong>The raw key is shown once.</strong> <code>workshop apply 5</code> prints it in shortened form while it runs its probes, then stores it in the token vault. Do not capture, copy or share it, and keep that output out of evidence; the harness fetches the key itself under its own workload identity.</li>
+<li><strong>Spend is asynchronous.</strong> The proxy writes spend in batches about every 10 seconds; the Keys tab and the dashboard lag by about 10 to 15 seconds. A cap lowered below spend that has not been written yet still lets the next call through.</li>
+<li><strong>Restoring a cap does not reset spend.</strong> <code>workshop cap --dev restore</code> writes the record's cap back; the spend already counted stays until the key's period resets.</li>
+<li><strong>The cap helper is HR-only.</strong> <code>workshop cap</code> changes the HR project's Dev key for the model in your record; there is no Finance key.</li>
+</ul>
+</section>
+<section id="m4-2-hands-on">
+<h2>Make a key and cap it <span class="time">15 min</span></h2>
+<div class="hands-on">
+            <strong>Make a key, cap it, and confirm the shared objects</strong>
+            <p class="caption">The proxy has run since the <a href="m2.html#m2-1">foundation</a> in Module 2. This lab adds its governed Dev key; the catalogue records were <a href="#m4-1">approved above</a>. CLI proxy calls use the relay.</p>
+            <ol class="steps">
+              <li><div><span class="pill tag record">record</span>Set the key cap in <code>design-record.yaml</code>.</div></li>
+              <li><div><span class="pill tag command">command</span><code>workshop apply 5</code>: it first prints the governance summary (the four aliases, each with the <code>hr-baseline</code> guardrail, the policy engine, the gateways) and the project team's spend against its budget. It then creates the Dev key, capped as <code>module_5.inputs.key_cap</code> says and restricted to the model you chose in <a href="m2.html#m2-4">Module 2</a> (<code>model</code> under <code>module_3.inputs</code>), and makes three calls with the raw key before putting it away: a normal question, where you read the answer, the token usage and the cost header <code>x-litellm-response-cost</code>; a question about suing a manager, which the guardrail stops with <code>finish_reason=content_filter</code> and the blocked message; and a call with the project's other allowed alias, <code>gpt-6-1-sol</code>, which the proxy refuses with HTTP 403 because the key may use one model only. Only then does it store the key in the AgentCore Identity token vault (this creates the key's API key credential provider), register that provider with the platform and adopt the key, which now appears in the project's <strong>Keys</strong> tab, and wait for the first spend to be recorded. On a re-run the key and provider already exist, so the command reuses them and skips the three calls.</div></li>
+              <li><div><span class="pill tag command">command</span><code>workshop cap --dev low</code>: as the Platform admin it lowers the Dev key's cap to half of what the key has spent so far (never more than 0.01 USD; 0.01 when no spend is recorded yet) and makes one more call through the proxy, which refuses it before any model runs: <code>OK BUDGET_EXCEEDED, gracefully: HTTP 422, Budget has been exceeded! Key=… Current cost: …, Max budget: …</code>. The text after the comma is LiteLLM's own wording (its error type is the lower-case <code>budget_exceeded</code>); <code>BUDGET_EXCEEDED</code> is the platform's code for the same refusal, which <code>workshop ask</code> prints and the Playground shows as its "Spending cap reached" alert once the agent is <a href="#m4-4">deployed</a>. If the call still passes, the spend the command read had not been written yet (the proxy writes spend in batches every 10 seconds), so the cap it set is still above the real spend: run the command once more. Then <code>workshop cap --dev restore</code> writes your record's cap back before the <a href="#m4-4">deployment</a>.</div></li>
+
+              <li><div><span class="pill tag command">command</span><code>workshop inventory</code>: verify the shared platform resources.</div></li>
+              <li><div><span class="pill tag record">record</span>Check the <code>module_5</code> <code>my_call</code> entries you wrote for the <a href="m2.html#m2-2">model route</a> and the <a href="m2.html#m2-3-1">registry</a> in Module 2 against what you observed.</div></li>
+            </ol>
+<pre class="code-dark"><code><span class="c"># workshop apply 5, first run (lines shortened; numbers vary)</span>
+== governance: approved models, guardrail, engine, gateways
+  model claude-opus-5        guardrail {'id': '...', 'version': '...', 'name': 'hr-baseline'}
+  model claude-sonnet-5      guardrail {'id': '...', 'version': '...', 'name': 'hr-baseline'}
+  model gpt-6-1-sol          guardrail {'id': '...', 'version': '...', 'name': 'hr-baseline'}
+  model nova-2-lite          guardrail {'id': '...', 'version': '...', 'name': 'hr-baseline'}
+  guardrail hr-baseline  policy engine True  gateways [('hr-assistant', 'dev', 'ENFORCE'), ...]
+== the project's team in the model gateway
+  team hr-assistant: spend 0.0 of 5.0 USD per 7d, tpm 200000, rpm 200, models ['claude-sonnet-5', 'gpt-6-1-sol'], keys 0
+== the Dev key for claude-sonnet-5: cap 1.0 USD per 7d
+  created key hr-assistant-dev-claude-sonnet-5: cap 1.0 USD per 7d, restricted to claude-sonnet-5; raw key sk-1a2b...9z8y (shown once)
+  hashed key id 1a2b3c4d5e6f7a8b...  spend 0.0 of 1.0 USD, resets ...
+== first calls through the model gateway with the raw key
+  the proxy is private (internal load balancer): the call goes through relay agent-platform-model-gateway-relay, a Lambda inside the VPC that forwards the HTTP request as is; the key travels in the Authorization header, the relay adds nothing
+  [2.6 s] An HR assistant can help an employee with ...
+  usage 25/48 tokens; cost header x-litellm-response-cost: 0.00058
+  guardrail: finish_reason=content_filter -&gt; "Sorry, I can't help with that topic. Please contact HR directly."
+OK   gpt-6-1-sol with this key -&gt; HTTP 403: the key is restricted to claude-sonnet-5 (the team allows gpt-6-1-sol, the key does not)
+== store the key in the AgentCore Identity token vault
+  credential provider arn:aws:bedrock-agentcore:us-east-1:...:token-vault/default/apikeycredentialprovider/litellm-hr-assistant-dev-claude-sonnet-5
+== the platform adopts the key
+  adopted: {"alias": "hr-assistant-dev-claude-sonnet-5", "env": "dev", "model": "claude-sonnet-5", "maxBudget": 1.0, "budgetDuration": "7d", "status": "active"}
+== spend
+  key hr-assistant-dev-claude-sonnet-5: spend 0.00058 USD of 1.0
+  team hr-assistant: spend 0.00058 of 5.0 USD per 7d
+OK   model access built
+
+next: `workshop cap --dev low` (the cap drops below the spend and one more call is refused with BUDGET_EXCEEDED), then `workshop cap --dev restore`
+      3 catalogue record(s) wait for approval: approve them on the Catalogue screen as Platform admin (`workshop approve catalogue` is the fallback)
+      then `workshop inventory`: platform complete
+   look: Keys tab: https://.../domains  (the project's Keys tab: spend against cap)
+   look: Catalogue screen: https://.../catalogue</code></pre>
+            <p class="caption">Three results to notice. The cost header prices one call, and that spend is what the Keys tab and the caps count. The guardrail answer comes back as a normal completion with <code>finish_reason=content_filter</code>, so an agent can handle it gracefully instead of failing. The wrong alias is refused before any model runs, because access is a property of the key, not of the caller.</p>
+            <p class="caption">Dashboard spend updates about 10–15 seconds after a call.</p>
+          </div>
+<p class="note">Read the three refusals as different controls: the guardrail answers normally with <code>finish_reason=content_filter</code>; the wrong alias is refused with HTTP 403 because model access belongs to the key; the cap is refused with HTTP 422 <code>BUDGET_EXCEEDED</code> before any model runs. Restore the cap before the deployment: Run 1 needs it.</p>
+<div class="ours-box" style="margin-top:16px">
+            <p><strong>What now exists.</strong> Every shared object is in place: the catalogue with its approved records, the policy engine and its policies, four gateways (the three of the <a href="m2.html#m2-3-2">access fixture</a>, where the caller is an IAM role, and the on-behalf-of gateway <code>hr-assistant-dev-gw-obo</code> that stands beside HR Dev for callers with a token from the corporate IdP), the agent and gateway role pair of each project and environment, the model-gateway team, the Dev key, and three credential providers in AgentCore Identity: the API-key provider that holds the Dev key, created in this step, and the two OAuth2 providers <code>kc-hr-agent</code> and <code>kc-hr-obo-gateway</code> from the <a href="m2.html#m2-1">foundation</a>. <code>workshop inventory</code> lists the registered part of this by name and ends with <code>platform complete: registry, policy engine with policies, gateways, roles, team and key exist; no agent yet</code>. Two things it does not show: the on-behalf-of gateway, which is deliberately not registered with the control plane, and the two OAuth2 providers, because the command lists API-key providers only. Both are visible in the AgentCore console. The <a href="#m4-4">deployment</a> below adds the first running agent.</p>
+          </div>
+</section>
+<section id="m4-2-record">
+<h2>Your design record: <code>module_5</code></h2>
+<pre class="code-dark"><code><span class="k">module_5</span>:
+  <span class="in">inputs</span>:                                     <span class="c"># read by: workshop apply 5</span>
+    <span class="in">key_cap</span>: <span class="s">{usd: 1.00, period: 7d}</span>           <span class="c"># the Dev key for the agent's model</span>
+  <span class="k">decisions</span>:
+    <span class="k">model_access</span>:        {<span class="k">workshop</span>: <span class="s">model-gateway</span>,       <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># LiteLLM</span>
+    <span class="k">spend_control</span>:       {<span class="k">workshop</span>: <span class="s">hard-caps</span>,           <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># team budget + key caps</span>
+    <span class="k">catalogue</span>:           {<span class="k">workshop</span>: <span class="s">agent-registry</span>,      <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># manual approval, a label</span>
+    <span class="k">processing_location</span>: {<span class="k">workshop</span>: <span class="s">geographic-profiles</span>, <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># us. profiles; the SCP side is 1.4</span></code></pre>
+<p class="note">The input is read by <code>workshop apply 5</code>; the decisions were made in Module 2 with the <a href="m2.html#m2-2">model route</a> (model access, spend control, processing location) and the <a href="m2.html#m2-3-1">registry</a> (catalogue).</p>
+</section>
+
+
+
+<section id="m4-3-explain">
+<h2>Isolation review: shared or dedicated, and what enforces it <span class="time">5 min</span></h2>
+<p class="lead" id="m4-3">The agent now has a capped key and a gateway it may call. Before widening anyone's access or deploying, reconcile every boundary the HR workload relies on with the evidence you actually collected, and name the gaps for the intended audience.</p>
+<p>Sharing reduces cost and maintenance; every shared runtime, tool, store and telemetry view needs a boundary a reviewer can identify. The layer table of <a href="m1.html#m1-4-tenants">Module 1</a> is the checklist; this review fills it with evidence. A namespace, a UI filter or a session label only names a scope: record the permission, trusted identity binding, data filter or service isolation that enforces it.</p>
+</section>
+<section id="m4-3-review">
+<h2>Review the HR workload, layer by layer</h2>
+<table class="plain"><thead><tr><th>Layer</th><th>Control in this workshop</th><th>Evidence collected</th><th>Gap or production step</th></tr></thead><tbody>
+<tr><td>Identity</td><td>Cognito groups mapped to roles; Keycloak for employees; IAM role pairs per project and environment</td><td>Developer refused <code>POST /domains</code> (Module 2, foundation); agent role refused both tool Lambdas (Module 2, control plane)</td><td>Switch persona is a workshop shortcut; roles trust the account root; release-approval separation is proven at <a href="#m4-5">approval</a></td></tr>
+<tr><td>Network</td><td>Isolated subnets, interface endpoints, no internet path; relay for outside callers</td><td>Route tables and endpoints (Module 2, foundation); health call through the relay</td><td>Single-AZ database; no endpoint policies; the web UI and API have no WAF</td></tr>
+<tr><td>Gateway and tools</td><td>Per-project gateways with IAM inbound; Cedar permits and a forbid rule</td><td>Finance role HTTP 403 on the HR gateway and HR role 403 on Finance's (Module 3, both gateway probes); LOG_ONLY tool error; ENFORCE -32002 (Module 3, HR gateway)</td><td>Only HR Dev enforces; the empty tool allow-list allows every tool; the on-behalf-of gateway is not attached to the policy engine</td></tr>
+<tr><td>Data</td><td>Knowledge filter pinned at the target; HR API JWT authorizer</td><td>Expense policy never returned to HR (Module 3); the HR API logged the employee's sub, aud and azp (Module 3)</td><td>The HR tools trust the <code>employee_id</code> argument: identity propagation is proven, row-level security is not</td></tr>
+<tr><td>Memory</td><td>One memory per project and environment; 30-day events</td><td>Created at deployment below; read back in Module 5</td><td>The caller supplies the actor id; bind it to a verified identity</td></tr>
+<tr><td>Catalogue metadata</td><td>One IAM registry; every persona reads approved records through the platform API</td><td>Discovery as several personas and the 403 on invocation (discovery step above)</td><td>No per-tenant metadata boundary; approval is a label, not a deployment gate</td></tr>
+<tr><td>Telemetry</td><td>CloudWatch IAM controls trace access; full synthetic content</td><td>Inspected in Module 5</td><td>No metadata-only or redaction policy; readers and retention per source not defined</td></tr>
+</tbody></table>
+</section>
+<section id="m4-3-hands-on">
+<h2>Activity: review one boundary all the way through <span class="time">10 min</span></h2>
+<div class="hands-on"><strong>Write an isolation decision record</strong>
+<ol class="steps">
+<li><div><span class="pill tag record">record</span>Choose one row. Trace consumer identity → runtime and session → tool → data and state, then name who can read its metadata and telemetry. Use the evidence you already have; this is a review, not another access-testing lab.</div></li>
+<li><div><span class="pill tag record">record</span>Write the decision: requirement (for example, an employee must not read another employee's leave balance), selected boundary, enforcement, evidence to reuse, trade-off, the condition that would force a dedicated resource, and the response if evidence is missing (return to the tool owner; keep wider availability pending).</div></li>
+<li><div><span class="pill tag record">record</span>Add the failure boundary: who handles a shared-tool outage, a noisy neighbour, a revoked tenant or data retained after retirement. Security isolation and capacity isolation can need different controls.</div></li>
+<li><div><span class="pill tag record">record</span>Mark each control <strong>verified</strong>, <strong>proposed</strong> or <strong>gap</strong>, with its configuration reference and owner. For the intended audience of the HR release (People Operations employees through the platform), state whether the gaps block it.</div></li>
+</ol></div>
+</section>
+
+
+
+<section id="m4-4-explain">
+<h2>Deploy, evaluate, iterate: from platform to workload <span class="time">10 min</span></h2>
+<p class="lead" id="m4-4">With access granted, spend capped and the boundaries reviewed, the HR blueprint can run. Start Run 1 now; it renders and deploys the blueprint while you read on. Switch from Platform admin to Agent developer: the AgentOps loop deploys the blueprint to Dev, lets the release gate block a planted regression, fixes the prompt and evaluates again, then runs the employee-aware variant once the runtime exists.</p>
+<aside class="hands-on start-now" aria-label="Start the first evaluation run">
+  <strong>Run 1 · start now · about 12 to 15 minutes</strong>
+  <p>Check that the Dev cap from the <a href="#m4-2">key-and-cap step</a> is restored and that <code>module_6.inputs.prompt_version</code> reads <code>v1</code>. The supplied record defaults to v1; reset it if you are resuming after Run 2. In <code>design-record.yaml</code>, set <code>prompt_version: v1</code> under <code>module_6.inputs</code>, then run <code>workshop apply 6</code>. It waits about two and a half minutes for the two memories to become active, four to five minutes for the first Dev deployment (the first harness in the VPC waits for its network interfaces; later versions and the on-behalf-of twin reuse them and take under a minute), and five to six minutes for the evaluation. The planted prompt bug should produce a BLOCKED release; read your actual verdict, because the historical rehearsal used different model aliases. Work through the explanations and decisions below while it runs.</p>
+</aside>
+<p>Building a workload takes <strong>five steps</strong>:</p>
+<ol class="concept-list">
+  <li><strong>Build:</strong> write a blueprint.</li>
+  <li><strong>Deploy:</strong> render it for Dev.</li>
+  <li><strong>Evaluate:</strong> compare scores with thresholds.</li>
+  <li><strong>Release:</strong> obtain Domain approver approval.</li>
+  <li><strong>Promote:</strong> render the approved blueprint for Prod.</li>
+</ol>
+<figure>
+            <svg viewBox="0 0 960 170" role="img" aria-labelledby="m4-4-m6-fig6a-title">
+              <title id="m4-4-m6-fig6a-title">The AgentOps loop</title>
+              <defs><marker id="m4-4-m6-arr6a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+              <rect class="d-box d-ours" x="20" y="40" width="130" height="56" style="fill:#fff8ea"/>
+              <text class="d-text d-title" x="85" y="63" text-anchor="middle">Blueprint</text>
+              <text class="d-text d-small" x="85" y="81" text-anchor="middle">version 1, 2, 3 ...</text>
+              <path class="d-arrow" d="M150 68 L176 68" marker-end="url(#m4-4-m6-arr6a)"/>
+              <rect class="d-box d-aws" x="178" y="40" width="130" height="56"/>
+              <text class="d-text d-title" x="243" y="63" text-anchor="middle">Deploy to Dev</text>
+              <text class="d-text d-small" x="243" y="81" text-anchor="middle">Harness · DEFAULT</text>
+              <path class="d-arrow" d="M308 68 L334 68" marker-end="url(#m4-4-m6-arr6a)"/>
+              <rect class="d-box d-blue" x="336" y="40" width="130" height="56"/>
+              <text class="d-text d-title" x="401" y="63" text-anchor="middle">Evaluate</text>
+              <text class="d-text d-small" x="401" y="81" text-anchor="middle">dataset · thresholds</text>
+              <path class="d-arrow" d="M466 68 L492 68" marker-end="url(#m4-4-m6-arr6a)"/>
+              <rect class="d-box d-people" x="494" y="40" width="130" height="56"/>
+              <text class="d-text d-title" x="559" y="63" text-anchor="middle">Approve</text>
+              <text class="d-text d-small" x="559" y="81" text-anchor="middle">Domain approver</text>
+              <path class="d-arrow" d="M624 68 L650 68" marker-end="url(#m4-4-m6-arr6a)"/>
+              <rect class="d-box d-aws" x="652" y="40" width="130" height="56"/>
+              <text class="d-text d-title" x="717" y="63" text-anchor="middle">Promote</text>
+              <text class="d-text d-small" x="717" y="81" text-anchor="middle">render for Prod · live</text>
+              <path class="d-arrow" d="M782 68 L808 68" marker-end="url(#m4-4-m6-arr6a)"/>
+              <rect class="d-box d-platform" x="810" y="40" width="130" height="56"/>
+              <text class="d-text d-title" x="875" y="63" text-anchor="middle">Monitor</text>
+              <text class="d-text d-small" x="875" y="81" text-anchor="middle">online scores · spend</text>
+              <path class="d-arrow" d="M875 96 L875 130 L85 130 L85 98" marker-end="url(#m4-4-m6-arr6a)"/>
+              <text class="d-text d-small" x="480" y="146" text-anchor="middle">feedback: scores, spend, user comments become the next blueprint version</text>
+            </svg>
+            <figcaption>This section and the approval that follows take the blueprint through release and promotion. <a href="m5.html">Module 5</a> observes traffic and feeds the next improvement. The blueprint remains the release unit, including on the code path.</figcaption>
+          </figure>
+<p class="note"><a href="m3.html#m3-1-3">Module 3</a> explains the blueprint and the six platform steps from Write to Promote; this section runs Validate, Render, Deploy and Gate.</p>
+<h3 id="m4-4-on-behalf-of-twin">The agent that acts on your behalf</h3>
+<p>The Dev and Prod harnesses are called with SigV4 (Playground, evaluation, <code>workshop traffic</code>) and reach their tools as the project's agent role: the service identity of <a href="m2.html#m2-3-2-d2-10">D2.10</a>. A SigV4 call carries no employee, and AgentCore propagates no per-user identity downstream from it, so there is nothing to exchange. The on-behalf-of chain (<a href="m3.html#m3-1-1-d3-1">D3.1</a>, <a href="m3.html#m3-1-2-d3-5">D3.5</a>) therefore gets a harness of its own. <code>workshop apply 6</code> renders the latest blueprint for Dev once more and patches <strong>three things</strong>:</p>
+<ul class="concept-list">
+  <li><strong>Inbound:</strong> a JWT authorizer that trusts the realm anycompany and accepts the audience hr-agent.</li>
+  <li><strong>Tool gateway:</strong> the on-behalf-of gateway of <a href="m3.html#m3-1-2">Module 3</a>, called with OAuth TOKEN_EXCHANGE through the provider kc-hr-agent for the audience hr-obo-gateway.</li>
+  <li><strong>Memory:</strong> off. One question needs none, and a memory would need an actor id per employee.</li>
+</ul>
+<p>The result is <code>hr_assistant_dev_obo</code>, the twin of <code>hr_assistant_dev</code>: the same model alias, prompt, limits and agent role, plus one inline policy on that role, <code>obo-token-exchange</code>. The policy does two things: it lets the role ask AgentCore Identity for the exchange through kc-hr-agent, and it lets the twin fetch its model key from the token vault under its own workload identity, <code>harness_hr_assistant_dev_obo-*</code>, which the role template does not cover because it names only the Dev harness's identity, <code>harness_hr_assistant_dev-*</code>. The twin is called over HTTPS with <code>Authorization: Bearer</code> and the employee's token T0, not with a signed request. Before every tool call the harness hands T0 to AgentCore Identity, which exchanges it at Keycloak for T1; the gateway exchanges again, and the HR API receives T2. The harness code never sees a secret or an exchange. The Dev and Prod harnesses are untouched, and the twin is neither released nor promoted: it proves the identity chain from the employee's login to the tool's log line.</p>
+<table class="plain">
+  <thead><tr><th></th><th>Dev harness hr_assistant_dev</th><th>On-behalf-of twin hr_assistant_dev_obo</th></tr></thead>
+  <tbody>
+    <tr><td>Who may call it</td><td>An IAM identity allowed to invoke it, with a SigV4 signature</td><td>A token from the realm anycompany with the audience hr-agent, sent as <code>Authorization: Bearer</code></td></tr>
+    <tr><td>Tool gateway</td><td>hr-assistant-dev-gw, signed with the agent role</td><td>hr-assistant-dev-gw-obo, with a token exchanged through kc-hr-agent for the audience hr-obo-gateway</td></tr>
+    <tr><td>What the tool learns</td><td>The arguments, under the gateway's role</td><td>The arguments and a token for hr-tools-api: sub, employee_id, aud, azp</td></tr>
+    <tr><td>Memory</td><td>This project's Dev memory</td><td>Off</td></tr>
+    <tr><td>Release and promotion</td><td>Yes: the gate, the approver, <code>live</code></td><td>No: a demonstration of the identity chain</td></tr>
+  </tbody>
+</table>
+</section>
+<section id="m4-4-decisions">
+<h2>Decide how a release passes <span class="time">10 min</span></h2>
+<aside class="hands-on start-now" aria-label="Start the second evaluation run">
+  <strong>Run 2 · after Run 1 finishes · about 6–7 minutes</strong>
+  <p>Read the v1 release's BLOCKED verdict. Set <code>prompt_version: v2</code>, then run <code>workshop apply 6</code> again. Discuss the decisions while the corrected prompt is evaluated.</p>
+</aside>
+<div class="card">
+            <h4 class="q" id="m4-4-d4-1"><span class="id">D4.1</span>How does a release pass?</h4>
+            <figure style="margin:0 0 10px">
+              <svg viewBox="0 0 960 298" role="img" aria-labelledby="m4-4-m6-fig6-d2-title">
+                <title id="m4-4-m6-fig6-d2-title">How a release passes: the dataset run against the Dev harness, scored by four evaluators against the thresholds, then the Domain approver; the two alternatives beside it</title>
+                <defs><marker id="m4-4-m6-fig6-d2-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+
+                <text class="d-text d-title" x="22" y="24">A · A dataset run, evaluators, thresholds, then a human</text>
+                <rect x="526" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
+                <text class="d-text" x="579" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+                <rect class="d-box d-account d-ours d-glow" x="12" y="34" width="620" height="228"/>
+                <rect class="d-box d-platform" x="28" y="46" width="170" height="44"/>
+                <text class="d-text" x="113" y="64" text-anchor="middle">Dataset</text>
+                <text class="d-text d-small" x="113" y="80" text-anchor="middle">10 scripted conversations</text>
+                <path class="d-arrow" d="M198 68 L216 68" marker-end="url(#m4-4-m6-fig6-d2-arr)"/>
+                <rect class="d-box d-aws" x="218" y="46" width="120" height="44"/>
+                <text class="d-text" x="278" y="64" text-anchor="middle">Dev harness</text>
+                <text class="d-text d-small" x="278" y="80" text-anchor="middle">DEFAULT</text>
+                <path class="d-arrow" d="M338 68 L356 68" marker-end="url(#m4-4-m6-fig6-d2-arr)"/>
+                <rect class="d-box d-blue" x="358" y="46" width="120" height="44"/>
+                <text class="d-text" x="418" y="64" text-anchor="middle">Spans</text>
+                <text class="d-text d-small" x="418" y="80" text-anchor="middle">in CloudWatch</text>
+                <path class="d-arrow" d="M478 68 L496 68" marker-end="url(#m4-4-m6-fig6-d2-arr)"/>
+                <rect class="d-box d-blue" x="498" y="46" width="120" height="44"/>
+                <text class="d-text" x="558" y="64" text-anchor="middle">4 evaluators</text>
+                <text class="d-text d-small" x="558" y="80" text-anchor="middle">built-in</text>
+                <path class="d-arrow" d="M558 90 L558 102" marker-end="url(#m4-4-m6-fig6-d2-arr)"/>
+
+                <rect class="d-group" x="28" y="104" width="590" height="148"/>
+                <text class="d-text d-small" x="40" y="120">scores against the thresholds in the blueprint</text>
+                <rect class="d-box" x="40" y="128" width="340" height="116"/>
+                <text class="d-text d-strong" x="50" y="146">prompt v1 <tspan style="fill:#b4471f">→ BLOCKED</tspan></text>
+                <text class="d-text d-tiny" x="50" y="162">evaluator</text>
+                <text class="d-text d-tiny" x="250" y="162" text-anchor="end">score</text>
+                <text class="d-text d-tiny" x="306" y="162" text-anchor="end">threshold</text>
+                <text class="d-text d-tiny" x="370" y="162" text-anchor="end">result</text>
+                <line x1="50" y1="167" x2="370" y2="167" stroke="#d5dbdb" stroke-width="1"/>
+                <text class="d-text d-small" x="50" y="180">Correctness</text>
+                <text class="d-text d-small" x="250" y="180" text-anchor="end">0.7</text>
+                <text class="d-text d-small" x="306" y="180" text-anchor="end">≥ 0.8</text>
+                <text class="d-text d-small d-strong" x="370" y="180" text-anchor="end" style="fill:#b4471f">FAIL</text>
+                <text class="d-text d-small" x="50" y="196">GoalSuccessRate</text>
+                <text class="d-text d-small" x="250" y="196" text-anchor="end">0.7</text>
+                <text class="d-text d-small" x="306" y="196" text-anchor="end">≥ 0.9</text>
+                <text class="d-text d-small d-strong" x="370" y="196" text-anchor="end" style="fill:#b4471f">FAIL</text>
+                <text class="d-text d-small" x="50" y="212">TrajectoryInOrderMatch</text>
+                <text class="d-text d-small" x="250" y="212" text-anchor="end">0.625</text>
+                <text class="d-text d-small" x="306" y="212" text-anchor="end">≥ 0.9</text>
+                <text class="d-text d-small d-strong" x="370" y="212" text-anchor="end" style="fill:#b4471f">FAIL</text>
+                <text class="d-text d-small" x="50" y="228">Harmfulness</text>
+                <text class="d-text d-small" x="250" y="228" text-anchor="end">0.0</text>
+                <text class="d-text d-small" x="306" y="228" text-anchor="end">≤ 0.0</text>
+                <text class="d-text d-small d-strong" x="370" y="228" text-anchor="end" style="fill:#1d8102">PASS</text>
+                <rect class="d-box" x="396" y="128" width="220" height="50"/>
+                <text class="d-text" x="506" y="148" text-anchor="middle">prompt v2 → all pass</text>
+                <text class="d-text d-small d-strong" x="506" y="166" text-anchor="middle" style="fill:#16191f">PENDING_APPROVAL</text>
+                <path class="d-arrow" d="M506 178 L506 198" marker-end="url(#m4-4-m6-fig6-d2-arr)"/>
+                <rect class="d-box d-people" x="396" y="200" width="220" height="44"/>
+                <text class="d-text" x="506" y="226" text-anchor="middle">Domain approver's click</text>
+                <text class="d-text d-small" x="322" y="282" text-anchor="middle">repeatable · a regression is caught before Prod · dataset evaluation is public preview</text>
+
+                <rect class="d-box" x="662" y="34" width="290" height="58"/>
+                <text class="d-text d-strong" x="807" y="52" text-anchor="middle">B · Human review only</text>
+                <text class="d-text d-small" x="807" y="68" text-anchor="middle">cheap to start · no repeatability</text>
+                <text class="d-text d-tiny" x="807" y="82" text-anchor="middle">when: the first weeks</text>
+                <rect class="d-box" x="662" y="108" width="290" height="58"/>
+                <text class="d-text d-strong" x="807" y="126" text-anchor="middle">C · Online evaluation only</text>
+                <text class="d-text d-small" x="807" y="142" text-anchor="middle">real traffic · problems reach users first</text>
+                <text class="d-text d-tiny" x="807" y="156" text-anchor="middle">when: low-risk agents</text>
+              </svg>
+              <figcaption>The demo scorecard shows v1 failing three thresholds; its numbers come from the 8 Oct 2026 dry runs, measured with the previous aliases Claude Sonnet 5.5 and Haiku 4.5, and the rehearsal with <code>claude-sonnet-5</code> is pending. v2 should pass and wait for approval. Read the actual scores in Releases; a failing metric blocks promotion.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr class="ours"><td>A dataset run with built-in evaluators and thresholds, then a human</td><td class="good">repeatable; a regression is caught before Prod</td><td class="bad">dataset evaluation is public preview; a dataset to maintain</td><td class="when">always</td></tr>
+                <tr><td>Human review only</td><td class="good">cheap to start</td><td class="bad">no repeatability</td><td class="when">the first weeks</td></tr>
+                <tr><td>Online evaluation only</td><td class="good">real traffic</td><td class="bad">problems reach users first</td><td class="when">low-risk agents</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <p><strong>This workshop.</strong> The release gate has <strong>four parts</strong>:</p>
+<ol class="concept-list">
+  <li><strong>Dataset:</strong> ten scripted conversations against Dev.</li>
+  <li><strong>Evaluators:</strong> Correctness, GoalSuccessRate, TrajectoryInOrderMatch and Harmfulness.</li>
+  <li><strong>Thresholds:</strong> all four must pass; otherwise BLOCKED. Three are floors on the mean score. Harmfulness is the one ceiling: the judge scores a harmless answer 1, and the gate compares the harm rate (1 minus the mean) with 0.0. That is why the figure's 0.0 for Harmfulness is a harm rate, not a mean, and why the Releases screen shows a mean score of 1.0 beside a compared value of 0.0; a single harmful answer blocks the release.</li>
+  <li><strong>Human:</strong> a passing release waits for Domain approver approval.</li>
+</ol>
+              <p class="also">The v1 prompt skips the knowledge base; v2 fixes the instruction. Compare each run's scores. Two paths run the gate today, and both use the thresholds of the team's blueprint. <code>workshop apply 6</code> runs the dataset from your machine and posts the scores, which the platform records as self-reported. A release created on the Releases screen, or run again there with <strong>Run evaluation</strong>, is run by the platform's worker instead: it deploys the version to Dev when the Dev harness does not run it yet, runs the same dataset and applies the thresholds, and the release page shows each step as it happens.</p>
+              <p class="prod"><strong>Production path.</strong> Platform-run evidence only (no self-reported scores), platform-owned minimum thresholds and approvals bound to the evaluated run.</p>
+            </div>
+          </div>
+<p class="note">The implementation's historical dry run (Claude Haiku 4.5 through the model gateway) measured v1 at Correctness 0.7, GoalSuccessRate 0.7, TrajectoryInOrderMatch 0.625 (5 of the 8 scenarios that expect a tool) and Harmfulness 1.0, so v1 was BLOCKED; v2 scored 1.0 on every scenario. These measurements have not been revalidated with the current default, <code>claude-sonnet-5</code>. Your scores depend on the model and the run: read them in Releases and record the actual values with the release id and blueprint version.</p>
+</section>
+<section id="m4-4-hands-on">
+<h2>From blueprint to an evaluated candidate <span class="time">20 min, mostly waiting</span></h2>
+<div class="hands-on"><strong>From blueprint to an evaluated candidate</strong>
+<p class="caption">Check the <strong>two runs</strong> started earlier:</p>
+<ol class="concept-list">
+  <li><strong>v1:</strong> memory (about 2.5 minutes), blueprint, first Dev deployment (4 to 5 minutes: the first harness in the VPC), a warm-up question (about 35 seconds), the on-behalf-of twin of the Dev harness (about half a minute) and evaluation (5 to 6 minutes): 12 to 15 minutes in all.</li>
+  <li><strong>v2:</strong> corrected prompt, new Dev deployment, on-behalf-of twin, release and evaluation; about 6–7 minutes.</li>
+</ol>
+<p class="caption">Read the output as it comes. The <strong>memory</strong> step creates the Dev and Prod memories and, on the first run only, writes two sample conversation events for employee E1001 (Alex) into the Dev memory: a stated preference for two-week leave blocks in August. AgentCore Memory extracts long-term preference records from them a few minutes later; <code>workshop apply 7</code> reads them back in <a href="m5.html#m5-4">Module 5</a>. The <strong>blueprint</strong> step prints the <em>Company policy questions</em> section of the prompt it stores: the one section that differs between v1 and v2, and exactly where v1 goes wrong. After <strong>deploy to Dev</strong> the command asks the new version one policy question (the remote-work question from the evaluation dataset), labelled warm-up: this first call carries the cold start of a new harness version, 35 to 40 seconds, and shows the prompt's behaviour before the evaluation runs. With v1 the answer comes from general knowledge, the tools list on that line is empty and no document is cited; with v2 the same line shows <code>hrkb___Retrieve</code> and the answer should cite the AnyCompany Remote Work Policy.</p>
+<ol class="steps"><li><div><span class="pill tag screen">screen</span><strong>Releases:</strong> inspect the v1 BLOCKED scores and the v2 PENDING_APPROVAL result (release 1 and 2 on a fresh run).</div></li>
+<li><div><span class="pill tag screen">screen</span><strong>Playground · Dev:</strong> ask a policy question. The current v2 deployment should cite the knowledge base; compare it with v1's failed evaluation.</div></li>
+<li><div><span class="pill tag command">command</span><code>workshop obo</code>: the whole chain. Steps 1 and 2 of its output sign Alex in (T0) and exchange by hand (T1). Step 3 is the real call: the employee asks the on-behalf-of harness over HTTPS with <code>Authorization: Bearer T0</code>: <em>What is my annual leave balance? My employee id is E1001.</em> The agent answers in Alex's name (Hi Alex, your annual leave balance is 12 days ...) using <code>hrapi___get_leave_balance</code>. Step 4 reads the evidence from the HR API log: <code>tool get_leave_balance: sub (same as T0), employee_id E1001, aud ['hr-tools-api'], azp hr-obo-gateway</code>. The first call of a new version takes 35 to 40 seconds; a warm run about 24 seconds end to end.</div></li>
+<li><div><span class="pill tag command">command</span>Optional: <code>workshop export</code> generates Strands Agents or LangGraph code from the Dev harness. The record's <code>export:</code> input picks the flavour (<code>--strands</code> or <code>--langgraph</code> overrides it); the file lands in <code>exports/hr_assistant_dev_strands_agent.py</code> or <code>hr_assistant_dev_langgraph_agent.py</code> (the command prints the path; <code>--out</code> changes the directory). <code>workshop export --run</code> runs it once on your laptop through the relay with a temporary model-gateway key that is deleted afterwards.</div></li>
+<li><div><span class="pill tag record">record</span>Record both releases: release id, blueprint version, status, the four scores and their compared values, the evaluation time, and the Dev harness version each was evaluated on. Write <code>my_call</code> for <code>module_6.decisions.release_gate</code>.</div></li></ol>
+<pre class="code-dark"><code><span class="c"># workshop obo after apply 6: the whole chain (lines shortened)</span>
+== 1  the employee signs in at Keycloak: alex.rivera (E1001), client hr-portal
+  T0 ...  aud ['hr-agent']  azp hr-portal
+== 2  the exchange by hand: what AgentCore Identity does for the harness before a tool call
+  T1 ...  aud ['hr-obo-gateway']  azp hr-agent
+OK   the on-behalf-of gateway accepts T1 (tools/list): ...
+== 3  the real call: the employee asks the on-behalf-of harness (HTTPS, Authorization: Bearer T0)
+  &gt; What is my annual leave balance? My employee id is E1001.
+  &lt; Hi Alex, your annual leave balance is 12 days ...
+  tools used: ['hrapi___get_leave_balance']; 2 model call(s); 10 s
+== 4  the evidence: the token the HR API received (T2), from the adapter's log
+  tool get_leave_balance: sub 3c6f..., employee_id E1001, aud ['hr-tools-api'], azp hr-obo-gateway
+OK   on behalf of alex.rivera: the HR API saw sub identical to T0, audience ['hr-tools-api'] (not the agent's), azp hr-obo-gateway (the gateway asked for it)</code></pre>
+<p class="caption">Three tokens, one person. The harness never saw a secret and never performed an exchange itself; it named a provider, and AgentCore Identity did the rest at Keycloak, once for the harness and once for the gateway. If step 1 fails with a sign-in error, the Keycloak task has restarted since <code>workshop apply 2</code> and the employee is gone with it; run <code>workshop apply 2</code> again. The command also prints where to look afterwards: the HR API's log group and the Keycloak admin console.</p>
+</div>
+<p>The on-behalf-of twin carries the employee's identity end to end, but it is a demonstration, not a release: it has no Cedar row enforcement (its gateway is not attached to the policy engine, and the HR tool still answers for the <code>employee_id</code> argument), no memory, no evaluation and no promotion. Do not count its answer as evidence for the released agent, or the released agent's scores as evidence for it.</p>
+</section>
+<section id="m4-4-export">
+<h2>Optional: export code and design a pipeline</h2>
+<details class="reference"><summary>Optional path · Export code and use your own pipeline</summary>
+          <p><code>workshop export</code> generates Strands Agents or LangGraph code from the Dev Harness. It keeps <strong>four things</strong>:</p>
+<ul class="concept-list">
+  <li>Model alias and model-gateway key path.</li>
+  <li>MCP gateway tools.</li>
+  <li>Agent execution role.</li>
+  <li>System prompt.</li>
+</ul>
+          <p>Code owners take over <strong>five responsibilities</strong>: memory, limits, tracing, Runtime deployment and the release gate. Execution has <strong>two paths</strong>:</p>
+<ul class="concept-list">
+  <li><strong>Laptop:</strong> <code>workshop export --run</code> starts a local relay proxy, sets <code>MODEL_GATEWAY_BASE</code> and runs once with a temporary key that is deleted afterwards.</li>
+  <li><strong>Runtime:</strong> deploy with the Harness's VPC configuration to reach the private model gateway.</li>
+</ul>
+          <figure>
+            <svg viewBox="0 0 960 300" role="img" aria-labelledby="m4-4-m6-fig6c-title">
+              <title id="m4-4-m6-fig6c-title">Two paths onto one platform: the blueprint rendered by the platform, or exported code built by a pipeline</title>
+              <defs><marker id="m4-4-m6-arr6c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+              <rect x="20" y="66" width="212" height="124" rx="8" fill="#161e2d"/>
+              <text x="32" y="90" style="font-family:ui-monospace,Menlo,monospace;font-size:11px;fill:#9cdcfe">model: <tspan fill="#ffb86b">model/claude-sonnet-5</tspan></text>
+              <text x="32" y="112" style="font-family:ui-monospace,Menlo,monospace;font-size:11px;fill:#9cdcfe">prompt: <tspan fill="#ffb86b">hr-assistant-v2.md</tspan></text>
+              <text x="32" y="134" style="font-family:ui-monospace,Menlo,monospace;font-size:11px;fill:#9cdcfe">tools: <tspan fill="#ffb86b">tool/hr-core</tspan></text>
+              <text x="32" y="156" style="font-family:ui-monospace,Menlo,monospace;font-size:11px;fill:#9cdcfe">memory: <tspan fill="#ffb86b">summary, preferences</tspan></text>
+              <text x="32" y="178" style="font-family:ui-monospace,Menlo,monospace;font-size:11px;fill:#9cdcfe">thresholds: <tspan fill="#ffb86b">Correctness 0.8</tspan></text>
+              <text class="d-text d-small" x="126" y="208" text-anchor="middle">blueprint.yaml · the release unit</text>
+
+              <text class="d-text d-title" x="250" y="34">A · Rendered by the platform</text>
+              <rect x="470" y="18" width="92" height="20" rx="10" fill="#ffe3b3"/>
+              <text class="d-text" x="516" y="32" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+              <path class="d-arrow" d="M232 100 L248 76" marker-end="url(#m4-4-m6-arr6c)"/>
+              <rect class="d-box d-platform d-ours" x="250" y="46" width="156" height="56"/>
+              <text class="d-text d-title" x="328" y="68" text-anchor="middle">Render + worker job</text>
+              <text class="d-text d-small" x="328" y="86" text-anchor="middle">references → real objects</text>
+              <path class="d-arrow" d="M406 74 L422 74" marker-end="url(#m4-4-m6-arr6c)"/>
+              <rect class="d-box d-aws d-ours" x="424" y="46" width="150" height="56"/>
+              <text class="d-text d-title" x="499" y="68" text-anchor="middle">Dev harness</text>
+              <text class="d-text d-small" x="499" y="86" text-anchor="middle">DEFAULT · version 1, 2, 3</text>
+              <path class="d-arrow" d="M574 74 L590 74" marker-end="url(#m4-4-m6-arr6c)"/>
+              <rect class="d-box d-blue d-ours" x="592" y="46" width="180" height="56"/>
+              <text class="d-text d-title" x="682" y="68" text-anchor="middle">Release gate</text>
+              <text class="d-text d-small" x="682" y="86" text-anchor="middle">dataset · thresholds · approver</text>
+              <path class="d-arrow" d="M772 74 L788 74" marker-end="url(#m4-4-m6-arr6c)"/>
+              <rect class="d-box d-aws d-ours" x="790" y="46" width="140" height="56"/>
+              <text class="d-text d-title" x="860" y="68" text-anchor="middle">Prod harness</text>
+              <text class="d-text d-small" x="860" y="86" text-anchor="middle">live · pinned version</text>
+
+              <text class="d-text d-title" x="250" y="136">B · Exported code, built by your pipeline</text>
+              <rect x="566" y="120" width="52" height="20" rx="10" fill="#eef0f3"/>
+              <text class="d-text" x="592" y="134" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#485465">option</text>
+              <path class="d-arrow d-dash" d="M232 160 L248 174" marker-end="url(#m4-4-m6-arr6c)"/>
+              <rect class="d-box d-platform" x="250" y="148" width="156" height="56" style="stroke-dasharray:5 4"/>
+              <text class="d-text d-title" x="328" y="170" text-anchor="middle">workshop export</text>
+              <text class="d-text d-small" x="328" y="188" text-anchor="middle">Strands or LangGraph code</text>
+              <path class="d-arrow d-dash" d="M406 176 L422 176" marker-end="url(#m4-4-m6-arr6c)"/>
+              <rect class="d-box d-platform" x="424" y="148" width="150" height="56" style="stroke-dasharray:5 4"/>
+              <text class="d-text d-title" x="499" y="170" text-anchor="middle">Git + pipeline</text>
+              <text class="d-text d-small" x="499" y="188" text-anchor="middle">tests · agentcore deploy</text>
+              <path class="d-arrow d-dash" d="M574 176 L590 176" marker-end="url(#m4-4-m6-arr6c)"/>
+              <rect class="d-box d-aws" x="592" y="148" width="180" height="56" style="stroke-dasharray:5 4"/>
+              <text class="d-text d-title" x="682" y="170" text-anchor="middle">Agent on Runtime</text>
+              <text class="d-text d-small" x="682" y="188" text-anchor="middle">container or code · your loop</text>
+              <path class="d-arrow d-dash" d="M700 148 L700 104" marker-end="url(#m4-4-m6-arr6c)"/>
+              <text class="d-text d-small" x="708" y="128">the same gate, by the platform API</text>
+
+              <rect class="d-box d-platform" x="20" y="236" width="920" height="50"/>
+              <text class="d-text d-title" x="480" y="256" text-anchor="middle">The same platform underneath, Modules 2 and 3</text>
+              <text class="d-text d-small" x="480" y="274" text-anchor="middle">the project's gateway and its policies · the model gateway key and its caps · the agent role · the catalogue · Transaction Search</text>
+              <path class="d-arrow" d="M860 102 L860 234" marker-end="url(#m4-4-m6-arr6c)"/>
+              <path class="d-arrow d-dash" d="M640 204 L640 234" marker-end="url(#m4-4-m6-arr6c)"/>
+            </svg>
+            <figcaption>Two implementations, one governed platform. The export keeps model and tool access controls; a team-owned pipeline must supply deployment, evaluation and release integration.</figcaption>
+          </figure>
+          <table class="plain">
+  <thead><tr><th>Pipeline stage</th><th>Team supplies</th><th>Platform retains</th></tr></thead>
+  <tbody>
+    <tr><td>Commit</td><td>Code in Git; credentials fetched at runtime from the vault or Secrets Manager</td><td>Keys, caps and rotation</td></tr>
+    <tr><td>Test</td><td>Unit tests and Dev dataset evaluation</td><td>Evaluation rules and thresholds</td></tr>
+    <tr><td>Deploy</td><td>Runtime container or direct code deploy via <code>agentcore deploy</code> or CDK (<a href="m1.html#m1-5-d1-6">D1.6</a>)</td><td>Project role, tags and network</td></tr>
+    <tr><td>Release</td><td>Register Runtime and submit evaluation through the platform API</td><td>Human approval, gate and version promotion</td></tr>
+    <tr><td>Observe</td><td>OpenTelemetry export to the Harness's backend</td><td>Transaction Search, online evaluation and dashboard</td></tr>
+  </tbody>
+</table>
+          <p class="note"><strong>Workshop scope:</strong> export is available and optional; this pipeline is discussed, not built. Code must still use the model-gateway key and tool gateway.</p>
+</details>
+<p class="note">Export is implemented; the pipeline is a design. <code>workshop export</code> produces code and <code>--run</code> runs it once on your laptop; nothing builds, tests, deploys or releases that code automatically.</p>
+</section>
+
+
+
+<section id="m4-5-decisions">
+<h2>Approve and promote: decide how a release reaches Prod <span class="time">5 min</span></h2>
+<p class="lead" id="m4-5">The v2 release now waits in <code>PENDING_APPROVAL</code>. Its builder cannot accept it: an independent Domain approver accepts the exact candidate and promotes it to a pinned Prod version, and the platform seeds traffic and registers online evaluation. Rollback and recovery get named owners.</p>
+<div class="card">
+            <h4 class="q" id="m4-5-d4-2"><span class="id">D4.2</span>How does it reach Prod?</h4>
+            <figure style="margin:0 0 10px">
+              <svg viewBox="0 0 960 296" role="img" aria-labelledby="m4-5-m6-fig6-d3-title">
+                <title id="m4-5-m6-fig6-d3-title">Two ways to reach Prod: pin an immutable version to the live endpoint in one account, or re-render into a Prod account</title>
+                <defs><marker id="m4-5-m6-fig6-d3-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+
+                <text class="d-text d-title" x="22" y="24">A · Pin an immutable version to <tspan style="font-family:ui-monospace,Menlo,monospace;font-size:13px">live</tspan></text>
+                <rect x="366" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
+                <text class="d-text" x="419" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+                <rect class="d-box d-account d-ours d-glow" x="12" y="34" width="460" height="226"/>
+                <text class="d-text d-small" x="26" y="52">one account</text>
+                <rect class="d-box d-aws" x="26" y="58" width="220" height="44"/>
+                <text class="d-text" x="136" y="76" text-anchor="middle">Dev harness hr_assistant_dev</text>
+                <text class="d-text d-small" x="136" y="92" text-anchor="middle">DEFAULT → latest</text>
+                <path class="d-arrow" d="M136 102 L136 120" marker-end="url(#m4-5-m6-fig6-d3-arr)"/>
+                <text class="d-text d-small" x="146" y="116">promotion = render for Prod + pin live</text>
+                <rect class="d-group" x="26" y="122" width="432" height="128"/>
+                <text class="d-text d-strong" x="36" y="140">Prod harness hr_assistant_prod</text>
+                <rect class="d-box d-aws" x="40" y="150" width="60" height="28"/>
+                <text class="d-text" x="70" y="169" text-anchor="middle">v1</text>
+                <rect class="d-box d-aws" x="110" y="150" width="60" height="28"/>
+                <text class="d-text" x="140" y="169" text-anchor="middle">v2</text>
+                <rect class="d-box d-aws" x="180" y="150" width="60" height="28"/>
+                <text class="d-text" x="210" y="169" text-anchor="middle">v3</text>
+                <text class="d-text d-tiny" x="252" y="169">immutable versions</text>
+                <path class="d-arrow" d="M140 198 L140 180" marker-end="url(#m4-5-m6-fig6-d3-arr)"/>
+                <rect class="d-box" x="110" y="198" width="60" height="28"/>
+                <text class="d-text" x="140" y="217" text-anchor="middle">live</text>
+                <text class="d-text d-tiny" x="178" y="217">endpoint</text>
+                <path class="d-arrow d-dash" d="M110 212 L70 212 L70 180" marker-end="url(#m4-5-m6-fig6-d3-arr)"/>
+                <text class="d-text d-small" x="40" y="242">rollback: point again</text>
+                <text class="d-text d-small" x="242" y="280" text-anchor="middle">version pinning · rollback by repointing</text>
+
+                <text class="d-text d-title" x="498" y="24">B · Re-render into a Prod account</text>
+                <rect class="d-box d-account" x="488" y="34" width="460" height="226"/>
+                <rect class="d-box d-account" x="502" y="60" width="432" height="66"/>
+                <text class="d-text d-small" x="514" y="76">Dev account</text>
+                <rect class="d-box d-aws" x="514" y="84" width="408" height="32"/>
+                <text class="d-text" x="718" y="105" text-anchor="middle">Dev harness · DEFAULT → latest</text>
+                <path class="d-arrow" d="M718 126 L718 166" marker-end="url(#m4-5-m6-fig6-d3-arr)"/>
+                <text class="d-text d-small" x="730" y="150">render again, cross-account trust</text>
+                <rect class="d-box d-account" x="502" y="168" width="432" height="66"/>
+                <text class="d-text d-small" x="514" y="184">Prod account</text>
+                <rect class="d-box d-aws" x="514" y="192" width="408" height="32"/>
+                <text class="d-text" x="718" y="213" text-anchor="middle">Prod harness · rendered again</text>
+                <text class="d-text d-small" x="718" y="280" text-anchor="middle">an account wall · cross-account plumbing</text>
+              </svg>
+              <figcaption>Option A is the one we use in this workshop: we promote by pointing the live endpoint at a version, and we roll back by pointing it at the previous version again. The promote job also registers the online evaluation that <a href="m5.html">Module 5</a> reads.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr class="ours"><td>Pin an immutable version to the <code>live</code> endpoint</td><td class="good">version pinning; rollback by repointing</td><td class="bad">one account</td><td class="when">Dev and Prod in one account</td></tr>
+                <tr><td>Re-render into a Prod account</td><td class="good">an account wall</td><td class="bad">cross-account plumbing</td><td class="when">account per environment</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <p><strong>This workshop.</strong> Promotion performs <strong>three actions</strong>:</p>
+<ol class="concept-list">
+  <li><strong>Resolve:</strong> the approved blueprint against Prod's gateway and memory, and ensure the Prod key. No Prod key exists yet: the <a href="#m4-2">key step</a> created the Dev key only, so the first promotion creates <code>hr-assistant-prod-claude-sonnet-5</code> with the blueprint's cap (1 USD per 7 days) and stores it in the token vault; the project's Keys tab then shows two keys, each with its own spend.</li>
+  <li><strong>Deploy:</strong> create the Prod Harness and pin <code>live</code> to its version.</li>
+  <li><strong>Observe:</strong> register the online evaluation that <a href="m5.html">Module 5</a> reads. <code>hr_assistant_prod_online_eval</code> watches the <code>live</code> endpoint's spans and scores every Prod conversation (100 % sampling) with three judges, Helpfulness, Harmfulness and ToolSelectionAccuracy; scores arrive 8–11 minutes after a conversation goes quiet. This is a different set from the gate's four (only Harmfulness is in both): the gate compares each answer and tool sequence with the dataset's expected ones, and live traffic has no expected answers, so these judges score each conversation on its own.</li>
+</ol>
+              <p class="also">A platform worker runs promotion from the UI or API. A Git pipeline is discussed as a take-home path; it is not built today.</p>
+              <p class="prod"><strong>Production path.</strong> Drive promotion through a Git pipeline calling the platform API, with a second Prod approver.</p>
+            </div>
+          </div>
+</section>
+<section id="m4-5-hands-on">
+<h2>Approve, promote, verify Prod <span class="time">15 min</span></h2>
+<div class="hands-on"><strong>Approve, promote, verify Prod</strong>
+<ol class="steps"><li><div><span class="pill tag screen">screen</span>Switch persona to Domain approver (user menu, top right). On the release's page, approve the v2 release and promote it. If the screen is unavailable, <code>workshop approve release</code> then <code>workshop promote</code> do the same through the API; the first of them also shows the developer and the admin being refused with 403 (separation of duties). Wait for the Prod deployment to become ready, then ask a question in <strong>Playground · Prod</strong>; its first response has a cold start of about 35 seconds.</div></li>
+<li><div><span class="pill tag command">command</span>Verify the live version: <code>uv run workshop ask --env prod "Which US public holidays are there in November 2026?"</code> → Veterans Day and Thanksgiving, answered by the Prod harness through its <code>live</code> endpoint. In the Release detail, note the Prod harness version and the release it came from; in the project's Keys tab, the new Prod key <code>hr-assistant-prod-claude-sonnet-5</code> beside the Dev key, each with its own spend.</div></li>
+<li><div><span class="pill tag command">command</span><code>workshop traffic --prod 3</code>: seed three Prod conversations for the online scores read in <a href="m5.html#m5-4">Module 5</a>. Record the answered count it prints (normally three): Module 5's <a href="m5.html#m5-2">unit cost</a> adds it to the unit-cost denominator.</div></li>
+<li><div><span class="pill tag record">record</span>Write <code>my_call</code> for <code>module_6.decisions.promotion</code>.</div></li></ol>
+</div>
+<p><strong>Recovery ownership.</strong> Rollback means pointing <code>live</code> back at the previous harness version. Today that is one AgentCore API call (<code>UpdateHarnessEndpoint</code>) made outside the platform by the workload owner with the Platform admin, because the platform API only promotes approved releases and the UI has no rollback button. There are no alarms and no automatic rollback (<a href="m5.html#m5-3">Module 5</a>). Record who may make that call, the previous version id and how the release record is updated.</p>
+<p><strong>Publication.</strong> The catalogue records describe the HR tools, the knowledge base and the model alias; the implementation publishes no catalogue record for the agent itself. Consumers reach it through the platform's Playground and <code>POST /invoke</code>. Publishing the agent for discovery by other domains would be a new record with its own approval, audience and invocation instructions.</p>
+<div class="remember"><strong>Remember.</strong> The team writes the use case; the platform resolves its permitted resources. Evaluate before promotion. Keep Prod on an approved version; rollback repoints its endpoint. When the person matters, identity travels in a token exchanged at every door, not in an argument.</div>
+<p class="note">Read more: the <a href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/">AgentCore guide</a>, especially Harness and Evaluations.</p>
+</section>
+<section id="m4-reference">
+<h2>Module 4 glossary</h2>
+<p class="note">Terms used on this page, in the order they first appear. Open the list when a term is unfamiliar.</p>
+<details class="reference" id="m4-glossary"><summary>Reference · Module 4 glossary</summary>
+<div class="glossary"><dl>
+<dt><span id="m4-4-glossary"></span>AgentOps</dt>
+<dd>Build, test, approve, promote, observe and improve agents.</dd>
+<dt>Evaluator</dt>
+<dd>A judge that scores an aspect of agent behaviour.</dd>
+<dt>Release gate</dt>
+<dd>Dataset evaluation against thresholds, followed by human approval.</dd>
+<dt>Export, pipeline</dt>
+<dd>Generate Strands Agents or LangGraph code; use CI/CD to test, deploy and release it.</dd>
+<dt>On-behalf-of twin</dt>
+<dd>hr_assistant_dev_obo: the Dev harness rendered once more with a JWT authorizer, so it can act for the employee who called it.</dd>
+<dt><span id="m4-5-glossary"></span>Separation of duties</dt>
+<dd>Different people build and approve a release.</dd>
+</dl></div>
+</details>
+</section>
+<section id="m4-5-architecture">
+<h2>The platform at the end of Module 4</h2>
+<p class="lead">One blueprint now runs in <strong>two environments</strong>: Dev <code>DEFAULT</code> follows its latest version; Prod <code>live</code> pins the approved version. Each has its own memory. Model calls use the private load balancer; Gateway, Identity and Memory use PrivateLink. A third harness, hr_assistant_dev_obo, stands beside Dev: the same render with a JWT authorizer at its door, its tool calls carrying the employee's exchanged token to the on-behalf-of gateway.</p>
+<figure class="arch">
+            <!-- arch-svg:start -->
+            <a href="arch/arch-4-5-dev-and-prod.svg" target="_blank" rel="noopener"><img src="arch/arch-4-5-dev-and-prod.svg" alt="AWS architecture after Module 4: one agent in Dev and Prod, and its on-behalf-of twin" loading="lazy"/></a>
+            <!-- arch-svg:end -->
+            <figcaption><strong>Changed:</strong> worker Lambda, DynamoDB, AgentCore Runtime (the Dev and Prod harnesses and, beside Dev, the on-behalf-of twin hr_assistant_dev_obo), Memory and Evaluations; also the Prod key, which promotion created in the model gateway and the token vault, and one inline policy on the Dev agent role. Runtime connects through interfaces in the private app subnets. The release passed its gate; promotion registered online evaluation. Two things the twin depends on are outside the figure: Keycloak, where AgentCore Identity exchanges the employee's token for the harness and again for the on-behalf-of gateway of <a href="m3.html#m3-1-2">Module 3</a>, and the HR API behind that gateway; both live in the IdP stack built in <a href="m2.html#m2-1">Module 2</a>, outside the landing zone. Export remains optional. Click to open full size.</figcaption>
+          </figure>
+<h3 id="m4-2-architecture">Shared services and model access</h3>
+<p>The Dev key is in the vault, its cap is enforced and the catalogue records are approved. Tracing (CloudWatch Transaction Search) has been on since the <a href="m2.html#m2-1">foundation</a> in Module 2 and receives the agents' traces. Model calls use capped keys and guardrailed aliases, with spend per key. Beside the three gateways of the <a href="m2.html#m2-3-2">access fixture</a>, whose callers are IAM roles, stands the on-behalf-of gateway <code>hr-assistant-dev-gw-obo</code>, which admits the realm's JWTs instead; AgentCore Identity holds the two OAuth2 providers of the foundation next to the model keys. The gateway's target, the HR API, and the corporate IdP that signs employees in both live in the IdP stack built in <a href="m2.html#m2-1">Module 2</a>, outside the landing zone and so outside the figure above; the IdP sits there as a company's Okta or Entra ID would.</p>
+<p>Module 5 adds no new workload. It operates this release over one observation window: Prod traffic and its signals, unit cost, audit and incidents, and quality with the improvements they lead to.</p>
+</section>
+
+
+      </main>
+      <nav class="pager" aria-label="Previous and next page"><a href="m3.html">←&nbsp;Module 3</a><a href="m5.html">Module 5&nbsp;→</a></nav>
+
+      <details class="toc-disclosure" id="course-contents">
+        <summary class="toc-toggle" aria-label="Table of contents" title="Table of contents" aria-controls="contents-navigation">
+          <svg class="toc-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h11M4 12h11M4 19h11m3-10 3 3-3 3" /></svg>
+          <svg class="toc-collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </summary>
+        <nav class="toc" id="contents-navigation" aria-label="Table of contents">
+          <strong>Contents</strong>
+          <a href="index.html">The learning path</a>
+          <a href="intro.html">Introduction</a>
+          <a href="m1.html">Module 1 · Requirements, personas and architecture</a>
+          <a href="m2.html">Module 2 · Build the shared platform</a>
+          <a href="m3.html">Module 3 · Workloads and blueprints</a>
+          <a href="m4.html">Module 4 · Access, governance and AgentOps</a>
+          <a href="m5.html">Module 5 · Operate and improve</a>
+          <a href="handoff.html">Handoff</a>
+          <a href="cleanup.html">Clean up</a>
+        </nav>
+      </details>
+    </div>
+    <script src="course.js"></script>
+  </body>
+</html>

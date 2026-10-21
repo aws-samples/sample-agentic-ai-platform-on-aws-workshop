@@ -4,6 +4,11 @@
 the dataset evaluation (BLOCKED is the expected verdict). With prompt_version v2 it stores blueprint v2, redeploys, creates release 2
 and evaluates it (PENDING_APPROVAL). Approval and promotion are the Domain approver's clicks in the UI (`workshop approve release`
 and `workshop promote` are the fallbacks).
+
+The dataset expects the module 4 deny of leave requests over `max_leave_days`, which only a gateway in ENFORCE applies: before a
+v2 evaluation the command reads the Dev gateway's policy mode and stops with the flip instructions while it is LOG_ONLY (a v1 run
+only warns). A BLOCKED v2 release is evaluated again by running the command again; an UNSCORED scenario (its telemetry was not
+complete when the evaluators read it) is the usual reason for one.
 """
 
 from __future__ import annotations
@@ -17,7 +22,7 @@ import yaml
 
 from platform_sdk import agentcore, api, blueprint, evaluation
 
-from .context import Context, WorkshopError, head, look, ok, say
+from .context import Context, WorkshopError, head, look, ok, say, warn
 
 EVALUATION_DELAY_SECONDS = 180
 RUN_POLL_SECONDS = 10
@@ -27,6 +32,30 @@ RUN_WAIT_SECONDS = 15 * 60  # the worker's limit: a platform run still EVALUATIN
 def registered(client, project_id: str, env: str, type_: str, name: str | None = None) -> dict | None:
     rows = client.list_resources(project_id, env=env)
     return next((r for r in rows if r["type"] == type_ and (name is None or r["name"] == name)), None)
+
+
+# ---- the gateway's policy mode ------------------------------------------------------------------------------------------
+def dev_gateway_mode(ctx: Context) -> tuple[str, str | None]:
+    """(name, policy mode) of the project's Dev gateway: ENFORCE | LOG_ONLY, or None when no policy engine is attached or the
+    gateway is not registered (module 4 not applied yet)."""
+    name = ctx.names("dev").gateway
+    row = registered(ctx.developer, ctx.project_id, "dev", "gateway", name)
+    if not row or not row.get("id"):
+        return name, None
+    gateway = agentcore.control_client(ctx.region).get_gateway(gatewayIdentifier=row["id"])
+    return name, (gateway.get("policyEngineConfiguration") or {}).get("mode")
+
+
+def gateway_mode_problem(mode: str | None, gateway_name: str, max_leave_days: int) -> str | None:
+    """Why a dataset run would lose its long-leave scenario on this gateway; None when the gateway enforces its policies."""
+    if mode == "ENFORCE":
+        return None
+    state = f"is {mode}" if mode else "has no policy engine attached"
+    return (
+        f"the Dev gateway {gateway_name} {state}: the dataset expects the module 4 deny of leave requests over "
+        f"{max_leave_days} days, which only ENFORCE applies (the 12-day scenario scores 0 otherwise). Flip {gateway_name} to "
+        "ENFORCE on the Governance screen or run `workshop mode ENFORCE --gateway hr-dev`, then run `workshop apply 6` again"
+    )
 
 
 # ---- memory -----------------------------------------------------------------------------------------------------------
@@ -236,13 +265,67 @@ def wait_for_platform_run(ctx: Context, release: dict) -> dict:
     return release
 
 
+def print_problem_rows(rows: list) -> None:
+    """The scenarios that produced no score (FAILED invocation, UNSCORED evaluation) and what to do about them."""
+    problems = [r for r in rows if evaluation.is_failed_row(r)]
+    for row in problems:
+        say(f"  {str(row.get('status')):<9} {row.get('scenarioId')}: {str(row.get('error') or '')[:140]}")
+    if any(r.get("status") == "UNSCORED" for r in problems):
+        say(
+            "  UNSCORED: the evaluators read an incomplete span set for that session; each such scenario counts as 0. "
+            "Run this command again (or `Run again` on the Releases screen) to evaluate the release once more"
+        )
+
+
 def print_verdict(outcome: dict) -> None:
     ev = outcome.get("evaluation") or {}
     for name, detail in (ev.get("details") or {}).items():
+        label = "scenarios without a score" if name == "_scenarios" else name
         say(
-            f"  {name:<24} actual {str(detail.get('actual')):>6}  {detail.get('op')}{detail.get('threshold')}  {'PASS' if detail.get('passed') else 'FAIL'}"
+            f"  {label:<24} actual {str(detail.get('actual')):>6}  {detail.get('op')}{detail.get('threshold')}  {'PASS' if detail.get('passed') else 'FAIL'}"
         )
+    print_problem_rows(ev.get("results") or [])
     say(f"  -> release {outcome.get('status')} (verdict {ev.get('verdict')})")
+
+
+def blocked_reasons(ev: dict) -> str:
+    """One clause per failed threshold, with the ids of the scenarios without a score."""
+    parts = []
+    for name, detail in (ev.get("details") or {}).items():
+        if detail.get("passed"):
+            continue
+        if name == "_scenarios":
+            ids = ", ".join(str(s) for s in ev.get("failedScenarios") or []) or "see the run file"
+            parts.append(f"{detail.get('actual')} scenario(s) without a score ({ids})")
+        else:
+            parts.append(f"{name} {detail.get('actual')} vs {detail.get('op')}{detail.get('threshold')}")
+    return "; ".join(parts) or "see the verdict above"
+
+
+def closing_line(release: dict, prompt_version: str, expect_pass: bool) -> tuple[str, str]:
+    """(level, text) of the command's last line: `ok` for the expected outcomes, `warn` for a v2 release that is BLOCKED (the
+    v1 wording, "set prompt_version: v2", would send the learner to a setting that is already in place)."""
+    status, release_id = release.get("status"), release.get("releaseId")
+    if status == "BLOCKED" and not expect_pass:
+        return (
+            "ok",
+            f"release {release_id} is BLOCKED: the gate caught prompt {prompt_version}. Set prompt_version: v2 in the record "
+            "and run `workshop apply 6` again",
+        )
+    if status == "BLOCKED":
+        return (
+            "warn",
+            f"release {release_id} is BLOCKED although prompt {prompt_version} was expected to pass: "
+            f"{blocked_reasons(release.get('evaluation') or {})}. Run `workshop apply 6` again to evaluate it once more "
+            "(or `Run again` on the Releases screen)",
+        )
+    if status == "PENDING_APPROVAL":
+        return (
+            "ok",
+            f"release {release_id} passed the gate: PENDING_APPROVAL. Approve and promote it as the Domain approver on the "
+            "Releases screen",
+        )
+    return "ok", f"release {release_id} is {status}"
 
 
 def run_evaluation(ctx: Context, release: dict, label: str, evaluators: list[str]) -> dict:
@@ -266,7 +349,7 @@ def run_evaluation(ctx: Context, release: dict, label: str, evaluators: list[str
         )
     scenarios = json.loads(ctx.dataset_path.read_text())["scenarios"]
     say(
-        f"  dataset {ctx.dataset_path.name}: {len(scenarios)} scenarios, 3 at a time; evaluators {evaluators}; telemetry delay {EVALUATION_DELAY_SECONDS} s -> 5 to 6 minutes"
+        f"  dataset {ctx.dataset_path.name}: {len(scenarios)} scenarios, 3 at a time; evaluators {evaluators}; telemetry delay {EVALUATION_DELAY_SECONDS} s, then each session's spans are read until complete -> 5 to 7 minutes"
     )
     started = time.monotonic()
 
@@ -378,6 +461,13 @@ def run(ctx: Context, skip_evaluation: bool = False) -> None:
     if skip_evaluation:
         say(f"  --skip-evaluation: release {release['releaseId']} left {status}")
     elif needs_run:
+        gateway_name, mode = dev_gateway_mode(ctx)
+        say(f"  Dev gateway {gateway_name}: policy mode {mode or 'none (no policy engine attached)'}")
+        problem = gateway_mode_problem(mode, gateway_name, int(ctx.inputs(4).get("max_leave_days", 10)))
+        if problem and expect_pass:
+            raise WorkshopError(f"{problem}. Release {release['releaseId']} stays {status}; nothing was evaluated")
+        if problem:
+            warn(problem)
         run_evaluation(ctx, release, prompt_version, bp.evaluator_ids())
         release = developer.get_release(release["releaseId"])
     else:
@@ -389,16 +479,9 @@ def run(ctx: Context, skip_evaluation: bool = False) -> None:
     ctx.state.set(f"releases.{prompt_version}", release_state(release))
 
     say("")
-    if release["status"] == "BLOCKED":
-        ok(
-            f"release {release['releaseId']} is BLOCKED: the gate caught prompt {prompt_version}. Set prompt_version: v2 in the record and run `workshop apply 6` again"
-        )
-    elif release["status"] == "PENDING_APPROVAL":
-        ok(
-            f"release {release['releaseId']} passed the gate: PENDING_APPROVAL. Approve and promote it as the Domain approver on the Releases screen"
-        )
+    level, text = closing_line(release, prompt_version, expect_pass)
+    (warn if level == "warn" else ok)(text)
+    if release["status"] == "PENDING_APPROVAL":
         say("      fallbacks: `workshop approve release` then `workshop promote`")
-    else:
-        ok(f"release {release['releaseId']} is {release['status']}")
     look("Releases screen", f"{ctx.ui_url}/releases/{release['releaseId']}")
     look("Playground", f"{ctx.ui_url}/playground  (environment dev: ask a policy question)")

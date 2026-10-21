@@ -77,11 +77,11 @@ export function ResourcesTab({ projectId }: { projectId: string }) {
   }
   return (
     <SpaceBetween size="l">
-      <Box>
+      <Box float="right">
         <SegmentedControl
           selectedId={envFilter}
           options={[
-            { id: "all", text: "All environments" },
+            { id: "all", text: "All" },
             { id: "dev", text: "Dev" },
             { id: "prod", text: "Prod" },
           ]}

@@ -22,7 +22,7 @@ import { INFO_SPACER, InfoFormField, InfoHeader } from "../../../components/Info
 import { SpendBar } from "../../../components/SpendBar";
 import { EnvBadge, KeyStatus } from "../../../components/StatusBadge";
 import { formatErrorContent, useNotifications } from "../../../layout/notifications";
-import { formatBudgetDuration, formatDateTime, formatRelative, formatUsd } from "../../../utils/format";
+import { formatBudgetDuration, formatDateTime, formatUsd } from "../../../utils/format";
 import { durationError, numberError } from "../validation";
 
 interface KeyRow extends AgentKey {
@@ -87,7 +87,7 @@ export function KeysTab({ project }: { project: Project }) {
                 />
                 {canManage ? (
                   <Button disabled={!selectedKey} onClick={() => selectedKey && setRaiseCapKey(selectedKey)} data-testid="raise-cap">
-                    Set cap
+                    Modify budget
                   </Button>
                 ) : null}
                 {canManage ? (
@@ -114,7 +114,7 @@ export function KeysTab({ project }: { project: Project }) {
               </SpaceBetween>
             }
           >
-            Agent keys
+            Agents
           </InfoHeader>
         }
         items={rows}
@@ -127,8 +127,8 @@ export function KeysTab({ project }: { project: Project }) {
         ariaLabels={{ selectionGroupLabel: "Key selection", itemSelectionLabel: (_data, item) => item.alias }}
         wrapLines
         columnDefinitions={[
-          { id: "alias", header: "Alias", minWidth: 280, cell: (k) => <CopyText value={k.alias} max={48} />, isRowHeader: true },
-          { id: "env", header: "Env", cell: (k) => <EnvBadge env={k.env} /> },
+          { id: "alias", header: "Alias", minWidth: 300, cell: (k) => <CopyText value={k.alias} max={48} />, isRowHeader: true },
+          { id: "env", header: "Environment", cell: (k) => <EnvBadge env={k.env} /> },
           { id: "model", header: "Model", minWidth: 150, cell: (k) => k.model },
           {
             id: "spend",
@@ -147,11 +147,11 @@ export function KeysTab({ project }: { project: Project }) {
           {
             id: "reset",
             header: "Reset",
-            minWidth: 170,
+            minWidth: 140,
             cell: (k) =>
               k.spendInfo?.budgetResetAt ? (
                 <span title={formatDateTime(k.spendInfo.budgetResetAt)}>
-                  {formatRelative(k.spendInfo.budgetResetAt)} (every {formatBudgetDuration(k.spendInfo.budgetDuration ?? k.budgetDuration)})
+                  every {formatBudgetDuration(k.spendInfo.budgetDuration ?? k.budgetDuration)}
                 </span>
               ) : (
                 `every ${formatBudgetDuration(k.budgetDuration)}`

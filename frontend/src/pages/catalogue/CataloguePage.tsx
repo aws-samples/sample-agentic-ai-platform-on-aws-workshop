@@ -14,12 +14,14 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import SplitPanel from "@cloudscape-design/components/split-panel";
 import Spinner from "@cloudscape-design/components/spinner";
 import Table from "@cloudscape-design/components/table";
+import Tabs from "@cloudscape-design/components/tabs";
 import Textarea from "@cloudscape-design/components/textarea";
+import { keepPreviousData } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { isApiError } from "../../api/client";
-import { useCatalogue, useCatalogueRecord, useCatalogueSearch, useSetCatalogueStatus } from "../../api/hooks";
+import { useCatalogue, useCatalogueRecord, useCatalogueSearch, useSetCatalogueStatus, useSyncCatalogueAgents } from "../../api/hooks";
 import type { CatalogueRecord, DecisionStatus } from "../../api/types";
 import { useMe } from "../../auth/MeContext";
 import { CopyText } from "../../components/CopyText";
@@ -32,6 +34,7 @@ import { useBreadcrumbs } from "../../layout/breadcrumbs";
 import { formatErrorContent, useNotifications } from "../../layout/notifications";
 import { usePageSplitPanel } from "../../layout/splitPanel";
 import { formatDateTime } from "../../utils/format";
+import { CATALOGUE_TABS, type CatalogueTabId, categoryLabel, emptyDescription, emptyTitle, isCatalogueTab, rowsForTab, tabLabel } from "./catalogueTabs";
 
 const SEARCH_MAX = 256; // SearchDiscoverableRegistryRecords.searchQuery limit (the API answers 400 above it)
 const REASON_MAX = 255; // UpdateRegistryRecordStatus.statusReason limit
@@ -71,22 +74,49 @@ export function CataloguePage() {
   const me = useMe();
   const navigate = useNavigate();
   const notifications = useNotifications();
+  const [params, setParams] = useSearchParams();
   const [queryText, setQueryText] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [status, setStatus] = useState("");
   const [selected, setSelected] = useState<CatalogueRecord[]>([]);
   const [decision, setDecision] = useState<DecisionStatus | null>(null);
   const canDecide = me.can("catalogue:decide");
+  const syncAgents = useSyncCatalogueAgents();
+  const registerAgents = () =>
+    syncAgents.mutate(undefined, {
+      onSuccess: (result) => {
+        const registered = result.agents.filter((a) => a.recordId);
+        const failed = result.agents.filter((a) => a.error);
+        const skipped = result.agents.filter((a) => a.skipped);
+        const lines = result.agents.map((a) => `${a.projectId}: ${a.recordId ? `${a.name} ${a.status ?? ""} (${a.action ?? "kept"})` : (a.error ?? a.skipped ?? "—")}`);
+        if (failed.length) {
+          notifications.error(`${failed.length} agent(s) could not be registered`, new Error(lines.join("; ")));
+        } else {
+          notifications.success(`${registered.length} agent record(s) registered${skipped.length ? `, ${skipped.length} project(s) skipped` : ""}`, lines.join("; "));
+        }
+      },
+      onError: (error) => notifications.error("Registering the promoted agents failed", error),
+    });
+  // the Records tab (All / Models / Knowledge bases / Tools / Agents) lives in the URL like the other tabbed screens
+  const requestedTab = params.get("tab");
+  const tab: CatalogueTabId = isCatalogueTab(requestedTab) ? requestedTab : "all";
+  const setTab = (next: CatalogueTabId) => {
+    const nextParams = new URLSearchParams(params);
+    nextParams.set("tab", next);
+    setParams(nextParams, { replace: true });
+  };
 
   const searching = submittedQuery.trim().length > 0;
-  const list = useCatalogue(status || undefined, { enabled: !searching });
-  const search = useCatalogueSearch(submittedQuery);
+  // the previous rows stay while a new status filter or search loads, so the tab counts do not flicker to nothing
+  const list = useCatalogue(status || undefined, { enabled: !searching, placeholderData: keepPreviousData });
+  const search = useCatalogueSearch(submittedQuery, { placeholderData: keepPreviousData });
   const active = searching ? search : list;
   const rows = useMemo(() => {
     const data = (active.data ?? []) as CatalogueRecord[];
     return [...data].sort((a, b) => (a.updatedAt ?? "") < (b.updatedAt ?? "") ? 1 : -1);
   }, [active.data]);
-  const selectedRecord = rows.find((r) => r.recordId === selected[0]?.recordId) ?? null;
+  const tabRows = useMemo(() => rowsForTab(rows, tab), [rows, tab]);
+  const selectedRecord = tabRows.find((r) => r.recordId === selected[0]?.recordId) ?? null;
   const detail = useCatalogueRecord(selectedRecord?.recordId);
 
   const notConfigured = isApiError(active.error) && active.error.code === "REGISTRY_NOT_CONFIGURED";
@@ -101,6 +131,7 @@ export function CataloguePage() {
               items={[
                 { label: "Name", value: selectedRecord.name },
                 { label: "Type", value: selectedRecord.recordType },
+                { label: "Category", value: categoryLabel(detail.data?.category ?? selectedRecord.category) },
                 { label: "Status", value: <RecordStatus status={detail.data?.status ?? selectedRecord.status} /> },
                 { label: "Version", value: selectedRecord.recordVersion ?? "—" },
                 { label: "Record id", value: <CopyText value={selectedRecord.recordId} /> },
@@ -131,10 +162,10 @@ export function CataloguePage() {
   usePageSplitPanel(panel, !!selectedRecord);
 
   useEffect(() => {
-    if (selected.length && !rows.some((r) => r.recordId === selected[0].recordId)) {
-      setSelected([]);
+    if (selected.length && !tabRows.some((r) => r.recordId === selected[0].recordId)) {
+      setSelected([]); // the record left the list, or the tab changed to one it does not belong to
     }
-  }, [rows, selected]);
+  }, [tabRows, selected]);
 
   const submitSearch = () => setSubmittedQuery(queryText.trim().slice(0, SEARCH_MAX));
   const decisionItems = [
@@ -142,13 +173,14 @@ export function CataloguePage() {
     { id: "REJECTED", text: "Reject", disabled: selectedRecord?.status === "REJECTED" },
     { id: "DEPRECATED", text: "Deprecate", disabled: selectedRecord?.status === "DEPRECATED" },
   ];
+  const recordsTable = renderRecordsTable();
 
   return (
     <ContentLayout
       header={
         <Header
           variant="h1"
-          description="Shared Agent Registry: MCP tool servers, knowledge bases and approved models that projects may use. Search covers APPROVED (discoverable) records only; the status filter lists every record."
+          description="Shared Agent Registry: MCP tool servers, knowledge bases, approved models and the agents promoted to Prod, one tab each. Search covers APPROVED (discoverable) records only; the status filter lists every record."
         >
           Catalogue
         </Header>
@@ -156,115 +188,12 @@ export function CataloguePage() {
     >
       <SpaceBetween size="l">
         {active.error && !notConfigured ? <ErrorAlert header="Catalogue could not be loaded" error={active.error} onRetry={() => void active.refetch()} /> : null}
-        <Table
-          header={
-            <Header
-              variant="h2"
-              counter={active.data ? `(${rows.length})` : undefined}
-              actions={
-                <SpaceBetween direction="horizontal" size="xs">
-                  <Button onClick={() => void active.refetch()} iconName="refresh" ariaLabel="Refresh" />
-                  {canDecide ? (
-                    <ButtonDropdown
-                      items={decisionItems}
-                      disabled={!selectedRecord}
-                      onItemClick={({ detail }) => setDecision(detail.id as DecisionStatus)}
-                      data-testid="set-status"
-                    >
-                      Set status
-                    </ButtonDropdown>
-                  ) : null}
-                </SpaceBetween>
-              }
-            >
-              Records
-            </Header>
-          }
-          filter={
-            <SpaceBetween direction="horizontal" size="s">
-              <FormField constraintText={`${queryText.length}/${SEARCH_MAX}`}>
-                <Input
-                  type="search"
-                  value={queryText}
-                  placeholder="Search approved records (GET /catalogue/search?q=)"
-                  onChange={({ detail }) => setQueryText(detail.value.slice(0, SEARCH_MAX))}
-                  onKeyDown={({ detail }) => {
-                    if (detail.key === "Enter") {
-                      submitSearch();
-                    }
-                  }}
-                  clearAriaLabel="Clear search"
-                  data-testid="catalogue-search"
-                />
-              </FormField>
-              <Button onClick={submitSearch} disabled={!queryText.trim()}>
-                Search
-              </Button>
-              {searching ? (
-                <Button
-                  variant="link"
-                  onClick={() => {
-                    setQueryText("");
-                    setSubmittedQuery("");
-                  }}
-                >
-                  Clear search
-                </Button>
-              ) : null}
-              <Select
-                selectedOption={STATUS_OPTIONS.find((o) => o.value === status) ?? STATUS_OPTIONS[0]}
-                options={STATUS_OPTIONS}
-                disabled={searching}
-                onChange={({ detail }) => setStatus(detail.selectedOption.value ?? "")}
-              />
-            </SpaceBetween>
-          }
-          items={rows}
-          loading={active.isLoading}
-          loadingText={searching ? "Searching the registry" : "Loading records"}
-          trackBy="recordId"
-          selectionType="single"
-          selectedItems={selected}
-          onSelectionChange={({ detail }) => setSelected([...detail.selectedItems])}
-          ariaLabels={{ selectionGroupLabel: "Record selection", itemSelectionLabel: (_data, item) => item.name }}
-          wrapLines
-          columnDefinitions={[
-            {
-              id: "name",
-              header: "Name",
-              minWidth: 220,
-              isRowHeader: true,
-              cell: (r) => (
-                <div>
-                  <Box variant="strong" display="block">
-                    {r.displayName ?? r.name}
-                  </Box>
-                  <Box variant="small" color="text-body-secondary" display="block">
-                    {r.name}
-                  </Box>
-                </div>
-              ),
-            },
-            { id: "type", header: "Type", minWidth: 100, cell: (r) => <Badge color={r.recordType === "MCP" ? "blue" : "grey"}>{r.recordType}</Badge> },
-            // 200px keeps "Pending approval" (icon + 16 characters + cell padding) on one line; Description gives the room back
-            { id: "status", header: "Status", width: 200, minWidth: 200, cell: (r) => <RecordStatus status={r.status} /> },
-            { id: "description", header: "Description", minWidth: 220, cell: (r) => r.description ?? "—" },
-            { id: "version", header: "Version", cell: (r) => r.recordVersion ?? "—" },
-            { id: "updated", header: "Updated", cell: (r) => formatDateTime(r.updatedAt) },
-          ]}
-          empty={
-            notConfigured ? (
-              <EmptyState
-                title="No Agent Registry configured"
-                description="PUT /settings {registryId} points the Catalogue at an Agent Registry; until then the catalogue is empty."
-                action={<Button onClick={() => navigate("/governance")}>Open Governance</Button>}
-              />
-            ) : searching ? (
-              <EmptyState title="No approved records match" description="Search covers discoverable (APPROVED) records only; clear the search to list every record by status." />
-            ) : (
-              <EmptyState title="No records" description={status ? `No records with status ${status}.` : "Records are created in the Agent Registry; POST /catalogue/{id}/status approves, rejects or deprecates them."} />
-            )
-          }
+        <Tabs
+          activeTabId={tab}
+          onChange={({ detail }) => setTab(isCatalogueTab(detail.activeTabId) ? detail.activeTabId : "all")}
+          ariaLabel="Records by category"
+          // the same table under every tab (only the active one is mounted): the tab decides which rows it shows
+          tabs={CATALOGUE_TABS.map((t) => ({ id: t.id, label: tabLabel(t, active.data ? rows : undefined), content: recordsTable }))}
         />
       </SpaceBetween>
       {selectedRecord && decision ? (
@@ -281,6 +210,128 @@ export function CataloguePage() {
       ) : null}
     </ContentLayout>
   );
+
+  function renderRecordsTable() {
+    return (
+      <Table
+        header={
+          <Header
+            variant="h2"
+            counter={active.data ? `(${tabRows.length})` : undefined}
+            actions={
+              <SpaceBetween direction="horizontal" size="xs">
+                <Button onClick={() => void active.refetch()} iconName="refresh" ariaLabel="Refresh" />
+                {canDecide && tab === "agent" ? (
+                  // the promote job's catalogue step for every project at once: agents promoted before it existed, or a failed step
+                  <Button onClick={registerAgents} loading={syncAgents.isPending} data-testid="register-agents">
+                    Register promoted agents
+                  </Button>
+                ) : null}
+                {canDecide ? (
+                  <ButtonDropdown
+                    items={decisionItems}
+                    disabled={!selectedRecord}
+                    onItemClick={({ detail }) => setDecision(detail.id as DecisionStatus)}
+                    data-testid="set-status"
+                  >
+                    Set status
+                  </ButtonDropdown>
+                ) : null}
+              </SpaceBetween>
+            }
+          >
+            Records
+          </Header>
+        }
+        filter={
+          <SpaceBetween direction="horizontal" size="s">
+            <FormField constraintText={`${queryText.length}/${SEARCH_MAX}`}>
+              <Input
+                type="search"
+                value={queryText}
+                placeholder="Search approved records (GET /catalogue/search?q=)"
+                onChange={({ detail }) => setQueryText(detail.value.slice(0, SEARCH_MAX))}
+                onKeyDown={({ detail }) => {
+                  if (detail.key === "Enter") {
+                    submitSearch();
+                  }
+                }}
+                clearAriaLabel="Clear search"
+                data-testid="catalogue-search"
+              />
+            </FormField>
+            <Button onClick={submitSearch} disabled={!queryText.trim()}>
+              Search
+            </Button>
+            {searching ? (
+              <Button
+                variant="link"
+                onClick={() => {
+                  setQueryText("");
+                  setSubmittedQuery("");
+                }}
+              >
+                Clear search
+              </Button>
+            ) : null}
+            <Select
+              selectedOption={STATUS_OPTIONS.find((o) => o.value === status) ?? STATUS_OPTIONS[0]}
+              options={STATUS_OPTIONS}
+              disabled={searching}
+              onChange={({ detail }) => setStatus(detail.selectedOption.value ?? "")}
+            />
+          </SpaceBetween>
+        }
+        items={tabRows}
+        loading={active.isLoading}
+        loadingText={searching ? "Searching the registry" : "Loading records"}
+        trackBy="recordId"
+        selectionType="single"
+        selectedItems={selected}
+        onSelectionChange={({ detail }) => setSelected([...detail.selectedItems])}
+        ariaLabels={{ selectionGroupLabel: "Record selection", itemSelectionLabel: (_data, item) => item.name }}
+        wrapLines
+        columnDefinitions={[
+          {
+            id: "name",
+            header: "Name",
+            minWidth: 220,
+            isRowHeader: true,
+            cell: (r) => (
+              <div>
+                <Box variant="strong" display="block">
+                  {r.displayName ?? r.name}
+                </Box>
+                <Box variant="small" color="text-body-secondary" display="block">
+                  {r.name}
+                </Box>
+              </div>
+            ),
+          },
+          { id: "type", header: "Type", minWidth: 100, cell: (r) => <Badge color={r.recordType === "MCP" ? "blue" : "grey"}>{r.recordType}</Badge> },
+          // 200px keeps "Pending approval" (icon + 16 characters + cell padding) on one line; Description gives the room back
+          { id: "status", header: "Status", width: 200, minWidth: 200, cell: (r) => <RecordStatus status={r.status} /> },
+          { id: "description", header: "Description", minWidth: 220, cell: (r) => r.description ?? "—" },
+          { id: "version", header: "Version", cell: (r) => r.recordVersion ?? "—" },
+          { id: "updated", header: "Updated", cell: (r) => formatDateTime(r.updatedAt) },
+        ]}
+        empty={
+          notConfigured ? (
+            <EmptyState
+              title="No Agent Registry configured"
+              description="PUT /settings {registryId} points the Catalogue at an Agent Registry; until then the catalogue is empty."
+              action={<Button onClick={() => navigate("/governance")}>Open Governance</Button>}
+            />
+          ) : active.error ? (
+            // a failed load is not an empty registry: the alert above says what happened
+            <EmptyState title="Records could not be loaded" description="Retry with the button in the alert above." />
+          ) : (
+            <EmptyState title={emptyTitle(tab, searching)} description={emptyDescription(tab, status, searching)} />
+          )
+        }
+      />
+    );
+  }
 }
 
 function DecisionModal({

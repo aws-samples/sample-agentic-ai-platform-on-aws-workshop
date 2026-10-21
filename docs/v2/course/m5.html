@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Module 5: Operate and improve</title>
+    <link rel="stylesheet" href="course.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-inner">
+        <h1>Module 5: Operate and improve</h1>
+        <p>Operate the released HR agent from evidence: a known version and traffic window, its traces and metrics, what each successful answer costs, what changed and who acts, and what to improve first.</p>
+        <div class="meta"><span>Module 5 of 5</span><span>35 min</span><span>observe</span><span>cost</span><span>audit</span><span>quality</span></div>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <nav class="pager" aria-label="Previous and next page"><a href="m4.html">←&nbsp;Module 4</a><a href="handoff.html">Handoff&nbsp;→</a></nav>
+      <main>
+
+
+<section id="m5-overview-overview">
+<h2>One release, one window</h2>
+<p class="lead" id="m5-overview">Module 4 ended with one approved HR release live in Prod. This module operates it over one observation window, so that the trace, the cost worksheet and the scorecard all describe the same service; the incident exercise is a separate practice scenario. Signals come first, because cost, audit and quality all read them; quality closes the module and turns every workshop shortcut into a production backlog. Copy this operations header into your journey record and fill it as you go.</p>
+<pre class="code-dark"><code>Workload / owner / environment:      hr-assistant / People Operations / prod
+Approved release / Prod harness version / blueprint version:
+Observation start and end (UTC):
+Traffic in the window:               seeded by Module 4 promotion (count) + apply 7 (count) + your own questions
+Telemetry: Transaction Search, GenAI observability, Overview; sampling and missing signals:
+Successful outcome definition:       an answered conversation (no error, no BUDGET_EXCEEDED)
+Cost owner / incident responder / next review date:</code></pre>
+<p>The telemetry backend configured here is CloudWatch Transaction Search with GenAI observability and the platform's Overview. CloudWatch Omni and third-party backends are alternatives from <a href="m1.html#m1-5-d1-7">D1.7</a>, not dashboards that exist in this account. The implementation configures no alarms and no automatic rollback.</p>
+</section>
+
+
+
+<section id="m5-1-explain">
+<h2>Signals: seeing the platform run <span class="time">5 min</span></h2>
+<p class="lead" id="m5-1">Start with the signals, because the cost, audit and quality steps all read them. Send Prod traffic to the promoted version, then read its metrics, policy decisions and one trace from four evidence sources.</p>
+<p>The dashboard combines <strong>four evidence sources</strong>:</p>
+<ol class="concept-list">
+  <li><strong>AgentCore metrics:</strong> invocations, errors and latency.</li>
+  <li><strong>Policy decisions:</strong> allowed and denied tool calls.</li>
+  <li><strong>Online evaluation:</strong> quality scores.</li>
+  <li><strong>Model-gateway spend logs:</strong> spend per key, read through the gateway's API rather than from CloudWatch.</li>
+</ol>
+<figure>
+            <svg viewBox="0 0 960 266" role="img" aria-labelledby="m5-1-m7-fig7-title">
+              <title id="m5-1-m7-fig7-title">Four sources feed one dashboard; change records feed an investigation</title>
+              <defs><marker id="m5-1-m7-arr7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+              <rect class="d-box d-aws" x="20" y="20" width="230" height="44"/>
+              <text class="d-text" x="135" y="38" text-anchor="middle">AgentCore metrics</text>
+              <text class="d-text d-small" x="135" y="55" text-anchor="middle">invocations · latency · errors · sessions</text>
+              <rect class="d-box d-blue" x="20" y="74" width="230" height="44"/>
+              <text class="d-text" x="135" y="92" text-anchor="middle">Policy decisions</text>
+              <text class="d-text d-small" x="135" y="109" text-anchor="middle">allow and deny per gateway</text>
+              <rect class="d-box d-people" x="20" y="128" width="230" height="44"/>
+              <text class="d-text" x="135" y="146" text-anchor="middle">Online evaluation scores</text>
+              <text class="d-text d-small" x="135" y="163" text-anchor="middle">Helpfulness · Harmfulness · Tool selection</text>
+              <rect class="d-box d-platform" x="20" y="182" width="230" height="44"/>
+              <text class="d-text" x="135" y="200" text-anchor="middle">Model gateway spend</text>
+              <text class="d-text d-small" x="135" y="217" text-anchor="middle">per key: agent, environment, model</text>
+              <path class="d-arrow" d="M250 42 L338 110" marker-end="url(#m5-1-m7-arr7)"/>
+              <path class="d-arrow" d="M250 96 L338 116" marker-end="url(#m5-1-m7-arr7)"/>
+              <path class="d-arrow" d="M250 150 L338 128" marker-end="url(#m5-1-m7-arr7)"/>
+              <path class="d-arrow" d="M250 204 L338 134" marker-end="url(#m5-1-m7-arr7)"/>
+              <rect class="d-box d-platform d-ours" x="340" y="70" width="260" height="110"/>
+              <text class="d-text d-title" x="470" y="96" text-anchor="middle">Platform dashboard</text>
+              <text class="d-text d-small" x="470" y="118" text-anchor="middle">per agent and environment</text>
+              <text class="d-text d-small" x="470" y="136" text-anchor="middle">CloudWatch metrics + gateway spend logs</text>
+              <text class="d-text d-small" x="470" y="160" text-anchor="middle">Overview screen</text>
+              <path class="d-arrow" d="M600 110 L698 110" marker-end="url(#m5-1-m7-arr7)"/>
+              <rect class="d-box d-aws" x="700" y="70" width="240" height="110" style="stroke-dasharray:5 4"/>
+              <text class="d-text d-title" x="820" y="96" text-anchor="middle">Production: alarms</text>
+              <text class="d-text d-small" x="820" y="118" text-anchor="middle">errors, latency, budget burn</text>
+              <text class="d-text d-small" x="820" y="136" text-anchor="middle">quality regression</text>
+              <text class="d-text d-small" x="820" y="160" text-anchor="middle">automatic rollback</text>
+              <rect class="d-box d-blue" x="340" y="194" width="260" height="58" style="stroke-dasharray:5 4"/>
+              <text class="d-text" x="470" y="212" text-anchor="middle">Change records</text>
+              <text class="d-text d-small" x="470" y="229" text-anchor="middle">release records · CloudTrail</text>
+              <text class="d-text d-small" x="470" y="244" text-anchor="middle">read in an investigation, not on the dashboard</text>
+            </svg>
+            <figcaption>CloudWatch holds conversation traces. Release records and CloudTrail answer who changed what. Production adds alarms and automatic rollback.</figcaption>
+          </figure>
+<p>The placement and reader decisions behind these sources were made in <a href="m1.html#m1-5-d1-7">D1.7</a> and <a href="m1.html#m1-5-d1-8">D1.8</a>. Here you check them against a real window. Correlate three things for the same minutes: AgentCore Runtime invocations, errors and latency for the Prod endpoint; the gateway's <code>AllowDecisions</code> and <code>DenyDecisions</code> (HR Dev enforces, HR Prod observes in LOG_ONLY unless you switched it); and the trace of one conversation, whose spans show the model calls and the tool calls through the gateway.</p>
+</section>
+<section id="m5-1-hands-on">
+<h2>Watch it run <span class="time">10 min</span></h2>
+<div class="hands-on"><strong>Watch it run</strong>
+<ol class="steps"><li><div><span class="pill tag command">command</span><code>workshop apply 7</code>. It needs the Prod agent that <a href="m4.html#m4-5">promotion</a> created in Module 4: without an approved and promoted release it stops with <em>no Prod agent yet</em>. It first prints the online evaluation that promotion registered (status, sampling, quiet timeout, evaluator ids), then sends ten Prod conversations by default (<code>prod_traffic</code> in your record, a whole number from 1 to 50), three at a time with one line per conversation, and reports <code>OK 10 of 10 conversations answered</code>. It then waits, up to three minutes, for those invocations to show in the Prod metrics and prints invocations, errors, sessions and latency, the policy allow and deny counts, and the team's spend by environment. It posts one thumbs-up for the first answered conversation (<code>POST /feedback</code>), reads the long-term memory records of employee E1001, the sample conversation <code>workshop apply 6</code> wrote into the Dev memory (the <a href="#m5-4">quality step</a> interprets them), and ends with the online scores so far (or <em>none yet</em>: <code>workshop scores</code> shows them when they arrive) and two links, Overview and CloudWatch GenAI observability. The step usually takes about a minute (ten conversations were answered in 31 s on warm sessions); a cold session takes 25 to 40 s and the metrics check can wait up to three minutes, so allow up to five.</div></li>
+<li><div><span class="pill tag screen">screen</span><strong>Overview</strong>, with <strong>Prod</strong> selected: read invocation counts, error rate and latency, spend by environment, policy Allow/Deny counts, the online scores so far and the feedback counts; the thumbs-up apply 7 posted is already there.</div></li>
+<li><div><span class="pill tag screen">screen</span><strong>CloudWatch · GenAI observability:</strong> follow one Prod trace step by step.</div></li>
+<li><div><span class="pill tag record">record</span>Fill the <a href="#m5-overview-overview">operations header</a> at the top of this page: the Prod harness version (Release detail), the window's start and end, the answered counts (seeded at promotion in Module 4, sent by apply 7, your own), and which evidence was present or missing. A trace id correlates records; it does not identify the user.</div></li></ol>
+</div>
+<p class="note">If a metric is missing, distinguish idle traffic, a pipeline delay (the metrics check waits up to three minutes; policy metrics can lag four) and a broken collection path before concluding anything. A missing signal is a finding, not a pass.</p>
+</section>
+<section id="m5-1-record">
+<h2>Your design record: <code>module_7</code> input</h2>
+<p><code>module_7.inputs.prod_traffic</code> (default 10, a whole number from 1 to 50) is the number of Prod conversations <code>workshop apply 7</code> sends. The <code>module_7</code> block with its decisions and backlog is shown with the <a href="#m5-4-record">production backlog</a> below. With the window's traffic answered and its signals read, the next question is what that traffic cost.</p>
+</section>
+
+
+
+<section id="m5-2-explain">
+<h2>Cost: measured spend and successful outcomes <span class="time">5 min</span></h2>
+<p class="lead" id="m5-2">Calculate what a successful HR answer costs, including failed calls and every conversation in the window, decide how shared costs are allocated, and plan the billing reconciliation.</p>
+<p>Price the outcome, not the call. Model spend per key comes from the model gateway's spend logs, which see every call; sampled traces do not. The successful outcome for HR is an answered conversation; a failed or retried call stays in the spend and adds nothing to the outcomes.</p>
+<table class="plain"><thead><tr><th>Rule</th><th>Benefit</th><th>Trade-off</th></tr></thead><tbody>
+<tr><td>Define the window and scope</td><td>One UTC window, one environment, one key</td><td>Spend outside the window, or on another key, distorts the ratio</td></tr>
+<tr><td>Count every successful outcome in the window</td><td>A comparable denominator</td><td>The Prod key also paid for traffic other commands sent</td></tr>
+<tr><td>Keep failures in the numerator</td><td>An honest unit cost</td><td>A cheaper model with more failures can look worse, as it should</td></tr>
+<tr><td>Zero successful outcomes</td><td>Report total cost and zero completions</td><td>Unit cost is undefined, not zero</td></tr>
+</tbody></table>
+</section>
+<section id="m5-2-decisions">
+<h2>Decide how shared cost is allocated <span class="time">5 min</span></h2>
+<div class="card">
+            <h4 class="q" id="m5-2-d5-1"><span class="id">D5.1</span>How is shared cost allocated?</h4>
+            <figure style="margin:0 0 10px">
+              <svg viewBox="0 0 960 300" role="img" aria-labelledby="m5-2-m7-fig7-d4-title">
+                <title id="m5-2-m7-fig7-d4-title">Three ways to allocate shared cost: measured consumption, usage-based share, platform-funded pool</title>
+                <defs><marker id="m5-2-m7-fig7-d4-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+                <text class="d-text d-title" x="22" y="24">A · Measured consumption</text>
+                <rect x="286" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
+                <text class="d-text" x="339" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+                <rect class="d-box d-account d-ours d-glow" x="12" y="34" width="380" height="210"/>
+                <rect class="d-box d-platform" x="26" y="44" width="352" height="44"/>
+                <text class="d-text" x="202" y="62" text-anchor="middle">model gateway prices every call</text>
+                <text class="d-text d-small" x="202" y="78" text-anchor="middle">charged to the key: agent · environment · model</text>
+                <path class="d-arrow" d="M202 88 L202 102" marker-end="url(#m5-2-m7-fig7-d4-arr)"/>
+                <rect x="26" y="104" width="352" height="58" rx="8" fill="#161e2d"/>
+                <text x="202" y="122" text-anchor="middle" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#9cdcfe"><tspan fill="#ffb86b">unit cost</tspan> = key spend</text>
+                <text x="202" y="138" text-anchor="middle" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#9cdcfe">÷ conversations that ended with an answer</text>
+                <text x="202" y="154" text-anchor="middle" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#7fbf7f">(failed ones stay in the spend)</text>
+                <rect class="d-box d-platform" x="26" y="174" width="352" height="58"/>
+                <text class="d-text d-strong" x="202" y="192" text-anchor="middle">the foundation · platform-funded, unallocated</text>
+                <text class="d-text d-small" x="202" y="208" text-anchor="middle">network · gateways · registry · the proxy</text>
+                <text class="d-text d-small" x="202" y="222" text-anchor="middle">the proxy itself about 0.1 USD per hour</text>
+                <text class="d-text d-small" x="202" y="262" text-anchor="middle">allocation follows use</text>
+
+                <text class="d-text d-title" x="422" y="24">B · Usage-based share</text>
+                <rect class="d-box d-account" x="412" y="34" width="258" height="210"/>
+                <rect x="426" y="44" width="230" height="44" rx="8" fill="#161e2d"/>
+                <text x="541" y="63" text-anchor="middle" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#9cdcfe"><tspan fill="#ffb86b">shared cost</tspan></text>
+                <text x="541" y="79" text-anchor="middle" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;fill:#9cdcfe">÷ request count per team</text>
+                <text class="d-text d-small" x="541" y="262" text-anchor="middle">repeatable · under-charges large requests</text>
+
+                <text class="d-text d-title" x="700" y="24">C · Platform-funded pool</text>
+                <rect class="d-box d-account" x="690" y="34" width="258" height="210"/>
+                <rect class="d-box d-platform" x="704" y="44" width="230" height="44"/>
+                <text class="d-text" x="819" y="62" text-anchor="middle">the foundation paid centrally</text>
+                <text class="d-text d-small" x="819" y="78" text-anchor="middle">teams see only direct spend</text>
+                <text class="d-text d-small" x="819" y="262" text-anchor="middle">simple · nobody feels the platform's bill</text>
+
+                <text class="d-text d-small" x="480" y="290" text-anchor="middle">billing tags need activation; a trace attribute is not a cost tag; the dashboard's spend is the gateway's estimate, reconciled against Cost Explorer</text>
+              </svg>
+              <figcaption>Three allocation choices: meter direct consumption, split shared cost by usage, or fund it centrally. We attribute model spend to keys and leave shared costs unallocated.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr class="ours"><td>Measured consumption: every call priced and charged to the key that made it</td><td class="good">allocation follows use</td><td class="bad">needs complete, non-overlapping metering and a pricing basis; the foundation stays unallocated</td><td class="when">metering exists, as here through the model gateway</td></tr>
+                <tr><td>Usage-based share: shared cost split by a proxy such as request count</td><td class="good">repeatable when direct attribution is missing</td><td class="bad">a request count under-charges large or slow requests</td><td class="when">shared services without per-call metering</td></tr>
+                <tr><td>Platform-funded pool: the foundation paid centrally; teams see only their direct spend</td><td class="good">simple for teams</td><td class="bad">unit costs hide the shared spend; nobody feels the platform's bill</td><td class="when">a first platform, few workloads</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <p><strong>This workshop.</strong> Costs have <strong>two categories</strong>:</p>
+<ul class="concept-list">
+  <li><strong>Model calls:</strong> measured per key, identifying agent, environment and model.</li>
+  <li><strong>Shared services:</strong> network, gateways, registry and proxy are platform-funded; the Keycloak stand-in from the <a href="m2.html#m2-1">foundation</a> is unallocated too, though in production the company's identity provider is its own cost centre, not the platform's.</li>
+</ul>
+              <p class="also">The rough fixed-cost estimate is <strong>0.28 USD/hour</strong>: proxy/database ~0.10 plus nine interface endpoints ~0.18. The corporate IdP from <a href="m2.html#m2-1">Module 2</a> adds about 0.08 USD/hour (one Fargate task and an internal load balancer; its two HTTP APIs cost almost nothing at this traffic), about 0.36 USD/hour in total while everything is deployed. This is not the full platform bill. Endpoints are billed per AZ-hour, including idle time. For HR, use <strong>key spend ÷ answered conversations</strong>; failed and retried calls remain in spend.</p>
+              <p class="prod"><strong>Production path.</strong> Make cost accounting explicit:</p>
+<ul class="concept-list">
+  <li><strong>Allocation:</strong> document the shared-cost rule and revisit it as traffic and tenants change.</li>
+  <li><strong>Evidence:</strong> activate billing tags; trace attributes are not billing tags. Reconcile gateway estimates with Cost Explorer or CUR.</li>
+  <li><strong>Control:</strong> AWS Budgets sends delayed alerts; gateway caps block calls. Read unit cost alongside quality.</li>
+</ul>
+            </div>
+          </div>
+</section>
+<section id="m5-2-hands-on">
+<h2>Unit cost for the Prod window <span class="time">10 min</span></h2>
+<div class="hands-on"><strong>Unit cost for the Prod window</strong>
+<ol class="steps"><li><div><span class="pill tag screen">screen</span>Calculate <strong>Prod key spend ÷ Prod conversations answered</strong>. The apply output counts only the conversations it just sent (ten by default). The Prod key has also paid for the traffic seeded at <a href="m4.html#m4-5">promotion</a> (the answered count <code>workshop traffic --prod 3</code> printed, normally three) and for any Prod question you asked after promotion in Playground · Prod or with <code>workshop ask --env prod</code>, so add those to the denominator. Failed calls add spend, not successful outcomes.</div></li>
+<li><div><span class="pill tag record">record</span>Write the calculation with its parts: Prod key spend (Keys tab or Overview, with its time), answered conversations (apply 7's count + the seeded count + your Prod questions), failed conversations, and the result. Label it <em>estimated from model-gateway spend</em>; shared costs are not in it.</div></li>
+<li><div><span class="pill tag record">record</span>Write the allocation rule for shared costs (network, endpoints, proxy, registry, gateways and the corporate IdP), who owns the fixed cost, and how often it is reviewed. Write <code>my_call</code> for <code>module_7.decisions.cost_allocation</code>.</div></li>
+<li><div><span class="pill tag record">record</span>Plan the reconciliation: with authorised billing access, compare the gateway's estimate with Cost Explorer or the Cost and Usage Report for the same scope and period, recording data-through time, cost basis and excluded categories. Current-period billing data is delayed and revised. Assign an owner and a date if you have no billing access today.</div></li></ol>
+</div>
+</section>
+<section id="m5-2-worked">
+<h2>Worked calculation and budgets</h2>
+<p>These are invented practice inputs, not AWS prices or measurements. A report-generating workload processed 100 jobs in 24 hours, 96 successfully, with complete metering of retries and failures: model input 240,000 tokens at 2 USD per million (0.48), output 60,000 at 8 USD per million (0.48), runtime 1.44, record queries and storage 0.40, and a 10% share of a 4.00 USD telemetry pool (0.40), 3.20 USD in total. Unit cost is 3.20 ÷ 96 ≈ 0.0333 USD per successful outcome; dividing by 100 would hide the four failures.</p>
+<ul class="concept-list">
+<li>With only 80 successes at the same cost: 0.04 USD.</li>
+<li>Cutting input tokens by 25% with nothing else changed: input becomes 0.36, the total 3.08, about 0.0321 USD per outcome, a 3.75% saving to weigh against effort and correctness risk.</li>
+</ul>
+<p>Assign a cost owner and a threshold. AWS Budgets by tag sends delayed alerts; it is not a synchronous cap. The gateway's key and team caps (Module 4) block calls. A notification needs an authorised destination and a test. Write one improvement decision with its expected saving, performance effect, correctness risk, owner and the evidence the <a href="#m5-4">quality step</a> needs. Cost explains what was spent; it does not explain who changed what, which is the audit question next. Activate billing tags through the billing owner; trace attributes are not billing tags.</p>
+</section>
+
+
+
+<section id="m5-3-explain">
+<h2>Audit and incidents: what each record can answer <span class="time">5 min</span></h2>
+<p class="lead" id="m5-3">Signals and cost show what happened, not who caused it. Explain what changed and who could act: connect traces, policy decisions, release records and CloudTrail, check who may read telemetry, then decide a response and its owner.</p>
+<table class="plain"><thead><tr><th>Source</th><th>Question it answers</th><th>Coverage to verify</th></tr></thead><tbody>
+<tr><td>Platform release records (Releases, Release detail)</td><td>Who created, submitted, approved and promoted which release, with which scores</td><td>Which actions emit records; the persona recorded; the link to the harness version</td></tr>
+<tr><td>CloudTrail</td><td>Which AWS API changed a resource, under which AWS identity</td><td>Account and Region; Event history keeps 90 days of management events; data events need configuration</td></tr>
+<tr><td>Traces, metrics and spend</td><td>Which call failed or was denied, how long it took, what it cost</td><td>Sampling, content kept, the reader's permissions</td></tr>
+</tbody></table>
+<p>The identities differ. A gateway mode change made on the Governance screen (or with <code>workshop mode</code>) is executed by the platform API, so CloudTrail records <code>UpdateGateway</code> under the API's execution role, not under the admin persona; the persona is visible only where the platform records it. CloudTrail does not record prompts, tool arguments or answers. A trace id correlates records; the authenticated application must establish who a request represents.</p>
+<p>Choose retention and readers for each source. Shorter retention reduces storage and exposure but can remove evidence needed for an investigation; immutable retention needs a configured mode, duration and administrative permissions. CloudTrail log-file integrity validation detects changes to delivered files; enabling digests alone neither validates nor prevents deletion.</p>
+</section>
+<section id="m5-3-hands-on">
+<h2>Reconstruct a change and check who may read the evidence <span class="time">10 min</span></h2>
+<div class="hands-on"><strong>Reconstruct a change and check who may read the evidence</strong>
+<ol class="steps">
+<li><div><span class="pill tag screen">screen</span>Open the release you promoted (Release detail): note who created, submitted, approved and promoted it and when, and the scores attached to it.</div></li>
+<li><div><span class="pill tag screen">screen</span>In the CloudTrail console, Event history, filter by event name <code>UpdateGateway</code> and find the ENFORCE switch you made in <a href="m3.html#m3-1-2-hands-on">Module 3</a>: record the time, the calling identity (the platform API's role) and the gateway id. Compare with what the platform shows for the same change, and record the gap if the persona appears nowhere.</div></li>
+<li><div><span class="pill tag screen">screen</span>In CloudWatch GenAI observability, open one Prod trace and note which fields hold content (prompts, answers, tool arguments) and which hold metadata. Per <a href="m1.html#m1-5-d1-8">D1.8</a>, the workshop keeps full synthetic content and CloudWatch IAM decides who may read it, independently of platform personas. Record which roles in your organisation would read traces, and whether redaction before export (<code>AWS_REDACT_SPAN_ATTRIBUTES</code>) or metadata-only capture would be required. No reader-restricted role is supplied, so a denied-reader test is a planned check.</div></li>
+<li><div><span class="pill tag record">record</span>Work through the practice incident below and write your own record. It is a separate exercise: keep its observations out of the Prod-window evidence you collected above.</div></li>
+</ol></div>
+</section>
+<section id="m5-3-incident">
+<h2>Detect, decide, recover</h2>
+<p>Detection needs a verified query, a threshold, an evaluation interval, pending and recovery durations, a no-data rule, an access profile, a responder and a notification destination. None is configured in this workshop; write them as implementation work. Decide whether missing data means idle traffic or a failed collection path by checking an expected schedule or a heartbeat.</p>
+<table class="plain"><thead><tr><th>Response</th><th>Select when</th><th>Trade-off</th></tr></thead><tbody>
+<tr><td>Pause affected work or revoke access through its owner</td><td>Continuing could expose data or amplify a failure</td><td>Limits harm, reduces availability</td></tr>
+<tr><td>Restore the known compatible release or configuration</td><td>Evidence links the failure to a reversible change</td><td>Faster recovery; compatibility must be preserved (rollback is <code>UpdateHarnessEndpoint</code> back to the previous version, <a href="m4.html#m4-5">Module 4</a>)</td></tr>
+<tr><td>Continue bounded diagnosis</td><td>Impact is contained and telemetry can distinguish causes</td><td>Keeps service; extends the incident if the hypothesis is wrong</td></tr>
+</tbody></table>
+<p><strong>Practice scenario, separate from the Prod window.</strong> This incident concerns HR Dev, not the Prod release you are observing; record it as a paper scenario and do not mix its timeline into the Prod-window worksheet. After the ENFORCE switch on HR Dev, an employee reports that the assistant "refused to book" a two-week holiday. Timeline: the trace shows <code>hrtools___submit_leave_request</code> with <code>days: 14</code> answered by JSON-RPC -32002; the Overview shows a Deny count for HR Dev; CloudTrail shows the <code>UpdateGateway</code> call minutes earlier; the release record shows no new agent version. Hypothesis: the policy change, working as designed (requests over ten days are forbidden). Counterevidence and limits: the agent version did not change; whether a two-week request should be allowed is a business decision. Decision: no rollback; the Domain approver and Platform admin decide whether to change <code>max_leave_days</code>; the workload owner makes the agent explain the rule to the employee. Closure evidence: the decision recorded, and if the rule changes, <code>max_leave_days</code> updated in the record and the policy redeployed with <code>workshop apply 4</code>. That rerun also reapplies <code>module_4.inputs.gateway_mode</code> to all three gateways, so with the record still at <code>LOG_ONLY</code> it resets HR Dev's enforcement: re-establish ENFORCE on HR Dev (Governance toggle or <code>workshop mode ENFORCE --gateway hr-dev</code>), confirm the mode on Governance, then verify an allowed call (<code>workshop call --as hr-dev get_leave_balance E1001</code>) and the over-limit refusal of <a href="m3.html#m3-1-2-hands-on">Module 3</a> (a request above the new limit → JSON-RPC -32002).</p>
+<pre class="code-dark"><code>Incident:            owner:                     severity:
+Timeline (UTC):      trace / metric / release / CloudTrail references
+Hypothesis:          counterevidence and unknowns:
+Decision:            response, owner, approval
+Recovery checks:     the original case replayed with the existing checks; scope and audit intact
+Actual status:       open / recovered / not executed (paper scenario)</code></pre>
+<p>Changed releases return through Module 4's <a href="m4.html#m4-4">evaluation</a> and <a href="m4.html#m4-5">approval and promotion</a>. Leave an incident open if recovery or control checks are missing.</p>
+</section>
+
+
+
+<section id="m5-4-decisions">
+<h2>Quality and improvement: decide how quality is watched in Prod <span class="time">5 min</span></h2>
+<p class="lead" id="m5-4">The practice incident showed that a control working as designed can still leave an employee with a poor answer, so the last signal to read is quality. Read the online quality scores with their counts and timing, the feedback and the memory the agent formed, then turn every workshop shortcut into a production action with an owner.</p>
+<div class="card">
+            <h4 class="q" id="m5-4-d5-2"><span class="id">D5.2</span>How is quality watched in Prod?</h4>
+            <figure style="margin:0 0 10px">
+              <svg viewBox="0 0 960 300" role="img" aria-labelledby="m5-4-m7-fig7-d2-title">
+                <title id="m5-4-m7-fig7-d2-title">Three ways to watch quality in Prod: online evaluation, periodic batch, user feedback only</title>
+                <defs><marker id="m5-4-m7-fig7-d2-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+                <text class="d-text d-title" x="22" y="24">A · Online evaluation</text>
+                <rect x="196" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
+                <text class="d-text" x="249" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+                <rect class="d-box d-account d-ours d-glow" x="12" y="34" width="290" height="198"/>
+                <rect class="d-box d-aws" x="26" y="44" width="262" height="58"/>
+                <text class="d-text" x="157" y="62" text-anchor="middle">Prod conversations</text>
+                <text class="d-text d-small" x="157" y="78" text-anchor="middle">sampling 100 %</text>
+                <text class="d-text d-small" x="157" y="92" text-anchor="middle">a quiet timeout of 1 min ends a session</text>
+                <path class="d-arrow" d="M157 102 L157 116" marker-end="url(#m5-4-m7-fig7-d2-arr)"/>
+                <rect class="d-box d-people" x="26" y="118" width="262" height="44"/>
+                <text class="d-text" x="157" y="136" text-anchor="middle">3 evaluators</text>
+                <text class="d-text d-small" x="157" y="152" text-anchor="middle" style="font-size:11px">Helpfulness, Harmfulness, ToolSelectionAccuracy</text>
+                <path class="d-arrow" d="M157 162 L157 176" marker-end="url(#m5-4-m7-fig7-d2-arr)"/>
+                <rect class="d-box d-blue" x="26" y="178" width="262" height="44"/>
+                <text class="d-text" x="157" y="196" text-anchor="middle">scores as CloudWatch metrics</text>
+                <text class="d-text d-small" x="157" y="212" text-anchor="middle">8 to 11 minutes later, on the dashboard</text>
+                <text class="d-text d-small" x="157" y="250" text-anchor="middle">continuous · judge cost · results minutes later</text>
+
+                <text class="d-text d-title" x="347" y="24">B · Periodic batch over real traces</text>
+                <rect class="d-box d-account" x="337" y="34" width="290" height="198"/>
+                <rect class="d-box d-blue" x="351" y="44" width="262" height="28"/>
+                <text class="d-text" x="482" y="62" text-anchor="middle">traces of the day</text>
+                <path class="d-arrow" d="M482 72 L482 86" marker-end="url(#m5-4-m7-fig7-d2-arr)"/>
+                <rect class="d-box d-people" x="351" y="88" width="262" height="28"/>
+                <text class="d-text" x="482" y="106" text-anchor="middle">batch evaluation</text>
+                <path class="d-arrow" d="M482 116 L482 130" marker-end="url(#m5-4-m7-fig7-d2-arr)"/>
+                <rect class="d-box" x="351" y="132" width="262" height="28"/>
+                <text class="d-text" x="482" y="150" text-anchor="middle">report</text>
+                <text class="d-text d-small" x="482" y="250" text-anchor="middle">cheaper · lag</text>
+
+                <text class="d-text d-title" x="672" y="24">C · User feedback only</text>
+                <rect class="d-box d-account" x="662" y="34" width="290" height="198"/>
+                <rect class="d-box d-people" x="676" y="44" width="262" height="28"/>
+                <text class="d-text" x="807" y="62" text-anchor="middle">thumbs up or down per session</text>
+                <path class="d-arrow" d="M807 72 L807 86" marker-end="url(#m5-4-m7-fig7-d2-arr)"/>
+                <rect class="d-box" x="676" y="88" width="262" height="28"/>
+                <text class="d-text" x="807" y="106" text-anchor="middle">sparse and biased</text>
+                <text class="d-text d-small" x="807" y="250" text-anchor="middle">free · never alone</text>
+
+                <rect class="d-box" x="12" y="266" width="936" height="28" style="stroke-dasharray:5 4"/>
+                <text class="d-text" x="480" y="284" text-anchor="middle">rollback today: point <tspan style="font-family:ui-monospace,Menlo,monospace;font-size:12px">live</tspan> back with the AgentCore API · production: automatic rollback on a quality regression</text>
+              </svg>
+              <figcaption>Online evaluation scores real Prod conversations after they end. Batch evaluation costs less but lags; user feedback alone is sparse and biased.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr class="ours"><td>Online evaluation: a sampling rate, evaluators, a quiet timeout</td><td class="good">continuous</td><td class="bad">judge cost; results minutes later</td><td class="when">always</td></tr>
+                <tr><td>Periodic batch over real traces</td><td class="good">cheaper</td><td class="bad">lag</td><td class="when">low traffic</td></tr>
+                <tr><td>User feedback only</td><td class="good">free</td><td class="bad">sparse and biased</td><td class="when">never alone</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <p><strong>This workshop.</strong> Promotion registers <strong>three online settings</strong>:</p>
+<ul class="concept-list">
+  <li><strong>Sampling:</strong> 100% of Prod conversations.</li>
+  <li><strong>Judges:</strong> Helpfulness, Harmfulness and ToolSelectionAccuracy. AgentCore names its built-in judges with a <code>Builtin.</code> prefix, so <code>workshop apply 7</code> echoes the registered configuration as <code>Builtin.ToolSelectionAccuracy</code> and CloudWatch uses that as the metric name; <code>workshop scores</code> and the Overview drop the prefix.</li>
+  <li><strong>Quiet timeout:</strong> one minute; scores arrive about 8–11 minutes after traffic.</li>
+</ul>
+              <p class="also">Feedback is tied to sessions. Rollback means pointing <code>live</code> back at the previous harness version. Today that is one call to the AgentCore API (<code>UpdateHarnessEndpoint</code>), made outside the platform: the platform API only promotes approved releases, and the UI has no rollback button yet.</p>
+              <p class="prod"><strong>Production path.</strong> Roll back on quality regression and turn user feedback into new dataset tests.</p>
+            </div>
+          </div>
+</section>
+<section id="m5-4-hands-on">
+<h2>Quality, feedback and memory <span class="time">10 min</span></h2>
+<div class="hands-on"><strong>Quality, feedback and memory</strong>
+<ol class="steps"><li><div><span class="pill tag command">command</span><code>workshop scores</code>: read the online scores. The three conversations seeded at <a href="m4.html#m4-5">promotion</a> with <code>workshop traffic --prod 3</code> should already be scored; today's ten arrive 8 to 11 minutes after each session goes quiet. The command lists the mean and the sample count per evaluator over the last three hours, then the platform's own view of the same numbers; the Overview shows them too. <code>workshop traffic --prod 3</code> sends more conversations whenever you want fresh scores.</div></li>
+<li><div><span class="pill tag screen">screen</span>On the Overview, read the feedback counts: the thumbs-up <code>workshop apply 7</code> posted for its first answered conversation (<code>POST /feedback</code>) is there. Feedback is tied to a session; one rating is not a quality signal.</div></li>
+<li><div><span class="pill tag record">record</span>Read the memory section of the <code>workshop apply 7</code> output: the long-term preference records extracted for E1001 (a preference for two-week leave blocks in August) come from the two sample events <code>workshop apply 6</code> wrote into the <strong>Dev</strong> memory. They prove the memory strategy works; they are not observations of Prod users, whose conversations go to the separate Prod memory.</div></li>
+<li><div><span class="pill tag record">record</span>Record per evaluator the mean and the sample count, the window (last three hours), and when the scores arrived relative to the traffic (8 to 11 minutes after a session goes quiet). Note that the online judges (Helpfulness, Harmfulness, ToolSelectionAccuracy) differ from the release gate's four. Write <code>my_call</code> for <code>module_7.decisions.prod_quality</code>.</div></li></ol>
+</div>
+<p class="note">If a regression appears, keep sanitised failing sessions as a new, versioned dataset case and return to Module 4's <a href="m4.html#m4-4">evaluation loop</a>; changing evaluator criteria needs a new version so the score history stays interpretable. A short workshop run does not prove sustained concurrency or a production service level.</p>
+</section>
+<section id="m5-4-backlog">
+<h2>The production backlog</h2>
+<div class="card">
+            <h4 class="q" id="m5-4-d5-3"><span class="id">D5.3</span>Recap: what changes for production</h4>
+            <p class="note">Turn the recap into your production backlog: <strong>one action and owner per row</strong>. Use your design record's <code>my_call</code> decisions to choose those actions. The owner column is a suggestion; replace it with your teams.</p>
+            <table class="plain">
+  <thead><tr><th>Workshop choice</th><th>Production action</th><th>Suggested owner</th><th>Decided in</th></tr></thead>
+  <tbody>
+    <tr><td>One account; scoped names</td><td>Platform/workload accounts; SCPs</td><td>Cloud platform team</td><td><a href="m1.html#m1-4">Module 1 · accounts</a></td></tr>
+    <tr><td>Private endpoints; single-AZ database</td><td>Multi-AZ, scoped endpoint policies, UI/API WAF</td><td>Network and platform team</td><td><a href="m1.html#m1-5">Module 1 · landing zone and telemetry</a></td></tr>
+    <tr><td>Shared team builds platform; project team builds agent</td><td>Name build, release, on-call and escalation owners</td><td>Platform lead with domain leads</td><td><a href="m1.html#m1-3">Module 1 · operating model</a></td></tr>
+    <tr><td>Local Cognito users for the platform; self-hosted Keycloak for employees</td><td>Brokered corporate IdP for the platform; Okta or Entra ID as the employees' issuer; MFA</td><td>Identity team</td><td><a href="m2.html#m2-1">Module 2 · identity</a></td></tr>
+    <tr><td>Agent service identity for Dev and Prod; on-behalf-of demonstrated in <a href="m3.html#m3-1-1">Module 3</a> (exchange and <a href="m3.html#m3-1-2">gateway</a>) and <a href="m4.html#m4-4">Module 4</a> with Keycloak</td><td>On-behalf-of wherever user identity matters; Okta or Entra ID as issuer; row-level security in the tools</td><td>Identity team with tool owners</td><td><a href="m3.html#m3-1-1">Module 3 · HR identity</a></td></tr>
+    <tr><td>Account-root trust; empty tool list allows all</td><td>Tighten templates</td><td>Platform team with security</td><td><a href="m2.html#m2-4">Module 2 · control plane</a></td></tr>
+    <tr><td>One approver group</td><td>Domain-bound approvers; two for Prod</td><td>Domain leads</td><td><a href="m1.html#m1-3">Module 1 · operating model</a></td></tr>
+    <tr><td>One IAM registry; all personas read</td><td>Organization IAM registry + RAM; separate JWT registry or mediated IDE view</td><td>Platform team (catalogue owner)</td><td><a href="m2.html#m2-3-1">Module 2 · registry</a></td></tr>
+    <tr><td>Gateway per project and environment</td><td>Add shared and domain gateways</td><td>Platform team</td><td><a href="m2.html#m2-3-2">Module 2 · gateways</a></td></tr>
+    <tr><td>Tools behind gateways</td><td>Specialist agents as targets; identity per hop</td><td>Platform team with workload teams</td><td><a href="m3.html#m3-1-2">Module 3 · HR gateway</a></td></tr>
+    <tr><td>Lambda tools; pinned KB filter; the HR API as an OpenAPI target with token exchange, tool logic unchanged</td><td>OAuth targets for every tool that needs the person; row-level security in the tools; user-scoped retrieval</td><td>Tool owners</td><td><a href="m3.html#m3-1-2">Module 3 · HR gateway</a></td></tr>
+    <tr><td>Shared engine; handwritten policies</td><td>Domain engines; reviewed policy changes</td><td>Policy owners per domain</td><td><a href="m2.html#m2-3-2">Module 2 · gateways</a></td></tr>
+    <tr><td>No VPC Lattice target endpoints</td><td>Private VPC targets; account-quota review. Agent-to-gateway PrivateLink already exists</td><td>Network team</td><td><a href="m3.html#m3-1-2">Module 3 · HR gateway</a></td></tr>
+    <tr><td>One model gateway; master key</td><td>Per-environment gateways; scoped admin key; early cap alerts</td><td>Platform team</td><td><a href="m2.html#m2-2">Module 2 · model route</a></td></tr>
+    <tr><td>Catalogue approval label</td><td>Approved-reference deployment gate</td><td>Platform team</td><td><a href="m4.html#m4-1">Module 4 · discovery</a></td></tr>
+    <tr><td><code>us.</code> profiles; no workshop SCP</td><td>Data-class processing rules; SCP profile exceptions</td><td>Security and data owners</td><td><a href="m2.html#m2-2">Module 2 · model route</a></td></tr>
+    <tr><td>Harness configuration</td><td>Containers where needed; MCP servers on Runtime</td><td>Workload teams</td><td><a href="m3.html#m3-1-3">Module 3 · HR blueprint</a></td></tr>
+    <tr><td>Self-reported scores from the command, platform-run evaluation from the Releases screen; team thresholds</td><td>Platform-run evaluation only; minimum floors; evidence-bound approval</td><td>Platform team with domain approvers</td><td><a href="m4.html#m4-4">Module 4 · evaluation</a></td></tr>
+    <tr><td>UI-triggered worker</td><td>Git pipeline calling platform API</td><td>Platform team</td><td><a href="m4.html#m4-5">Module 4 · promotion</a></td></tr>
+    <tr><td>No alarms; rollback by the AgentCore API</td><td>Alarms and automatic rollback</td><td>Workload owner with platform operations</td><td><a href="#m5-3">Audit and incidents</a></td></tr>
+    <tr><td>Full traces; CloudWatch IAM readers</td><td>Metadata by default; approved redaction; readers/retention per source</td><td>Data owners with platform operations</td><td><a href="m1.html#m1-5">Module 1 · landing zone and telemetry</a></td></tr>
+    <tr><td>Per-key spend; shared costs unallocated</td><td>Successful-outcome unit cost; shared-cost rule</td><td>FinOps owner</td><td><a href="#m5-2">Cost</a></td></tr>
+    <tr><td>Destroyable resources; no backups</td><td>RETAIN and point-in-time recovery</td><td>Each resource owner</td><td>all</td></tr>
+  </tbody>
+</table>
+            <div class="ours-box">
+              <p><strong>This workshop.</strong> Defaults keep the day manageable. Repository tests check that resources are destroyable for cleanup. Production needs deliberate retention and recovery choices.</p>
+            </div>
+          </div>
+</section>
+<section id="m5-4-record">
+<h2>Your design record: <code>module_7</code></h2>
+<pre class="code-dark"><code><span class="k">module_7</span>:
+  <span class="in">inputs</span>:                                     <span class="c"># read by: workshop apply 7</span>
+    <span class="in">prod_traffic</span>: <span class="s">10</span>                            <span class="c"># conversations sent to Prod</span>
+  <span class="k">decisions</span>:
+    <span class="k">observability</span>:     {<span class="k">workshop</span>: <span class="s">transaction-search</span>,   <span class="k">my_call</span>: <span class="s">"..."</span>}
+    <span class="k">prod_quality</span>:      {<span class="k">workshop</span>: <span class="s">online-eval-100pct</span>,   <span class="k">my_call</span>: <span class="s">"..."</span>}
+    <span class="k">telemetry_content</span>: {<span class="k">workshop</span>: <span class="s">full-content</span>,         <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># synthetic data; CloudWatch IAM controls trace access</span>
+    <span class="k">cost_allocation</span>:   {<span class="k">workshop</span>: <span class="s">measured-consumption</span>, <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># per key; the foundation unallocated</span>
+  <span class="k">backlog</span>:                                    <span class="c"># your production path: one line per recap row, with an owner</span>
+    - <span class="s">"accounts: platform + workload, owner: cloud team"</span>
+    - <span class="s">"identity: brokered Entra ID, owner: IAM team"</span>
+    - <span class="s">"..."</span></code></pre>
+<div class="hands-on"><strong>Write the backlog</strong>
+<ol class="steps"><li><div><span class="pill tag record">record</span>Fill <code>design-record.yaml</code>'s backlog: one production action and owner per recap row.</div></li>
+<li><div><span class="pill tag record">record</span>For each row, use your <code>my_call</code> decisions to choose the action, then name the accountable owner and a review date. Add one line from the <a href="m3.html#m3-2-3-gaps">Finance gap table</a> of Module 3 if you would deploy a Finance agent.</div></li></ol>
+</div>
+<div class="remember"><strong>Remember.</strong> Watch quality alongside cost. Price the successful outcome, including failed attempts. Your completed design record and backlog form the production plan.</div>
+<p class="note">Read more: <a href="https://aws-samples.github.io/sample-agentcore-enterprise-platform/#/PRODUCTION_READINESS_PLAN">production readiness</a>; <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch-omni.html">CloudWatch Omni</a>; <a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html">CloudTrail</a>; <a href="https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html">billing tags</a>.</p>
+</section>
+<section id="m5-reference">
+<h2>Module 5 glossary</h2>
+<p class="note">Terms used on this page, in the order they first appear. Open the list when a term is unfamiliar.</p>
+<details class="reference" id="m5-glossary"><summary>Reference · Module 5 glossary</summary>
+<div class="glossary"><dl>
+<dt><span id="m5-1-glossary"></span>Trace, span</dt>
+<dd>A trace records one request (one turn); spans record its individual steps.</dd>
+<dt>Session</dt>
+<dd>One conversation under one session id, kept until you start a new session in the Playground or pass a new one to <code>workshop ask --session</code>; each turn of it is a trace.</dd>
+<dt>Transaction Search</dt>
+<dd>CloudWatch search over spans, including agent conversations.</dd>
+<dt><span id="m5-3-glossary"></span>Audit trail</dt>
+<dd>Release records identify platform changes; CloudTrail records AWS API activity. Event history keeps 90 days of management events; data events require configuration. These are not prompt records.</dd>
+<dt>Redaction</dt>
+<dd>Remove sensitive fields before telemetry is stored or exported.</dd>
+<dt>Retention</dt>
+<dd>How long telemetry is kept.</dd>
+<dt>Rollback</dt>
+<dd>Point <code>live</code> back to the previous version.</dd>
+<dt><span id="m5-4-glossary"></span>Online evaluation</dt>
+<dd>Quality scoring over real agent traffic.</dd>
+<dt>Sampling</dt>
+<dd>The fraction of conversations recorded or evaluated.</dd>
+<dt>Quiet timeout</dt>
+<dd>Idle interval used to decide that a conversation has ended.</dd>
+<dt>Feedback</dt>
+<dd>A rating and comment tied to a session.</dd>
+<dt>Unit cost</dt>
+<dd>Spend divided by successful business outcomes. Failed attempts remain in the spend.</dd>
+<dt>Cost allocation</dt>
+<dd>Assign direct and shared costs to the teams that use the platform.</dd>
+<dt>Hardening</dt>
+<dd>Replace workshop shortcuts with production settings.</dd>
+</dl></div>
+</details>
+</section>
+<section id="m5-4-architecture">
+<h2>The operating platform at the end of Module 5</h2>
+<p class="lead">No new workload is built. <strong>Four sources</strong> now show its behaviour, policy decisions, quality and spend. Release records and CloudTrail support change investigations.</p>
+<figure class="arch">
+            <!-- arch-svg:start -->
+            <a href="arch/arch-5-operation.svg" target="_blank" rel="noopener"><img src="arch/arch-5-operation.svg" alt="AWS architecture after Module 5: the platform in operation" loading="lazy"/></a>
+            <!-- arch-svg:end -->
+            <figcaption><strong>Changed:</strong> AgentCore Evaluations, CloudWatch and CloudTrail. Spans use the VPC's X-Ray/logs endpoints; Transaction Search makes them searchable. Online scores arrive after conversations end. Transaction Search and the evaluation role come from the SharedServices stack of the <a href="m2.html#m2-1">foundation</a> in Module 2, which is account-level and has no box of its own. <strong>Unchanged:</strong> the on-behalf-of parts of Modules <a href="m2.html#m2-1">2</a>, <a href="m3.html#m3-1-2">3</a> and <a href="m4.html#m4-4">4</a>, the two OAuth2 providers, the <code>hr dev obo</code> gateway with its OpenAPI target and the Dev on-behalf-of twin. The corporate IdP they rely on, Keycloak on Fargate behind an internal load balancer and an API Gateway HTTP API, with the HR API and its JWT authorizer in front of the Lambda <code>agent-platform-hr-api</code>, lives in its own small public VPC (10.1.0.0/16) and is not drawn here. Click to open full size.</figcaption>
+          </figure>
+<p>This is the complete platform that Module 1 planned. The <a href="handoff.html">handoff</a> collects your design record, evidence and backlog; <a href="cleanup.html">clean-up</a> removes the workshop resources.</p>
+</section>
+
+
+      </main>
+      <nav class="pager" aria-label="Previous and next page"><a href="m4.html">←&nbsp;Module 4</a><a href="handoff.html">Handoff&nbsp;→</a></nav>
+
+      <details class="toc-disclosure" id="course-contents">
+        <summary class="toc-toggle" aria-label="Table of contents" title="Table of contents" aria-controls="contents-navigation">
+          <svg class="toc-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h11M4 12h11M4 19h11m3-10 3 3-3 3" /></svg>
+          <svg class="toc-collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </summary>
+        <nav class="toc" id="contents-navigation" aria-label="Table of contents">
+          <strong>Contents</strong>
+          <a href="index.html">The learning path</a>
+          <a href="intro.html">Introduction</a>
+          <a href="m1.html">Module 1 · Requirements, personas and architecture</a>
+          <a href="m2.html">Module 2 · Build the shared platform</a>
+          <a href="m3.html">Module 3 · Workloads and blueprints</a>
+          <a href="m4.html">Module 4 · Access, governance and AgentOps</a>
+          <a href="m5.html">Module 5 · Operate and improve</a>
+          <a href="handoff.html">Handoff</a>
+          <a href="cleanup.html">Clean up</a>
+        </nav>
+      </details>
+    </div>
+    <script src="course.js"></script>
+  </body>
+</html>

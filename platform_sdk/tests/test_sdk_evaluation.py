@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 
 import pytest
@@ -224,3 +225,109 @@ def test_result_value_mapping():
     assert evaluation.result_value({"value": True}) == 1.0
     assert evaluation.result_value({"errorCode": "SDKError", "errorMessage": "boom"}) is None
     assert evaluation.result_value({"label": "Mysterious"}) is None
+
+
+NO_SPANS = {
+    "errorCode": "SDKError",
+    "errorMessage": "An error occurred (ValidationException) when calling the Evaluate operation: Provided input has no spans "
+    "to evaluate. Please ensure that spans provided in the request are valid and have model/tool/agent invocation details",
+}
+
+
+def test_unscored_scenario_counts_as_failed_and_blocks_the_release():
+    """Seen 2026-10-20: the Evaluate API rejected an incomplete span set for one scenario, all four evaluators returned SDKError
+    and the scenario stayed COMPLETED, so it vanished from every mean (8/9 instead of 8/10) with nothing on the verdict to
+    show for it. It is UNSCORED now: 0 on the floors, listed in failedScenarios, a `_scenarios` failure."""
+    evaluators = ("Correctness", "GoalSuccessRate", "TrajectoryInOrderMatch", "Harmfulness")
+    good = [scenario(f"s{i}", **{e: 1.0 for e in evaluators}) for i in range(9)]
+    unscored = scenario("s9", **{e: dict(NO_SPANS) for e in evaluators})
+    scores, rows = evaluation.summarize(
+        {"scenario_results": good + [unscored]}, evaluator_ids=[f"Builtin.{e}" for e in evaluators]
+    )
+    assert rows[-1]["status"] == "UNSCORED" and rows[-1]["scores"] == {}
+    assert rows[-1]["error"].startswith("no evaluator produced a score: An error occurred (ValidationException)")
+    assert set(rows[-1]["errors"]) == set(evaluators)
+    assert evaluation.failed_scenario_ids(rows) == ["s9"]
+    assert scores["GoalSuccessRate"] == {
+        "mean": 0.9,
+        "min": 0.0,
+        "max": 1.0,
+        "passRate": 0.9,
+        "count": 10,
+        "errors": 1,
+        "failed": 1,
+    }
+    assert scores["Harmfulness"]["mean"] == 1.0 and scores["Harmfulness"]["count"] == 9
+    thresholds = {"Correctness": 0.8, "GoalSuccessRate": 0.9, "TrajectoryInOrderMatch": 0.9, "Harmfulness": 0.0}
+    verdict = evaluation.apply_thresholds(scores, thresholds)
+    assert verdict.status == "BLOCKED" and [f["evaluator"] for f in verdict.failures] == ["_scenarios"]
+    summary = evaluation.RunSummary("run", "d.json", 10, scores, rows, 1.0, failed_scenarios=["s9"])
+    assert [r["scenarioId"] for r in summary.problems()] == ["s9"] and summary.verdict(thresholds).status == "BLOCKED"
+    # one errored evaluator next to real scores (a trajectory evaluator without a reference) leaves the scenario COMPLETED
+    partial = scenario(
+        "s10",
+        Correctness=1.0,
+        GoalSuccessRate=1.0,
+        Harmfulness=1.0,
+        TrajectoryInOrderMatch={"errorCode": "EvaluationRequestValidationError", "errorMessage": "no trajectory"},
+    )
+    _, rows = evaluation.summarize({"scenario_results": [partial]})
+    assert rows[0]["status"] == "COMPLETED" and rows[0]["error"] is None and evaluation.failed_scenario_ids(rows) == []
+    # no evaluator result at all (every evaluator skipped by the runner) is UNSCORED too
+    _, rows = evaluation.summarize({"scenario_results": [scenario("s11")]})
+    assert rows[0]["status"] == "UNSCORED" and "no evaluator returned a result" in rows[0]["error"]
+
+
+def span(trace_id, span_id, operation=None, **attrs):
+    """A Logs Insights record as the SDK collector returns it: scope + ids always, gen_ai attributes only on real spans."""
+    doc = {"traceId": trace_id, "spanId": span_id, "scope": {"name": "x"}, "attributes": dict(attrs)}
+    if operation:
+        doc["attributes"]["gen_ai.operation.name"] = operation
+    return doc
+
+
+def test_collect_complete_waits_for_an_invocation_span_and_a_stable_set():
+    """Poll 1 sees only a log record with trace context (what the SDK collector would have returned), poll 2 the model and
+    tool spans, poll 3 the same set again: poll 3 is returned, after two confirmation sleeps."""
+    partial = [span("t1", "a")]
+    full = partial + [span("t1", "b", "invoke_agent"), span("t1", "c", "chat"), span("t1", "d", "execute_tool")]
+    polls = iter([partial, full, list(full)])
+    clock, slept = {"now": 0.0}, []
+
+    def sleep(seconds):
+        slept.append(seconds)
+        clock["now"] += seconds
+
+    result = evaluation.collect_complete(
+        lambda: next(polls), 300, confirm_seconds=10, clock=lambda: clock["now"], sleep=sleep
+    )
+    assert result == full and slept == [10, 10]
+    assert evaluation.is_invocation_span(span("t", "s", "chat")) and not evaluation.is_invocation_span(span("t", "s"))
+    assert evaluation.is_invocation_span({"attributes": {"openinference.span.kind": "LLM"}})
+    assert not evaluation.is_invocation_span({"attributes": "not a dict"}) and not evaluation.is_invocation_span(None)
+    assert evaluation.span_keys(full) == {("t1", "a"), ("t1", "b"), ("t1", "c"), ("t1", "d")}
+
+
+def test_collect_complete_gives_up_at_the_deadline_and_never_accepts_an_empty_set(caplog):
+    partial, calls, clock = [span("t1", "a")], {"n": 0}, {"now": 0.0}
+
+    def fetch():
+        calls["n"] += 1
+        return list(partial)
+
+    def sleep(seconds):
+        clock["now"] += seconds
+
+    with caplog.at_level(logging.WARNING, logger="platform_sdk.evaluation"):
+        result = evaluation.collect_complete(
+            fetch, 25, confirm_seconds=10, label="s-1", clock=lambda: clock["now"], sleep=sleep
+        )
+    assert result == partial and calls["n"] == 3  # polls at 0, 10 and 20 s; a fourth would end past the 25 s deadline
+    assert "s-1" in caplog.text and "without an invocation span" in caplog.text
+    # an empty set is never complete, however stable; the first complete set after it is
+    complete = [span("t1", "b", "chat")]
+    polls = iter([[], [], complete, list(complete)])
+    result = evaluation.collect_complete(
+        lambda: next(polls), 300, confirm_seconds=10, clock=lambda: clock["now"], sleep=sleep
+    )
+    assert result == complete

@@ -459,6 +459,145 @@ class FakeControl:
         return {"endpoint": endpoint}
 
 
+class FakeRegistry:
+    """agent-registry-control with the record lifecycle of the AWS docs (read 2026-10-21): a new record is DRAFT at once here
+    (CREATING for about 1.5 s live); submit -> PENDING_APPROVAL; UpdateRegistryRecordStatus allows PENDING_APPROVAL -> APPROVED |
+    REJECTED, REJECTED -> APPROVED and APPROVED -> DEPRECATED (ConflictException otherwise); an update of an APPROVED record is a
+    new DRAFT revision, a DEPRECATED record cannot be edited; `after_update_status` forces the status an update leaves."""
+
+    TRANSITIONS = {
+        ("PENDING_APPROVAL", "APPROVED"),
+        ("PENDING_APPROVAL", "REJECTED"),
+        ("REJECTED", "APPROVED"),
+        ("APPROVED", "DEPRECATED"),
+    }
+
+    def __init__(self):
+        self.records: dict[str, dict] = {}
+        self.calls: list[tuple[str, dict]] = []
+        self.fail_on: set[str] = set()
+        self.after_update_status: str | None = None
+        self.counter = 0
+        self.clock = 0
+
+    def _stamp(self):
+        from datetime import UTC, datetime, timedelta
+
+        self.clock += 1
+        return datetime(2026, 10, 21, tzinfo=UTC) + timedelta(seconds=self.clock)
+
+    def _check(self, operation):
+        if operation in self.fail_on:
+            raise ClientError({"Error": {"Code": "InternalServerException", "Message": f"{operation} boom"}}, operation)
+
+    def _arn(self, registry_id, record_id):
+        return f"arn:aws:agent-registry:{REGION}:{ACCOUNT}:registry/{registry_id}/record/{record_id}"
+
+    def list_registry_records(self, **kwargs):
+        self.calls.append(("list", kwargs))
+        self._check("ListRegistryRecords")
+        rows = list(self.records.values())
+        for flt in kwargs.get("filters") or []:
+            rows = [r for r in rows if r.get(flt["name"]) in flt["values"]]
+        return {"registryRecords": [{k: v for k, v in r.items() if k != "descriptors"} for r in rows]}
+
+    def create_registry_record(self, **kwargs):
+        self.calls.append(("create", kwargs))
+        self._check("CreateRegistryRecord")
+        if any(r["name"] == kwargs["name"] for r in self.records.values()):
+            raise ClientError(
+                {"Error": {"Code": "ConflictException", "Message": f"record {kwargs['name']} exists"}},
+                "CreateRegistryRecord",
+            )
+        self.counter += 1
+        record_id = f"rec{self.counter:03d}"
+        now = self._stamp()
+        self.records[record_id] = {
+            "recordId": record_id,
+            "recordArn": self._arn(kwargs["registryId"], record_id),
+            "name": kwargs["name"],
+            "displayName": kwargs.get("displayName"),
+            "description": kwargs.get("description"),
+            "recordType": kwargs["recordType"],
+            "recordVersion": kwargs.get("recordVersion"),
+            "descriptors": kwargs.get("descriptors"),
+            "status": "DRAFT",
+            "tags": kwargs.get("tags") or {},
+            "createdAt": now,
+            "updatedAt": now,
+        }
+        return {"recordArn": self.records[record_id]["recordArn"], "status": "CREATING"}
+
+    def update_registry_record(self, **kwargs):
+        self.calls.append(("update", kwargs))
+        self._check("UpdateRegistryRecord")
+        record = self.records[kwargs["recordId"]]
+        if record["status"] == "DEPRECATED":
+            raise ClientError(
+                {"Error": {"Code": "ConflictException", "Message": "a DEPRECATED record cannot be edited"}},
+                "UpdateRegistryRecord",
+            )
+        for key in ("displayName", "description"):
+            if key in kwargs:
+                record[key] = kwargs[key]["optionalValue"]
+        if "recordVersion" in kwargs:
+            record["recordVersion"] = kwargs["recordVersion"]
+        if "descriptors" in kwargs:
+            fields = kwargs["descriptors"]["optionalValue"]
+            record["descriptors"] = {k: v["optionalValue"] for k, v in fields.items()}
+        if self.after_update_status:
+            record["status"] = self.after_update_status
+        elif record["status"] in ("APPROVED", "PENDING_APPROVAL", "REJECTED"):
+            record["status"] = "DRAFT"  # the live registry opens a new DRAFT revision (GetRegistryRecord returns it)
+        record["updatedAt"] = self._stamp()
+        return {**record, "status": "UPDATING"}
+
+    def get_registry_record(self, **kwargs):
+        self.calls.append(("get", kwargs))
+        self._check("GetRegistryRecord")
+        record = self.records.get(kwargs["recordId"])
+        if record is None:
+            raise ClientError(
+                {"Error": {"Code": "ResourceNotFoundException", "Message": "no such record"}}, "GetRegistryRecord"
+            )
+        return dict(record)
+
+    def submit_registry_record_for_approval(self, **kwargs):
+        self.calls.append(("submit", kwargs))
+        self._check("SubmitRegistryRecordForApproval")
+        record = self.records[kwargs["recordId"]]
+        if record["status"] != "DRAFT":
+            raise ClientError(
+                {
+                    "Error": {
+                        "Code": "ConflictException",
+                        "Message": f"only DRAFT records are submitted ({record['status']})",
+                    }
+                },
+                "SubmitRegistryRecordForApproval",
+            )
+        record["status"], record["updatedAt"] = "PENDING_APPROVAL", self._stamp()
+        return {"status": "PENDING_APPROVAL"}
+
+    def update_registry_record_status(self, **kwargs):
+        self.calls.append(("status", kwargs))
+        self._check("UpdateRegistryRecordStatus")
+        record = self.records[kwargs["recordId"]]
+        if (record["status"], kwargs["status"]) not in self.TRANSITIONS:
+            raise ClientError(
+                {
+                    "Error": {
+                        "Code": "ConflictException",
+                        "Message": f"{record['status']} -> {kwargs['status']} is not allowed",
+                    }
+                },
+                "UpdateRegistryRecordStatus",
+            )
+        record["status"], record["statusReason"] = kwargs["status"], kwargs.get("statusReason")
+        record["updatedAt"] = self._stamp()
+        return {"recordId": record["recordId"], "recordArn": record["recordArn"], "status": record["status"]}
+
+
 class FakeLambda:
     def __init__(self):
         self.payloads: list[dict] = []

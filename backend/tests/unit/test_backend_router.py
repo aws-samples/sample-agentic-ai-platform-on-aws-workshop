@@ -30,6 +30,7 @@ EXPECTED_MATRIX = {
     ("PATCH", "/projects/{projectId}/keys/{env}/{model}"): (ADMIN,),
     ("GET", "/catalogue"): ANY,
     ("GET", "/catalogue/search"): ANY,
+    ("POST", "/catalogue/agents/sync"): (ADMIN,),  # the promote job's catalogue step, for every project
     ("GET", "/catalogue/{recordId}"): ANY,
     ("POST", "/catalogue/{recordId}/status"): (ADMIN,),
     ("GET", "/governance"): ANY,

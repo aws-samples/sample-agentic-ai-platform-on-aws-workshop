@@ -718,7 +718,7 @@
         <h1>Facilitator Guide</h1>
         <p>
           End-to-end run-through for building an Agentic AI Platform with Amazon Bedrock AgentCore.
-          <br/>① Deploy the control plane before the day&nbsp; ② Run modules 1-7&nbsp; ③ Clean up.
+          <br/>① Deploy the control plane before the day&nbsp; ② Run build phases 1-7&nbsp; ③ Clean up.
         </p>
         <div class="meta pt-4">
           <span>Updated 20 Oct 2026</span>
@@ -773,11 +773,11 @@
             <span class="d">about 12 min</span></a
           >
           <a href="#p3"
-            >Part 3: modules 1-4, the morning
+            >Part 3: build phases 1-4, the morning
             <span class="d">4 × 40 min</span></a
           >
           <a href="#p4"
-            >Part 4: modules 5-7, the afternoon
+            >Part 4: build phases 5-7, the afternoon
             <span class="d">3 × 40 min</span></a
           >
           <a href="#p5"
@@ -793,7 +793,10 @@
             This is a complete run-through from a fresh AWS account to the cleaned-up one. A facilitator uses it to rehearse what an attendee experiences through the workshop.
             <br/>
             The document outlines short steps, exact commands, where to look in the UI. The detailed explanations live in the course pages:
-            <a href="v2/course/index.html">docs/v2/course</a> (the path, the agenda, Get started, one page per module, clean up).
+            <a href="v2/course/index.html">docs/v2/course</a> (the learning path, the Introduction, five module pages, handoff and clean up).
+          </p>
+          <p class="note">
+            Teach the five-module sequence in the learning path. This command-by-command rehearsal keeps the seven CLI build phases, so a build phase number matches <code>workshop apply N</code> and the <code>module_N</code> block in <code>design-record.yaml</code>. The course returns to those phases as each design needs them; the <a href="v2/course/intro.html#setup-workspace-order">command-order table</a> maps them to the five modules.
           </p>
 
           <div class="key">
@@ -834,7 +837,7 @@
               <div class="v">7 × 40 min</div>
               <div class="s">
                 Explain 10 · Design 10 · Hands-on 20; clean up 35 min after
-                module 7
+                build phase 7
               </div>
             </div>
             <div class="card">
@@ -886,10 +889,10 @@
                   >Open the course once:
                   <a href="v2/course/index.html">v2/course/index.html</a> (the
                   path, the <a href="v2/course/index.html#agenda">agenda</a>,
-                  <a href="v2/course/index.html#start">Get started</a>) and
+                  <a href="v2/course/intro.html#setup-workspace">Get started</a>) and
                   <a href="workshop-guide.html">workshop-guide.html</a>
                   (architecture, services). Keep Get started open: its six steps
-                  are what every learner does before module 1.</span
+                  are what every learner does before build phase 1.</span
                 >
               </div>
             </li>
@@ -1022,8 +1025,8 @@ aws sts get-caller-identity   <span class="c"># the account id must be the works
             <code>-Platform</code> (the control plane: web UI, API, state,
             worker, the Cognito user pool and app client) and
             <code>AgentPlatform-Scenario</code> (the sample data). The landing
-            zone is the learners' module 1, the personas and Keycloak their
-            module 2.
+            zone is the learners' build phase 1, the personas and Keycloak their
+            build phase 2.
           </p>
           <ol class="steps">
             <li>
@@ -1069,7 +1072,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                 <label class="tick"><input type="checkbox" id="s9" />done</label
                 ><span class="text"
                   >Read the doctor. The landing-zone rows read not deployed and
-                  the personas not created: expected before modules 1 and 2, and
+                  the personas not created: expected before build phases 1 and 2, and
                   the doctor does not fail on it. Passwords exist only after
                   <code>workshop apply 2</code>.
                   <pre
@@ -1098,7 +1101,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
 <span class="c"># AgentPlatform-Scenario        CREATE_COMPLETE   sample data</span>
 <span class="c"># AgentPlatform-Idp             not deployed      corporate IdP (module 2)</span></code></pre>
                   Eight rows: four CREATE_COMPLETE, four not deployed. The first
-                  look at the UI waits for module 2: the personas exist only
+                  look at the UI waits for build phase 2: the personas exist only
                   after <code>workshop apply 2</code>.</span
                 >
               </div>
@@ -1129,8 +1132,8 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                       <code
                         >/aws/codebuild/agent-platform-deployer-deployer</code
                       >. <code>ModelGatewayUrl</code> reads "not deployed yet"
-                      until module 1; <code>PersonaPasswordsCommand</code>
-                      prints the passwords after module 2. Deleting the stack
+                      until build phase 1; <code>PersonaPasswordsCommand</code>
+                      prints the passwords after build phase 2. Deleting the stack
                       starts a destroy build (destroy path not yet exercised end
                       to end).
                     </p>
@@ -1142,7 +1145,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
         </section>
         <section id="p3">
           <h2>
-            Part 3: modules 1-4, the morning<span class="time"
+            Part 3: build phases 1-4, the morning<span class="time"
               >4 × 40 min</span
             >
           </h2>
@@ -1151,12 +1154,12 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
             <code>workshop apply N</code> reads <code>design-record.yaml</code>
             (<code>model: claude-sonnet-5</code> under
             <code>module_3.inputs</code>) and is idempotent: a re-run says
-            <code>exists</code>. Start the long deployments as the module begins
+            <code>exists</code>. Start the long deployments as the phase begins
             (the Start now boxes on the course pages). Pages:
-            <a href="v2/course/module-1-rev.html">module 1</a> ·
-            <a href="v2/course/module-2-rev.html">module 2</a> ·
-            <a href="v2/course/module-3-rev.html">module 3</a> ·
-            <a href="v2/course/module-4-rev.html">module 4</a>.
+            <a href="v2/course/m1.html#m1-overview">build phase 1</a> ·
+            <a href="v2/course/m2.html#m2-1">build phase 2</a> ·
+            <a href="v2/course/m2.html#m2-4">build phase 3</a> ·
+            <a href="v2/course/m2.html#m2-3-2">build phase 4</a>.
           </p>
           <div class="table-scroll">
             <table>
@@ -1175,7 +1178,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                   <td>
                     <code>workshop status</code>: eight stacks, four
                     CREATE_COMPLETE, four not deployed.
-                    <code>workshop apply 1</code> as the module begins,
+                    <code>workshop apply 1</code> as the phase begins,
                     <span class="pill wait">about 20 min</span>: deploys
                     <code>AgentPlatform-Network</code>,
                     <code>-SharedServices</code>, <code>-ModelGateway</code>
@@ -1206,7 +1209,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                     <span class="pill persona">Domain approver</span>
                   </td>
                   <td>
-                    <code>workshop apply 2</code> as the module begins,
+                    <code>workshop apply 2</code> as the phase begins,
                     <span class="pill wait">about 8 min</span> (seven of them
                     the <code>AgentPlatform-Idp</code> stack; re-run about 1
                     min): three groups and users in the user pool with stored
@@ -1232,7 +1235,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                     Identity, OAuth clients: kc-hr-agent, kc-hr-obo-gateway.
                     <span class="pill ui">Overview</span>
                     <span class="pill ui">Domains and projects</span>
-                    <span class="pill ui">Catalogue</span> (empty before module
+                    <span class="pill ui">Catalogue</span> (empty before build phase
                     4); <span class="pill ui">Governance</span>: the model
                     gateway's admin URL and credentials. File:
                     <code>platform_sdk/platform_sdk/templates/agent_role.json</code>.
@@ -1292,7 +1295,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                   <td>
                     project <span class="pill ui">Resources</span> tab: eight
                     resources; <span class="pill ui">Catalogue</span>: 3
-                    PENDING_APPROVAL (approved in module 5).
+                    PENDING_APPROVAL (approved in build phase 5).
                   </td>
                 </tr>
                 <tr>
@@ -1327,7 +1330,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
             </table>
           </div>
           <div class="callout warn">
-            <b>Checkpoint after module 4</b>
+            <b>Checkpoint after build phase 4</b>
             <ol>
               <li>Two domains and two projects, four IAM roles and a model-gateway team each</li>
               <li>Registry <code>agent_platform_catalogue</code> READY with three records PENDING_APPROVAL</li>
@@ -1336,20 +1339,20 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
               <li>Eight resources on the projects' Resources tabs</li>
               <li>A Deny count on the Overview after the <code>-32002</code> call (up to four minutes)</li>
             </ol>
-            The catalogue approval and the Dev key are module 5. The state file
+            In this command-only rehearsal, catalogue approval and the Dev key are build phase 5. In the five-module course, approve the HR gateway record during Module 2's coding-client activity, then approve the remaining records and create the key in Module 4. The state file
             <code>.workshop/state/hr-assistant.json</code> holds what the applies created.
           </div>
         </section>
         <section id="p4">
           <h2>
-            Part 4: modules 5-7, the afternoon<span class="time"
+            Part 4: build phases 5-7, the afternoon<span class="time"
               >3 × 40 min</span
             >
           </h2>
           <p class="lead">
-            Pages: <a href="v2/course/module-5-rev.html">module 5</a> ·
-            <a href="v2/course/module-6-rev.html">module 6</a> ·
-            <a href="v2/course/module-7-rev.html">module 7</a>. Module 6 is two
+            Pages: <a href="v2/course/m4.html#m4-2">build phase 5</a> ·
+            <a href="v2/course/m4.html#m4-4">build phase 6</a> ·
+            <a href="v2/course/m5.html">build phase 7</a>. Build phase 6 is two
             runs of <code>workshop apply 6</code>; start run 1 as the module
             begins.
           </p>
@@ -1382,7 +1385,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                     <code>workshop cap --dev low</code> &rarr;
                     <code>OK BUDGET_EXCEEDED</code>, HTTP 422 (still passes: the
                     proxy writes spend every 10 s, run it once more); then
-                    <code>workshop cap --dev restore</code> before module 6.
+                    <code>workshop cap --dev restore</code> before build phase 6.
                     Catalogue: filter Pending approval, approve
                     hr-assistant-tools, kb-hr-policies, model-claude-sonnet-5
                     (fallback <code>workshop approve catalogue</code>).
@@ -1401,7 +1404,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
             </table>
           </div>
           <div class="callout ok">
-            <b>Checkpoint "Platform complete" after module 5</b>
+            <b>Checkpoint "Platform complete" after build phase 5</b>
             <ol>
               <li>Catalogue <code>agent_platform_catalogue</code> with three APPROVED records</li>
               <li>Policy engine with its Cedar policies; four gateways: HR Dev, HR Prod, Finance Dev and <code>hr-assistant-dev-gw-obo</code></li>
@@ -1430,7 +1433,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                   <td>
                     Check the Dev cap is restored. Record
                     <code>prompt_version: v1</code>.
-                    <code>workshop apply 6</code> as the module begins,
+                    <code>workshop apply 6</code> as the phase begins,
                     <span class="pill wait">12-15 min</span>: memories Dev and
                     Prod, <span class="pill wait">about 2.5 min</span> (the first
                     run also writes two sample events for E1001 into the Dev
@@ -1498,7 +1501,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                     deployment can take minutes. Playground · Prod: cold start
                     <span class="pill wait">about 35 s</span>.
                     <code>workshop traffic --prod 3</code>: three conversations
-                    for module 7's scores. <code>workshop obo</code>: the whole
+                    for build phase 7's scores. <code>workshop obo</code>: the whole
                     chain, first call <span class="pill wait">35-40 s</span>
                     (warm run about 24 s): "Hi Alex, your annual leave balance
                     is 12 days" via <code>hrapi___get_leave_balance</code>, then
@@ -1551,7 +1554,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
             </table>
           </div>
           <div class="callout warn">
-            <b>Checkpoint at the end of the day, after module 7</b>
+            <b>Checkpoint at the end of the day, after build phase 7</b>
             <ol>
               <li>Dev harness <code>hr_assistant_dev</code> with versions v1 and v2; the on-behalf-of twin <code>hr_assistant_dev_obo</code></li>
               <li>Prod harness <code>hr_assistant_prod</code> with <code>live</code> pinned to the approved v2</li>
@@ -1566,7 +1569,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
         <section id="p5">
           <h2>Part 5: clean up<span class="time">35 min, 10 attended</span></h2>
           <p class="lead">
-            After module 7, outside the agenda: Explain 5 · Discuss 5 ·
+            After build phase 7, outside the agenda: Explain 5 · Discuss 5 ·
             Hands-on 25, of which about 10 attended. Optional in an event
             account (Workshop Studio deletes the account); run it once anyway,
             the order teaches what a stack knows about. Page:
@@ -1589,7 +1592,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                 <label class="tick"
                   ><input type="checkbox" id="s13" />done</label
                 ><span class="text"
-                  >Remove what modules 3-7 built, in reverse order:
+                  >Remove what build phases 3-7 built, in reverse order:
                   <span class="pill wait">about 10 min</span>, mostly AgentCore
                   deleting harnesses and memories in the background (2-8 min).
                   Nine steps; step 9 lists leftovers and that list must be
@@ -1676,13 +1679,13 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 </tr>
                 <tr>
                   <td>09:40</td>
-                  <td>Module 1 - Landing zone</td>
+                  <td>Build phase 1 - Landing zone</td>
                   <td>40</td>
                   <td>none: account work</td>
                 </tr>
                 <tr>
                   <td>10:20</td>
-                  <td>Module 2 - Identity</td>
+                  <td>Build phase 2 - Identity</td>
                   <td>40</td>
                   <td>
                     <span class="pill persona">Platform admin</span>
@@ -1699,13 +1702,13 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 </tr>
                 <tr>
                   <td>11:10</td>
-                  <td>Module 3 - Control plane and governance</td>
+                  <td>Build phase 3 - Control plane and governance</td>
                   <td>40</td>
                   <td><span class="pill persona">Platform admin</span></td>
                 </tr>
                 <tr>
                   <td>11:50</td>
-                  <td>Module 4 - Tool plane</td>
+                  <td>Build phase 4 - Tool plane</td>
                   <td>40</td>
                   <td>
                     <span class="pill persona">Platform admin</span> (Governance
@@ -1720,7 +1723,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 </tr>
                 <tr>
                   <td>13:15</td>
-                  <td>Module 5 - Model gateway</td>
+                  <td>Build phase 5 - Model gateway</td>
                   <td>40</td>
                   <td>
                     <span class="pill persona">Platform admin</span> (cap,
@@ -1729,7 +1732,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 </tr>
                 <tr>
                   <td>13:55</td>
-                  <td>Module 6 - AgentOps</td>
+                  <td>Build phase 6 - AgentOps</td>
                   <td>40</td>
                   <td>
                     <span class="pill persona">Agent developer</span>
@@ -1744,7 +1747,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 </tr>
                 <tr>
                   <td>14:45</td>
-                  <td>Module 7 - Operate and observe</td>
+                  <td>Build phase 7 - Operate and observe</td>
                   <td>40</td>
                   <td>any persona: Overview reading</td>
                 </tr>
@@ -1788,7 +1791,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 <tr>
                   <td><code>uv sync &amp;&amp; npm install</code></td>
                   <td>2-5 min</td>
-                  <td>Get started, before module 1</td>
+                  <td>Get started, before build phase 1</td>
                   <td>
                     Builds the Python environment with the
                     <code>workshop</code> command and installs the pinned CDK
@@ -1798,7 +1801,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 <tr>
                   <td><code>workshop apply 1</code></td>
                   <td>about 20 min</td>
-                  <td>module 1, start as the module begins</td>
+                  <td>build phase 1, start as the phase begins</td>
                   <td>
                     Three stacks: database, proxy and relay; the LiteLLM image is
                     copied into ECR. Explain and Design fill the wait. "did not
@@ -1809,7 +1812,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 <tr>
                   <td><code>workshop apply 2</code></td>
                   <td>about 8 min; re-run about 1 min</td>
-                  <td>module 2, start as the module begins</td>
+                  <td>build phase 2, start as the phase begins</td>
                   <td>
                     Seven of the eight minutes are the
                     <code>AgentPlatform-Idp</code> stack (Keycloak on Fargate).
@@ -1818,7 +1821,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 <tr>
                   <td><code>workshop apply 4</code></td>
                   <td>5-6 min</td>
-                  <td>module 4, during Discuss</td>
+                  <td>build phase 4, during Discuss</td>
                   <td>
                     The registry is READY in about a minute; the on-behalf-of
                     gateway adds about 20 s at the end.
@@ -1827,13 +1830,13 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 <tr>
                   <td>Set ENFORCE</td>
                   <td>about 10 s</td>
-                  <td>module 4, Governance</td>
+                  <td>build phase 4, Governance</td>
                   <td>UpdateGateway; the gateway stays reachable.</td>
                 </tr>
                 <tr>
                   <td>Policy metrics after LOG_ONLY traffic</td>
                   <td>up to 4 min</td>
-                  <td>module 4, Overview after <code>workshop call</code></td>
+                  <td>build phase 4, Overview after <code>workshop call</code></td>
                   <td>
                     CloudWatch delivers Allow and Deny separately; in LOG_ONLY
                     the result line reads <code>OK allowed</code> and the deny
@@ -1843,7 +1846,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 <tr>
                   <td>Memory creation</td>
                   <td>about 2.5 min</td>
-                  <td>module 6, <code>workshop apply 6</code> run 1</td>
+                  <td>build phase 6, <code>workshop apply 6</code> run 1</td>
                   <td>
                     Both memories are created in parallel; the first run also
                     writes two sample events for E1001.
@@ -1852,7 +1855,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 <tr>
                   <td>First Dev deployment</td>
                   <td>4-5 min</td>
-                  <td>module 6, run 1</td>
+                  <td>build phase 6, run 1</td>
                   <td>
                     The first harness in the VPC waits for its network
                     interfaces; later versions and the on-behalf-of twin take
@@ -1863,7 +1866,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                   <td>First invocation of a new harness version</td>
                   <td>35-40 s</td>
                   <td>
-                    module 6 warm-up, Playground after a deploy; module 7: a cold
+                    build phase 6 warm-up, Playground after a deploy; build phase 7: a cold
                     session 25-40 s
                   </td>
                   <td>
@@ -1874,7 +1877,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 <tr>
                   <td>Evaluation run</td>
                   <td>5-6 min</td>
-                  <td>module 6, run 1 and run 2</td>
+                  <td>build phase 6, run 1 and run 2</td>
                   <td>
                     Ten scripted conversations: one minute of invocations, a
                     180-second telemetry delay, then scoring by four evaluators.
@@ -1884,7 +1887,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 <tr>
                   <td>Promotion</td>
                   <td>minutes for the first Prod deployment</td>
-                  <td>module 6, release detail</td>
+                  <td>build phase 6, release detail</td>
                   <td>
                     The worker creates the Prod key, the Prod harness, pins
                     <code>live</code> and registers the online evaluation; later
@@ -1894,7 +1897,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 <tr>
                   <td><code>workshop apply 7</code></td>
                   <td>about 1 min, allow up to 5</td>
-                  <td>module 7</td>
+                  <td>build phase 7</td>
                   <td>
                     Ten conversations three at a time (31 s on warm sessions);
                     the metrics check waits up to three minutes.
@@ -1903,10 +1906,10 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 <tr>
                   <td>Online evaluation results</td>
                   <td>8-11 min after a session goes quiet</td>
-                  <td>module 7, <code>workshop scores</code> and Overview (Prod)</td>
+                  <td>build phase 7, <code>workshop scores</code> and Overview (Prod)</td>
                   <td>
                     Quiet timeout one minute; the three conversations seeded in
-                    module 6 should already be scored.
+                    build phase 6 should already be scored.
                   </td>
                 </tr>
                 <tr>
@@ -2002,7 +2005,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                     <code>the pinned CDK CLI is not installed</code>
                   </td>
                   <td>
-                    Module 1's deployment runs the CDK CLI: install Node.js 20
+                    Build phase 1's deployment runs the CDK CLI: install Node.js 20
                     or later, then <code>npm install</code> at the repository
                     root.
                   </td>
@@ -2076,7 +2079,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 <tr>
                   <td>
                     <code>workshop obo</code> step 1 fails with a sign-in error
-                    (modules 4, 6)
+                    (build phases 4, 6)
                   </td>
                   <td>
                     The Keycloak task restarted since
@@ -2135,13 +2138,13 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                     <code>BUDGET_EXCEEDED</code>, HTTP 422
                   </td>
                   <td>
-                    Expected after <code>workshop cap --dev low</code> in module
+                    Expected after <code>workshop cap --dev low</code> in build phase
                     5 (if that call still passes, the proxy writes spend every
                     10 s: run it once more). Fix:
                     <code>workshop cap --dev restore</code> (or
                     <code>workshop cap --dev &lt;USD&gt;</code>), or
                     <span class="pill persona">Platform admin</span> on the
-                    <span class="pill ui">Keys</span> tab. Module 6 starts with
+                    <span class="pill ui">Keys</span> tab. Build phase 6 starts with
                     the cap restored; the record's cap is 1 USD/7d.
                   </td>
                 </tr>
@@ -2170,7 +2173,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                     <code>workshop apply 7</code>: <code>no Prod agent yet</code>
                   </td>
                   <td>
-                    Approve and promote release 2 first (module 6, as
+                    Approve and promote release 2 first (build phase 6, as
                     <span class="pill persona">Domain approver</span>).
                   </td>
                 </tr>
@@ -2254,7 +2257,7 @@ workshop cleanup --stacks
 workshop deploy pre-day</code></pre>
           <p>
             There is no headless all-module runner;
-            <code>scripts/e2e_dryrun.py</code> covers modules 3-6 with the SDK
+            <code>scripts/e2e_dryrun.py</code> covers build phases 3-6 with the SDK
             (tagged <code>ManagedBy=dryrun</code>).
           </p>
           <h3>Go / no-go</h3>
@@ -2297,7 +2300,7 @@ workshop deploy pre-day</code></pre>
                   >A full <code>workshop apply 1</code> to
                   <code>workshop apply 7</code> plus
                   <code>workshop cleanup</code> in a fresh account passed, each
-                  module inside its 40-min slot (<code>apply 1</code> and
+                  build phase inside its rehearsal slot (<code>apply 1</code> and
                   <code>apply 6</code> run 1 started as their modules
                   begin).</span
                 >
@@ -2312,7 +2315,7 @@ workshop deploy pre-day</code></pre>
                   <code>workshop apply 2</code>
                   (<code>uv run python scripts/doctor.py --show-passwords</code>
                   or the <code>PersonaPasswordsCommand</code> output);
-                  <code>workshop cap --dev restore</code> before module 6 in the
+                  <code>workshop cap --dev restore</code> before build phase 6 in the
                   facilitator's notes.</span
                 >
               </div>
@@ -2332,7 +2335,7 @@ workshop deploy pre-day</code></pre>
           <h3>More</h3>
           <div class="docs">
             <a href="v2/course/index.html#agenda">Course and agenda</a
-            ><a href="v2/course/index.html#start">Get started</a
+            ><a href="v2/course/intro.html#setup-workspace">Get started</a
             ><a href="v2/course/cleanup.html">Clean up</a
             ><a href="workshop-guide.html">Workshop guide</a
             ><a href="../workshop_cli/README.md">The workshop command</a

@@ -379,6 +379,35 @@ export interface ReleaseApproval {
   decision: "APPROVED" | "REJECTED";
 }
 
+/** What the promote job did about the Catalogue: the project's AGENT record (created or updated and approved), or why not. */
+export interface PromotionRegistryRecord {
+  name: string;
+  recordId?: string;
+  recordArn?: string | null;
+  registryId?: string;
+  status?: string;
+  recordVersion?: string;
+  action?: "created" | "updated";
+  /** The record was written but left in a status that could not be approved (deprecated, failed, still updating). */
+  warning?: string;
+  /** No registry configured in the settings. */
+  skipped?: string;
+  /** The registry call failed; the promotion itself stands. */
+  error?: string;
+  /** The record exists but its resource row could not be written. */
+  resourceError?: string;
+}
+
+/** POST /catalogue/agents/sync: the promote job's catalogue step, run again for every project's newest promoted release. */
+export interface CatalogueAgentSyncEntry extends PromotionRegistryRecord {
+  projectId: string;
+  releaseId?: string;
+}
+
+export interface CatalogueAgentSync {
+  agents: CatalogueAgentSyncEntry[];
+}
+
 export interface ReleasePromotion {
   jobId: string;
   startedAt?: string;
@@ -388,6 +417,8 @@ export interface ReleasePromotion {
   at?: string;
   harnessArn?: string;
   onlineEvaluationConfigId?: string;
+  /** Absent on releases promoted before October 2026. */
+  registryRecord?: PromotionRegistryRecord;
 }
 
 /** Where a release run is: DEPLOYING (the "release" job), EVALUATING (the "evaluate" job), then DONE or FAILED. */
@@ -500,6 +531,9 @@ export const RECORD_STATUSES: ReadonlyArray<RecordStatus> = [
 
 export type DecisionStatus = "APPROVED" | "REJECTED" | "DEPRECATED";
 
+/** The Catalogue tab a record belongs to: AGENT and MCP records by type, CUSTOM records by the `kind` in their descriptor. */
+export type CatalogueCategory = "model" | "knowledge-base" | "tool" | "agent" | "other";
+
 export interface CatalogueRecord {
   recordId: string;
   recordArn: string | null;
@@ -513,6 +547,8 @@ export interface CatalogueRecord {
   createdAt: string | null;
   updatedAt: string | null;
   createdBy: string | null;
+  /** Set by the backend (absent on backends older than October 2026: such records show under the All tab only). */
+  category?: CatalogueCategory | null;
   /** Only on GET /catalogue/{recordId} and on search results. */
   descriptors?: Record<string, unknown>;
   customMetadata?: Record<string, unknown>;
@@ -610,8 +646,14 @@ export interface ToolOption {
   arn: string;
   name: string;
   description: string | null;
-  /** Where the candidate was found: "scenario", "gateway <name> target <name>", "registered: <project>/<env> target <name>". */
+  /** Where the candidate was found: "scenario", "gateway <name> target <name>", "registered: <project>/<env> target <name>",
+   * "project allow-list only" (named by a project, returned by no inventory). */
   sources: string[];
+  /** The projects whose allowedToolArns name this Lambda (absent on backends older than October 2026). */
+  projects?: string[];
+  /** False when the row exists only in a project's allow-list (no inventory returned it): shown on the Governance screen,
+   * left out of the project form's pick lists. Absent on older backends (treated as true). */
+  inventoried?: boolean;
 }
 
 /** A Bedrock knowledge base the gateway role may be allowed to retrieve from (GET /governance/project-options). */
@@ -622,8 +664,13 @@ export interface KnowledgeBaseOption {
   description: string | null;
   status: string | null;
   sources: string[];
+  /** The projects whose knowledgeBaseIds name this knowledge base (absent on older backends). */
+  projects?: string[];
+  /** False when only a project's allow-list names it (see ToolOption.inventoried). */
+  inventoried?: boolean;
 }
 
+/** Shared by the project form's pick lists and the Governance screen's Knowledge bases and Tools tabs. */
 export interface ProjectOptions {
   tools: ToolOption[];
   knowledgeBases: KnowledgeBaseOption[];

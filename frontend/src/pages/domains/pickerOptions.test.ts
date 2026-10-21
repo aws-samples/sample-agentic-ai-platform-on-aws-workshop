@@ -43,6 +43,19 @@ describe("pickerOptions", () => {
     expect(kbOptions[1].label).toBe("KB999");
   });
 
+  it("leaves allow-list-only rows out of the candidates, so another project's stale entry is never offered", () => {
+    const legacy = "arn:aws:lambda:us-east-1:123456789012:function:legacy-tool";
+    const withStale: ToolOption[] = [...tools, { arn: legacy, name: "legacy-tool", description: null, sources: ["project allow-list only"], projects: ["payroll-helper"], inventoried: false }];
+    expect(toolPickerOptions(withStale, []).map((o) => o.value)).toEqual([HR, PAYROLL]);
+    // the project that allows it still sees its own value, flagged as before
+    expect(toolPickerOptions(withStale, [legacy])[2]).toEqual({ value: legacy, label: "legacy-tool", description: legacy, tags: ["not in the pick list"] });
+    const staleKb: KnowledgeBaseOption[] = [...kbs, { id: "KBGONE", arn: "arn:aws:bedrock:us-east-1:123456789012:knowledge-base/KBGONE", name: "KBGONE", description: null, status: "NOT_FOUND", sources: ["project allow-list only"], inventoried: false }];
+    expect(knowledgeBasePickerOptions(staleKb, []).map((o) => o.value)).toEqual(["KB123"]);
+    expect(knowledgeBasePickerOptions(staleKb, ["KBGONE"])[1].tags).toEqual(["not in the pick list"]);
+    // older backends send no flag: every row is a candidate
+    expect(toolPickerOptions(tools, []).map((o) => o.value)).toEqual([HR, PAYROLL]);
+  });
+
   it("does not tag current values as unknown before the candidates have loaded", () => {
     expect(toolPickerOptions(undefined, [HR])[0].tags).toBeUndefined();
     expect(knowledgeBasePickerOptions(undefined, ["KB999"])[0].tags).toBeUndefined();

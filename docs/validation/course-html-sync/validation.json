@@ -1,0 +1,1450 @@
+{
+  "generatedAt": "2026-10-20T22:11:25.825037+00:00",
+  "sourceRepository": "scaling-agents-with-an-agentic-ai-platform-with-agentcore",
+  "sourceRevision": "0044e8f842a87bf72de0706155c9f198133c11b3",
+  "originalDestinationBaseline": "d16db3157986fb88abd56aaa90852b68758a476e",
+  "upstreamImplementationRevision": "25ea91f1f8926de32a6e8298384c65227f7a4d2a",
+  "branch": "docs/five-module-html-sync",
+  "preview": "http://localhost:8083/",
+  "initialSync": {
+    "commit": "e4c52ce53a54480b7fae14928613d676c82f5cd0",
+    "before": {
+      "htmlPages": 16,
+      "matchingFiles": 1,
+      "failedChecks": 22
+    },
+    "matchingReviewedFiles": 21,
+    "adaptation": "HTML worksheet links use templates/ instead of ../../static/templates/.",
+    "note": "Historical exact-copy result, before integrating the newer upstream contracts."
+  },
+  "currentFiles": [
+    {
+      "path": "arch/arch-2-1-identity.svg",
+      "sha256": "5c1371df13a8138a6b276e18d0c5848f42392aaa4127bb68fe85e7eed552f90f",
+      "matchesReviewedSource": false,
+      "adaptation": "Only the current model alias label changes; geometry and other diagram content are preserved."
+    },
+    {
+      "path": "arch/arch-2-1-landing-zone.svg",
+      "sha256": "97f272b3d55188e373bdd5d96051433273e0f1b3134c49b65a3d8000d90ab5ae",
+      "matchesReviewedSource": false,
+      "adaptation": "Only the current model alias label changes; geometry and other diagram content are preserved."
+    },
+    {
+      "path": "arch/arch-2-4-control-plane.svg",
+      "sha256": "aec89a61a07b09a287e7d356e4f8433f7a5e464a90e1b84b08f3ada31898ef46",
+      "matchesReviewedSource": false,
+      "adaptation": "Only the current model alias label changes; geometry and other diagram content are preserved."
+    },
+    {
+      "path": "arch/arch-3-tool-plane.svg",
+      "sha256": "18de49421aca88077f6bfce66758aa62d040a6174cc782a2d392477ea029eb3b",
+      "matchesReviewedSource": false,
+      "adaptation": "Only the current model alias label changes; geometry and other diagram content are preserved."
+    },
+    {
+      "path": "arch/arch-4-2-model-access.svg",
+      "sha256": "24e1fe2b974dbe3f47229ac47341d52201c4497eb19b58fd5aa6d207d21ed9fb",
+      "matchesReviewedSource": false,
+      "adaptation": "Only the current model alias label changes; geometry and other diagram content are preserved."
+    },
+    {
+      "path": "arch/arch-4-5-dev-and-prod.svg",
+      "sha256": "d1608efab679e71f5528f4bc114c05dcc5909e45c42d591356fbabff4ff3311d",
+      "matchesReviewedSource": false,
+      "adaptation": "Only the current model alias label changes; geometry and other diagram content are preserved."
+    },
+    {
+      "path": "arch/arch-5-operation.svg",
+      "sha256": "3559a897fa9e9dd6481c94c22ef2832a9ff5e596ae2af86c7c57419db985fcd7",
+      "matchesReviewedSource": false,
+      "adaptation": "Only the current model alias label changes; geometry and other diagram content are preserved."
+    },
+    {
+      "path": "cleanup.html",
+      "sha256": "9da3164b4460c2238e3305867914aaf8d1511c29421d138516126d04e24d1f9c",
+      "matchesReviewedSource": false,
+      "adaptation": "Harness ENI wait and retry, current cleanup reference documents, foundation label."
+    },
+    {
+      "path": "course.css",
+      "sha256": "d921440aa6b68b232f010bd0fa5f9bd37e9c344d8b9a7ae1510238274d230d7d",
+      "matchesReviewedSource": true,
+      "adaptation": "Unchanged after the original worksheet-link adaptation."
+    },
+    {
+      "path": "course.js",
+      "sha256": "6a4265759ea328372ddfe19df345d256ea0a7ddc987ce7d14059fb9b7b5b39df",
+      "matchesReviewedSource": true,
+      "adaptation": "Unchanged after the original worksheet-link adaptation."
+    },
+    {
+      "path": "handoff.html",
+      "sha256": "c920ee4e839558cc82b01f368cd9cdfefdc834726ed658bfb344349fa2e6ba9e",
+      "matchesReviewedSource": true,
+      "adaptation": "Unchanged after the original worksheet-link adaptation."
+    },
+    {
+      "path": "index.html",
+      "sha256": "d6142226228b8912a6972576115b554232964f0dd6a6145904ed9a0fdc3fcaab",
+      "matchesReviewedSource": true,
+      "adaptation": "Unchanged after the original worksheet-link adaptation."
+    },
+    {
+      "path": "intro.html",
+      "sha256": "ffc7771494b6e60ee30b0dfab2570fa349f65b5672ab09e78b92724197684cfc",
+      "matchesReviewedSource": false,
+      "adaptation": "Current state directory; remove retired no-AWS-CLI claim."
+    },
+    {
+      "path": "m1.html",
+      "sha256": "81c79f42ff1a674ad63f5242371864a5d651e99dcb588f24ed73e654ca78f47f",
+      "matchesReviewedSource": true,
+      "adaptation": "Unchanged after the original worksheet-link adaptation."
+    },
+    {
+      "path": "m2.html",
+      "sha256": "d1bdcc2a2757dfec7fd0f5d7109ec90a08442494716b0e7f4d58fea0d585446a",
+      "matchesReviewedSource": false,
+      "adaptation": "Four approved aliases, HR allow-list and key scope; current state path; updated model-route figure."
+    },
+    {
+      "path": "m3.html",
+      "sha256": "042ff7467ebb27bc8c3dd5a186090b3a518e83d35d400351fd08e0b0d2a76d10",
+      "matchesReviewedSource": false,
+      "adaptation": "Current HR model and fixed Finance nova-2-lite model."
+    },
+    {
+      "path": "m4.html",
+      "sha256": "cfb4bb2dd9d4e4dceb195e045b454c8fbcd2203a35315c4e5adbc7335e5bcab4",
+      "matchesReviewedSource": false,
+      "adaptation": "Four approved aliases and current keys; CLI versus platform evaluation; historical scores qualified; prompt v1 default; current export path."
+    },
+    {
+      "path": "m5.html",
+      "sha256": "12858eaacb11f00522a07abc33736215c4bd7ce759d5b29f4463b1356f839440",
+      "matchesReviewedSource": false,
+      "adaptation": "Production backlog distinguishes CLI self-reported scores and platform-run Releases evaluation."
+    },
+    {
+      "path": "templates/component-decision.md",
+      "sha256": "0e0e2d9909cb4ebe986114555c5f68a147b0e8801cd15234b7e98d2b5e365d7b",
+      "matchesReviewedSource": true,
+      "adaptation": "Unchanged after the original worksheet-link adaptation."
+    },
+    {
+      "path": "templates/evidence-checklist.md",
+      "sha256": "aac45e2a50efa4e02bd67fb35d1d119fc44dde097b4d85609cd0eae79f4cb619",
+      "matchesReviewedSource": true,
+      "adaptation": "Unchanged after the original worksheet-link adaptation."
+    },
+    {
+      "path": "templates/journey-record.md",
+      "sha256": "e14bde58ed1d20216f82a67ec521cec02089888c04c3207fbc2c32705469e129",
+      "matchesReviewedSource": true,
+      "adaptation": "Unchanged after the original worksheet-link adaptation."
+    }
+  ],
+  "upstreamContractChecks": {
+    "generatedAt": "2026-10-20T22:06:28.220271+00:00",
+    "implementationRevision": "25ea91f1f8926de32a6e8298384c65227f7a4d2a",
+    "checks": [
+      {
+        "check": "approved models match deployed catalogue",
+        "passed": true,
+        "source": "foundation/foundation/config.py: MODELS"
+      },
+      {
+        "check": "Finance model matches its fixed project",
+        "passed": true,
+        "source": "workshop_cli/workshop_cli/record.py: FINANCE"
+      },
+      {
+        "check": "HR allow-list matches the supplied record",
+        "passed": true,
+        "source": "design-record.yaml: module_3.inputs.models"
+      },
+      {
+        "check": "state and export paths use current CLI locations",
+        "passed": true,
+        "source": "platform_sdk/platform_sdk/state.py; workshop_cli/workshop_cli/export_cmd.py"
+      },
+      {
+        "check": "CLI and platform evaluation paths are both explained",
+        "passed": true,
+        "source": "backend/src/platform_api/worker_jobs.py; workshop_cli/workshop_cli/apply_6.py"
+      },
+      {
+        "check": "cleanup documents the harness interface wait and retry",
+        "passed": true,
+        "source": "workshop_cli/workshop_cli/cleanup.py; workshop_cli/workshop_cli/cdk.py"
+      },
+      {
+        "check": "canonical page set",
+        "passed": true,
+        "source": "accepted five-module course"
+      },
+      {
+        "check": "m1.html: retained topic anchors, decision figures and activity steps",
+        "passed": true,
+        "source": "reviewed course e4c52ce"
+      },
+      {
+        "check": "m2.html: retained topic anchors, decision figures and activity steps",
+        "passed": true,
+        "source": "reviewed course e4c52ce"
+      },
+      {
+        "check": "m3.html: retained topic anchors, decision figures and activity steps",
+        "passed": true,
+        "source": "reviewed course e4c52ce"
+      },
+      {
+        "check": "m4.html: retained topic anchors, decision figures and activity steps",
+        "passed": true,
+        "source": "reviewed course e4c52ce"
+      },
+      {
+        "check": "m5.html: retained topic anchors, decision figures and activity steps",
+        "passed": true,
+        "source": "reviewed course e4c52ce"
+      }
+    ],
+    "errors": []
+  },
+  "browser": {
+    "generatedAt": "2026-10-20T22:06:48.931Z",
+    "routing": "Browser plugin not available; using installed Playwright Chromium",
+    "pages": [
+      {
+        "file": "cleanup.html",
+        "width": 1440,
+        "title": "Clean up",
+        "heading": "Clean up",
+        "words": 1663,
+        "figures": 1,
+        "overflow": false,
+        "contents": true
+      },
+      {
+        "file": "handoff.html",
+        "width": 1440,
+        "title": "Handoff",
+        "heading": "Handoff",
+        "words": 579,
+        "figures": 0,
+        "overflow": false,
+        "contents": true
+      },
+      {
+        "file": "index.html",
+        "width": 1440,
+        "title": "Scale agents with an agentic AI platform on Amazon Bedrock AgentCore",
+        "heading": "Scale agents with an agentic AI platform on Amazon Bedrock AgentCore",
+        "words": 1131,
+        "figures": 2,
+        "overflow": false,
+        "contents": true,
+        "screenshot": "index-html-1440.png"
+      },
+      {
+        "file": "intro.html",
+        "width": 1440,
+        "title": "Introduction",
+        "heading": "Introduction",
+        "words": 4088,
+        "figures": 0,
+        "overflow": false,
+        "contents": true,
+        "screenshot": "intro-html-1440.png"
+      },
+      {
+        "file": "m1.html",
+        "width": 1440,
+        "title": "Module 1: Requirements, personas and architecture",
+        "heading": "Module 1: Requirements, personas and architecture",
+        "words": 10666,
+        "figures": 12,
+        "overflow": false,
+        "contents": true,
+        "screenshot": "m1-html-1440.png"
+      },
+      {
+        "file": "m2.html",
+        "width": 1440,
+        "title": "Module 2: Build the shared platform",
+        "heading": "Module 2: Build the shared platform",
+        "words": 17181,
+        "figures": 16,
+        "overflow": false,
+        "contents": true,
+        "screenshot": "m2-html-1440.png"
+      },
+      {
+        "file": "m3.html",
+        "width": 1440,
+        "title": "Module 3: Design workloads and build blueprints",
+        "heading": "Module 3: Design workloads and build blueprints",
+        "words": 11325,
+        "figures": 7,
+        "overflow": false,
+        "contents": true,
+        "screenshot": "m3-html-1440.png"
+      },
+      {
+        "file": "m4.html",
+        "width": 1440,
+        "title": "Module 4: Access, governance and AgentOps",
+        "heading": "Module 4: Access, governance and AgentOps",
+        "words": 6876,
+        "figures": 5,
+        "overflow": false,
+        "contents": true,
+        "screenshot": "m4-html-1440.png"
+      },
+      {
+        "file": "m5.html",
+        "width": 1440,
+        "title": "Module 5: Operate and improve",
+        "heading": "Module 5: Operate and improve",
+        "words": 4476,
+        "figures": 4,
+        "overflow": false,
+        "contents": true,
+        "screenshot": "m5-html-1440.png"
+      },
+      {
+        "file": "cleanup.html",
+        "width": 390,
+        "title": "Clean up",
+        "heading": "Clean up",
+        "words": 1663,
+        "figures": 1,
+        "overflow": false,
+        "contents": true
+      },
+      {
+        "file": "handoff.html",
+        "width": 390,
+        "title": "Handoff",
+        "heading": "Handoff",
+        "words": 579,
+        "figures": 0,
+        "overflow": false,
+        "contents": true
+      },
+      {
+        "file": "index.html",
+        "width": 390,
+        "title": "Scale agents with an agentic AI platform on Amazon Bedrock AgentCore",
+        "heading": "Scale agents with an agentic AI platform on Amazon Bedrock AgentCore",
+        "words": 1131,
+        "figures": 2,
+        "overflow": false,
+        "contents": true,
+        "screenshot": "index-html-390.png"
+      },
+      {
+        "file": "intro.html",
+        "width": 390,
+        "title": "Introduction",
+        "heading": "Introduction",
+        "words": 4088,
+        "figures": 0,
+        "overflow": false,
+        "contents": true,
+        "screenshot": "intro-html-390.png"
+      },
+      {
+        "file": "m1.html",
+        "width": 390,
+        "title": "Module 1: Requirements, personas and architecture",
+        "heading": "Module 1: Requirements, personas and architecture",
+        "words": 10666,
+        "figures": 12,
+        "overflow": false,
+        "contents": true,
+        "screenshot": "m1-html-390.png"
+      },
+      {
+        "file": "m2.html",
+        "width": 390,
+        "title": "Module 2: Build the shared platform",
+        "heading": "Module 2: Build the shared platform",
+        "words": 17181,
+        "figures": 16,
+        "overflow": false,
+        "contents": true,
+        "screenshot": "m2-html-390.png"
+      },
+      {
+        "file": "m3.html",
+        "width": 390,
+        "title": "Module 3: Design workloads and build blueprints",
+        "heading": "Module 3: Design workloads and build blueprints",
+        "words": 11325,
+        "figures": 7,
+        "overflow": false,
+        "contents": true,
+        "screenshot": "m3-html-390.png"
+      },
+      {
+        "file": "m4.html",
+        "width": 390,
+        "title": "Module 4: Access, governance and AgentOps",
+        "heading": "Module 4: Access, governance and AgentOps",
+        "words": 6876,
+        "figures": 5,
+        "overflow": false,
+        "contents": true,
+        "screenshot": "m4-html-390.png"
+      },
+      {
+        "file": "m5.html",
+        "width": 390,
+        "title": "Module 5: Operate and improve",
+        "heading": "Module 5: Operate and improve",
+        "words": 4476,
+        "figures": 4,
+        "overflow": false,
+        "contents": true,
+        "screenshot": "m5-html-390.png"
+      }
+    ],
+    "pending": [],
+    "errors": [],
+    "interactions": [
+      {
+        "width": 1440,
+        "opened": true,
+        "escaped": true,
+        "outside": true,
+        "target": "intro.html",
+        "navigated": true,
+        "lastLessonReachable": true
+      },
+      {
+        "width": 390,
+        "opened": true,
+        "escaped": true,
+        "outside": true,
+        "target": "intro.html",
+        "navigated": true,
+        "lastLessonReachable": true
+      }
+    ],
+    "navigation": [
+      {
+        "file": "cleanup.html",
+        "expected": [
+          "handoff.html",
+          "index.html"
+        ],
+        "pagers": [
+          [
+            "handoff.html",
+            "index.html"
+          ],
+          [
+            "handoff.html",
+            "index.html"
+          ]
+        ],
+        "correct": true
+      },
+      {
+        "file": "handoff.html",
+        "expected": [
+          "m5.html",
+          "cleanup.html"
+        ],
+        "pagers": [
+          [
+            "m5.html",
+            "cleanup.html"
+          ],
+          [
+            "m5.html",
+            "cleanup.html"
+          ]
+        ],
+        "correct": true
+      },
+      {
+        "file": "index.html",
+        "expected": [
+          "intro.html"
+        ],
+        "pagers": [
+          [
+            "intro.html"
+          ],
+          [
+            "intro.html"
+          ]
+        ],
+        "correct": true
+      },
+      {
+        "file": "intro.html",
+        "expected": [
+          "index.html",
+          "m1.html"
+        ],
+        "pagers": [
+          [
+            "index.html",
+            "m1.html"
+          ],
+          [
+            "index.html",
+            "m1.html"
+          ]
+        ],
+        "correct": true
+      },
+      {
+        "file": "m1.html",
+        "expected": [
+          "intro.html",
+          "m2.html"
+        ],
+        "pagers": [
+          [
+            "intro.html",
+            "m2.html"
+          ],
+          [
+            "intro.html",
+            "m2.html"
+          ]
+        ],
+        "correct": true
+      },
+      {
+        "file": "m2.html",
+        "expected": [
+          "m1.html",
+          "m3.html"
+        ],
+        "pagers": [
+          [
+            "m1.html",
+            "m3.html"
+          ],
+          [
+            "m1.html",
+            "m3.html"
+          ]
+        ],
+        "correct": true
+      },
+      {
+        "file": "m3.html",
+        "expected": [
+          "m2.html",
+          "m4.html"
+        ],
+        "pagers": [
+          [
+            "m2.html",
+            "m4.html"
+          ],
+          [
+            "m2.html",
+            "m4.html"
+          ]
+        ],
+        "correct": true
+      },
+      {
+        "file": "m4.html",
+        "expected": [
+          "m3.html",
+          "m5.html"
+        ],
+        "pagers": [
+          [
+            "m3.html",
+            "m5.html"
+          ],
+          [
+            "m3.html",
+            "m5.html"
+          ]
+        ],
+        "correct": true
+      },
+      {
+        "file": "m5.html",
+        "expected": [
+          "m4.html",
+          "handoff.html"
+        ],
+        "pagers": [
+          [
+            "m4.html",
+            "handoff.html"
+          ],
+          [
+            "m4.html",
+            "handoff.html"
+          ]
+        ],
+        "correct": true
+      }
+    ]
+  },
+  "localReferencesChecked": 502,
+  "entryLinks": {
+    "generatedAt": "2026-10-20T22:07:26.993Z",
+    "entryLinks": [
+      {
+        "file": "README.md",
+        "reference": "docs/v2/course/index.html",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "README.md",
+        "reference": "docs/v2/course/intro.html#setup-workspace-order",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "README.md",
+        "reference": "docs/v2/course/intro.html#setup-workspace",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "README.md",
+        "reference": "docs/v2/course/index.html",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "README.md",
+        "reference": "docs/v2/course/intro.html#setup-workspace",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "README.md",
+        "reference": "docs/v2/course/m1.html",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "README.md",
+        "reference": "docs/v2/course/cleanup.html",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/index.html",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/intro.html#setup-workspace-order",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/index.html",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/index.html#agenda",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/intro.html#setup-workspace",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/m1.html#m1-overview",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/m2.html#m2-1",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/m2.html#m2-4",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/m2.html#m2-3-2",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/m4.html#m4-2",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/m4.html#m4-4",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/m5.html",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/cleanup.html",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/index.html#agenda",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/intro.html#setup-workspace",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/facilitator-guide.html",
+        "reference": "v2/course/cleanup.html",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/workshop-guide.html",
+        "reference": "v2/course/index.html",
+        "exists": true,
+        "anchorExists": true
+      },
+      {
+        "file": "docs/workshop-guide.html",
+        "reference": "v2/course/intro.html#setup-workspace-order",
+        "exists": true,
+        "anchorExists": true
+      }
+    ],
+    "errors": []
+  },
+  "moduleJourneys": {
+    "generatedAt": "2026-10-20T22:06:48.922Z",
+    "browser": "Browser plugin not available; installed Playwright Chromium",
+    "flow": "Read each complete module, open its glossary, follow a preserved topic link, view its concluding platform at full size, and continue to the next page",
+    "baseUrl": "http://localhost:8083/",
+    "views": [
+      {
+        "file": "m1.html",
+        "width": 1440,
+        "title": "Module 1: Requirements, personas and architecture",
+        "mainWords": 10666,
+        "oldBanners": 0,
+        "currentPage": [
+          "m1.html"
+        ],
+        "overflow": false,
+        "heroColor": "rgb(35, 47, 62)",
+        "font": "\"Amazon Ember\", \"Helvetica Neue\", Arial, sans-serif",
+        "captionLinks": [],
+        "fullSizeLinkDisplay": "block",
+        "deepLink": {
+          "exists": true,
+          "top": 0,
+          "nearViewport": true
+        },
+        "terminalPlatform": {
+          "heading": "The target platform",
+          "laterContent": [],
+          "overflow": false
+        }
+      },
+      {
+        "file": "m2.html",
+        "width": 1440,
+        "title": "Module 2: Build the shared platform",
+        "mainWords": 17181,
+        "oldBanners": 0,
+        "currentPage": [
+          "m2.html"
+        ],
+        "overflow": false,
+        "heroColor": "rgb(35, 47, 62)",
+        "font": "\"Amazon Ember\", \"Helvetica Neue\", Arial, sans-serif",
+        "captionLinks": [
+          {
+            "text": "foundation",
+            "display": "inline"
+          },
+          {
+            "text": "Module 4",
+            "display": "inline"
+          }
+        ],
+        "fullSizeLinkDisplay": "block",
+        "deepLink": {
+          "exists": true,
+          "top": 0,
+          "nearViewport": true
+        },
+        "terminalPlatform": {
+          "heading": "The shared platform at the end of Module 2",
+          "laterContent": [],
+          "overflow": false
+        }
+      },
+      {
+        "file": "m3.html",
+        "width": 1440,
+        "title": "Module 3: Design workloads and build blueprints",
+        "mainWords": 11325,
+        "oldBanners": 0,
+        "currentPage": [
+          "m3.html"
+        ],
+        "overflow": false,
+        "heroColor": "rgb(35, 47, 62)",
+        "font": "\"Amazon Ember\", \"Helvetica Neue\", Arial, sans-serif",
+        "captionLinks": [],
+        "fullSizeLinkDisplay": "block",
+        "deepLink": {
+          "exists": true,
+          "top": 0,
+          "nearViewport": true
+        },
+        "terminalPlatform": {
+          "heading": "The platform at the end of Module 3",
+          "laterContent": [],
+          "overflow": false
+        }
+      },
+      {
+        "file": "m4.html",
+        "width": 1440,
+        "title": "Module 4: Access, governance and AgentOps",
+        "mainWords": 6876,
+        "oldBanners": 0,
+        "currentPage": [
+          "m4.html"
+        ],
+        "overflow": false,
+        "heroColor": "rgb(35, 47, 62)",
+        "font": "\"Amazon Ember\", \"Helvetica Neue\", Arial, sans-serif",
+        "captionLinks": [
+          {
+            "text": "Module 3",
+            "display": "inline"
+          },
+          {
+            "text": "Module 2",
+            "display": "inline"
+          }
+        ],
+        "fullSizeLinkDisplay": "block",
+        "deepLink": {
+          "exists": true,
+          "top": 0,
+          "nearViewport": true
+        },
+        "terminalPlatform": {
+          "heading": "The platform at the end of Module 4",
+          "laterContent": [],
+          "overflow": false
+        }
+      },
+      {
+        "file": "m5.html",
+        "width": 1440,
+        "title": "Module 5: Operate and improve",
+        "mainWords": 4476,
+        "oldBanners": 0,
+        "currentPage": [
+          "m5.html"
+        ],
+        "overflow": false,
+        "heroColor": "rgb(35, 47, 62)",
+        "font": "\"Amazon Ember\", \"Helvetica Neue\", Arial, sans-serif",
+        "captionLinks": [
+          {
+            "text": "foundation",
+            "display": "inline"
+          },
+          {
+            "text": "2",
+            "display": "inline"
+          },
+          {
+            "text": "3",
+            "display": "inline"
+          },
+          {
+            "text": "4",
+            "display": "inline"
+          }
+        ],
+        "fullSizeLinkDisplay": "block",
+        "deepLink": {
+          "exists": true,
+          "top": 0,
+          "nearViewport": true
+        },
+        "terminalPlatform": {
+          "heading": "The operating platform at the end of Module 5",
+          "laterContent": [],
+          "overflow": false
+        }
+      },
+      {
+        "file": "m1.html",
+        "width": 390,
+        "title": "Module 1: Requirements, personas and architecture",
+        "mainWords": 10666,
+        "oldBanners": 0,
+        "currentPage": [
+          "m1.html"
+        ],
+        "overflow": false,
+        "heroColor": "rgb(35, 47, 62)",
+        "font": "\"Amazon Ember\", \"Helvetica Neue\", Arial, sans-serif",
+        "captionLinks": [],
+        "fullSizeLinkDisplay": "block",
+        "deepLink": {
+          "exists": true,
+          "top": 0,
+          "nearViewport": true
+        },
+        "terminalPlatform": {
+          "heading": "The target platform",
+          "laterContent": [],
+          "overflow": false
+        }
+      },
+      {
+        "file": "m2.html",
+        "width": 390,
+        "title": "Module 2: Build the shared platform",
+        "mainWords": 17181,
+        "oldBanners": 0,
+        "currentPage": [
+          "m2.html"
+        ],
+        "overflow": false,
+        "heroColor": "rgb(35, 47, 62)",
+        "font": "\"Amazon Ember\", \"Helvetica Neue\", Arial, sans-serif",
+        "captionLinks": [
+          {
+            "text": "foundation",
+            "display": "inline"
+          },
+          {
+            "text": "Module 4",
+            "display": "inline"
+          }
+        ],
+        "fullSizeLinkDisplay": "block",
+        "deepLink": {
+          "exists": true,
+          "top": 0,
+          "nearViewport": true
+        },
+        "terminalPlatform": {
+          "heading": "The shared platform at the end of Module 2",
+          "laterContent": [],
+          "overflow": false
+        }
+      },
+      {
+        "file": "m3.html",
+        "width": 390,
+        "title": "Module 3: Design workloads and build blueprints",
+        "mainWords": 11325,
+        "oldBanners": 0,
+        "currentPage": [
+          "m3.html"
+        ],
+        "overflow": false,
+        "heroColor": "rgb(35, 47, 62)",
+        "font": "\"Amazon Ember\", \"Helvetica Neue\", Arial, sans-serif",
+        "captionLinks": [],
+        "fullSizeLinkDisplay": "block",
+        "deepLink": {
+          "exists": true,
+          "top": 0,
+          "nearViewport": true
+        },
+        "terminalPlatform": {
+          "heading": "The platform at the end of Module 3",
+          "laterContent": [],
+          "overflow": false
+        }
+      },
+      {
+        "file": "m4.html",
+        "width": 390,
+        "title": "Module 4: Access, governance and AgentOps",
+        "mainWords": 6876,
+        "oldBanners": 0,
+        "currentPage": [
+          "m4.html"
+        ],
+        "overflow": false,
+        "heroColor": "rgb(35, 47, 62)",
+        "font": "\"Amazon Ember\", \"Helvetica Neue\", Arial, sans-serif",
+        "captionLinks": [
+          {
+            "text": "Module 3",
+            "display": "inline"
+          },
+          {
+            "text": "Module 2",
+            "display": "inline"
+          }
+        ],
+        "fullSizeLinkDisplay": "block",
+        "deepLink": {
+          "exists": true,
+          "top": 0,
+          "nearViewport": true
+        },
+        "terminalPlatform": {
+          "heading": "The platform at the end of Module 4",
+          "laterContent": [],
+          "overflow": false
+        }
+      },
+      {
+        "file": "m5.html",
+        "width": 390,
+        "title": "Module 5: Operate and improve",
+        "mainWords": 4476,
+        "oldBanners": 0,
+        "currentPage": [
+          "m5.html"
+        ],
+        "overflow": false,
+        "heroColor": "rgb(35, 47, 62)",
+        "font": "\"Amazon Ember\", \"Helvetica Neue\", Arial, sans-serif",
+        "captionLinks": [
+          {
+            "text": "foundation",
+            "display": "inline"
+          },
+          {
+            "text": "2",
+            "display": "inline"
+          },
+          {
+            "text": "3",
+            "display": "inline"
+          },
+          {
+            "text": "4",
+            "display": "inline"
+          }
+        ],
+        "fullSizeLinkDisplay": "block",
+        "deepLink": {
+          "exists": true,
+          "top": 0,
+          "nearViewport": true
+        },
+        "terminalPlatform": {
+          "heading": "The operating platform at the end of Module 5",
+          "laterContent": [],
+          "overflow": false
+        }
+      }
+    ],
+    "interactions": [
+      {
+        "file": "m1.html",
+        "width": 1440,
+        "type": "contents-open-and-escape",
+        "passed": true
+      },
+      {
+        "file": "m1.html",
+        "width": 1440,
+        "type": "glossary-open-and-close",
+        "passed": true
+      },
+      {
+        "file": "m1.html",
+        "width": 1440,
+        "type": "open-final-platform",
+        "passed": true
+      },
+      {
+        "file": "m1.html",
+        "width": 1440,
+        "type": "continue-module",
+        "next": "m2.html",
+        "passed": true
+      },
+      {
+        "file": "m2.html",
+        "width": 1440,
+        "type": "contents-open-and-escape",
+        "passed": true
+      },
+      {
+        "file": "m2.html",
+        "width": 1440,
+        "type": "glossary-open-and-close",
+        "passed": true
+      },
+      {
+        "file": "m2.html",
+        "width": 1440,
+        "type": "open-final-platform",
+        "passed": true
+      },
+      {
+        "file": "m2.html",
+        "width": 1440,
+        "type": "continue-module",
+        "next": "m3.html",
+        "passed": true
+      },
+      {
+        "file": "m3.html",
+        "width": 1440,
+        "type": "contents-open-and-escape",
+        "passed": true
+      },
+      {
+        "file": "m3.html",
+        "width": 1440,
+        "type": "glossary-open-and-close",
+        "passed": true
+      },
+      {
+        "file": "m3.html",
+        "width": 1440,
+        "type": "open-final-platform",
+        "passed": true
+      },
+      {
+        "file": "m3.html",
+        "width": 1440,
+        "type": "continue-module",
+        "next": "m4.html",
+        "passed": true
+      },
+      {
+        "file": "m4.html",
+        "width": 1440,
+        "type": "contents-open-and-escape",
+        "passed": true
+      },
+      {
+        "file": "m4.html",
+        "width": 1440,
+        "type": "glossary-open-and-close",
+        "passed": true
+      },
+      {
+        "file": "m4.html",
+        "width": 1440,
+        "type": "open-final-platform",
+        "passed": true
+      },
+      {
+        "file": "m4.html",
+        "width": 1440,
+        "type": "continue-module",
+        "next": "m5.html",
+        "passed": true
+      },
+      {
+        "file": "m5.html",
+        "width": 1440,
+        "type": "contents-open-and-escape",
+        "passed": true
+      },
+      {
+        "file": "m5.html",
+        "width": 1440,
+        "type": "glossary-open-and-close",
+        "passed": true
+      },
+      {
+        "file": "m5.html",
+        "width": 1440,
+        "type": "open-final-platform",
+        "passed": true
+      },
+      {
+        "file": "m5.html",
+        "width": 1440,
+        "type": "continue-module",
+        "next": "handoff.html",
+        "passed": true
+      },
+      {
+        "file": "m1.html",
+        "width": 390,
+        "type": "contents-open-and-escape",
+        "passed": true
+      },
+      {
+        "file": "m1.html",
+        "width": 390,
+        "type": "glossary-open-and-close",
+        "passed": true
+      },
+      {
+        "file": "m1.html",
+        "width": 390,
+        "type": "open-final-platform",
+        "passed": true
+      },
+      {
+        "file": "m1.html",
+        "width": 390,
+        "type": "continue-module",
+        "next": "m2.html",
+        "passed": true
+      },
+      {
+        "file": "m2.html",
+        "width": 390,
+        "type": "contents-open-and-escape",
+        "passed": true
+      },
+      {
+        "file": "m2.html",
+        "width": 390,
+        "type": "glossary-open-and-close",
+        "passed": true
+      },
+      {
+        "file": "m2.html",
+        "width": 390,
+        "type": "open-final-platform",
+        "passed": true
+      },
+      {
+        "file": "m2.html",
+        "width": 390,
+        "type": "continue-module",
+        "next": "m3.html",
+        "passed": true
+      },
+      {
+        "file": "m3.html",
+        "width": 390,
+        "type": "contents-open-and-escape",
+        "passed": true
+      },
+      {
+        "file": "m3.html",
+        "width": 390,
+        "type": "glossary-open-and-close",
+        "passed": true
+      },
+      {
+        "file": "m3.html",
+        "width": 390,
+        "type": "open-final-platform",
+        "passed": true
+      },
+      {
+        "file": "m3.html",
+        "width": 390,
+        "type": "continue-module",
+        "next": "m4.html",
+        "passed": true
+      },
+      {
+        "file": "m4.html",
+        "width": 390,
+        "type": "contents-open-and-escape",
+        "passed": true
+      },
+      {
+        "file": "m4.html",
+        "width": 390,
+        "type": "glossary-open-and-close",
+        "passed": true
+      },
+      {
+        "file": "m4.html",
+        "width": 390,
+        "type": "open-final-platform",
+        "passed": true
+      },
+      {
+        "file": "m4.html",
+        "width": 390,
+        "type": "continue-module",
+        "next": "m5.html",
+        "passed": true
+      },
+      {
+        "file": "m5.html",
+        "width": 390,
+        "type": "contents-open-and-escape",
+        "passed": true
+      },
+      {
+        "file": "m5.html",
+        "width": 390,
+        "type": "glossary-open-and-close",
+        "passed": true
+      },
+      {
+        "file": "m5.html",
+        "width": 390,
+        "type": "open-final-platform",
+        "passed": true
+      },
+      {
+        "file": "m5.html",
+        "width": 390,
+        "type": "continue-module",
+        "next": "handoff.html",
+        "passed": true
+      }
+    ],
+    "errors": []
+  },
+  "secondaryGuides": {
+    "generatedAt": "2026-10-20T22:08:32.878Z",
+    "views": [
+      {
+        "guide": "facilitator-guide.html",
+        "width": 1440,
+        "title": "Facilitator guide",
+        "overflow": false,
+        "courseLinks": 16,
+        "phaseNote": true
+      },
+      {
+        "guide": "workshop-guide.html",
+        "width": 1440,
+        "title": "Build an Agentic AI Platform with Amazon Bedrock AgentCore: Workshop Guide",
+        "overflow": false,
+        "courseLinks": 2,
+        "phaseNote": true
+      },
+      {
+        "guide": "facilitator-guide.html",
+        "width": 390,
+        "title": "Facilitator guide",
+        "overflow": true,
+        "courseLinks": 16,
+        "phaseNote": true
+      },
+      {
+        "guide": "workshop-guide.html",
+        "width": 390,
+        "title": "Build an Agentic AI Platform with Amazon Bedrock AgentCore: Workshop Guide",
+        "overflow": false,
+        "courseLinks": 2,
+        "phaseNote": true
+      }
+    ],
+    "interactions": [
+      {
+        "guide": "facilitator-guide.html",
+        "width": 1440,
+        "action": "Get started opens Introduction setup",
+        "passed": true
+      },
+      {
+        "guide": "workshop-guide.html",
+        "width": 1440,
+        "action": "Learning path opens five-module course",
+        "passed": true
+      },
+      {
+        "guide": "facilitator-guide.html",
+        "width": 390,
+        "action": "Get started opens Introduction setup",
+        "passed": true
+      },
+      {
+        "guide": "workshop-guide.html",
+        "width": 390,
+        "action": "Learning path opens five-module course",
+        "passed": true
+      }
+    ],
+    "errors": [],
+    "finalGuideCheck": {
+      "scrollWidth": 390,
+      "width": 390,
+      "linkColor": "rgb(213, 219, 219)",
+      "textColor": "rgb(213, 219, 219)",
+      "awsCliPrerequisite": true
+    },
+    "facilitatorMobileBaseline": {
+      "viewport": 390,
+      "currentWidth": 396,
+      "upstreamWidth": 396,
+      "regression": false
+    }
+  },
+  "scope": {
+    "verifiedAt": "2026-10-20T22:13:35.175772+00:00",
+    "implementationMatchesUpstream": true,
+    "implementationRevision": "25ea91f1f8926de32a6e8298384c65227f7a4d2a",
+    "unexpectedChangedFiles": [],
+    "workshopTrackedFilesChanged": [],
+    "protectedUserFiles": [
+      {
+        "file": ".gitignore",
+        "preserved": true,
+        "method": "Upstream ignore rules plus exactly the original user additions from the autostash."
+      },
+      {
+        "file": "docs/.DS_Store",
+        "preserved": true,
+        "method": "Byte-identical SHA-256 comparison."
+      },
+      {
+        "file": ".env.omni",
+        "preserved": true,
+        "method": "File metadata unchanged; contents were not read."
+      }
+    ],
+    "autostash": "Git applied 406febe automatically after merge completion; no second application."
+  },
+  "validationNotes": [
+    "The original parity check failed against the old course; all 21 files matched after the first sync. The newer upstream then required the explicit adaptations recorded per file.",
+    "Twelve current-contract and retained-structure checks pass; the initial check caught seven missing adaptations or unresolved legacy pages.",
+    "The first original browser invocation lost PATH, then passed with the inherited environment. The facilitator-link check waits for navigation and fragment scrolling.",
+    "The secondary facilitator guide retains an upstream 6px mobile overflow (396px document at 390px viewport); the update does not increase it. All nine course pages fit both tested widths.",
+    "Historical evaluation scores have not been revalidated with claude-sonnet-5. No AWS lab, application deployment or authenticated hosted acceptance was performed."
+  ],
+  "screenshots": [
+    "module3-desktop.png",
+    "platform-mobile.png",
+    "model-route-desktop.png"
+  ]
+}

@@ -35,7 +35,7 @@ import {
   useRunRelease,
 } from "../../api/hooks";
 import { qk } from "../../api/queryKeys";
-import type { Job, JobError, Release, ReleasePipeline, ReleaseStatus as ReleaseStatusValue } from "../../api/types";
+import type { Job, JobError, PromotionRegistryRecord, Release, ReleasePipeline, ReleaseStatus as ReleaseStatusValue } from "../../api/types";
 import { useMe } from "../../auth/MeContext";
 import { ConfirmModal } from "../../components/ConfirmModal";
 import { CopyText } from "../../components/CopyText";
@@ -249,7 +249,7 @@ function ReleaseDetail({ releaseId }: { releaseId: string }) {
       onSuccess: (accepted) => {
         setTrackedJobId(accepted.jobId);
         setPromoteOpen(false);
-        notifications.info(`Promotion job ${accepted.jobId} started`, "Prod key, Prod harness version, live endpoint and online evaluation: about 20 seconds.");
+        notifications.info(`Promotion job ${accepted.jobId} started`, "Prod key, Prod harness version, live endpoint, online evaluation and the Catalogue's agent record: about 20 seconds.");
       },
       onError: handleConflict,
     });
@@ -779,6 +779,38 @@ function ScenarioResults({ release }: { release: Release }) {
   );
 }
 
+/** The promote job's Catalogue step: the project's AGENT record (a link to the Agents tab), or why there is none. */
+function CatalogueRecordCell({ entry }: { entry: PromotionRegistryRecord | undefined }) {
+  const navigate = useNavigate();
+  if (!entry) {
+    return <span>— (promoted before the catalogue step existed)</span>;
+  }
+  if (entry.recordId) {
+    const notes = [entry.action, entry.warning, entry.resourceError ? `resource row not written: ${entry.resourceError}` : null].filter(Boolean).join(" · ");
+    return (
+      <SpaceBetween size="xxs">
+        <Link
+          href="/catalogue?tab=agent"
+          onFollow={(event) => {
+            event.preventDefault();
+            navigate("/catalogue?tab=agent");
+          }}
+        >
+          {entry.name}
+        </Link>
+        <Box variant="small" color={entry.warning ? "text-status-warning" : "text-body-secondary"}>
+          {entry.status ?? "—"}
+          {notes ? ` · ${notes}` : ""}
+        </Box>
+      </SpaceBetween>
+    );
+  }
+  if (entry.skipped) {
+    return <StatusIndicator type="stopped">Skipped: {entry.skipped}</StatusIndicator>;
+  }
+  return <StatusIndicator type="warning">Not registered: {entry.error ?? "unknown error"}</StatusIndicator>;
+}
+
 function PromotionPanel({
   release,
   job,
@@ -819,7 +851,7 @@ function PromotionPanel({
       },
       {
         status: workStatus,
-        header: "Prod key, Prod harness version, live endpoint, online evaluation",
+        header: "Prod key, Prod harness version, live endpoint, online evaluation, catalogue record",
         details: jobStatus === "FAILED" && error ? `${error.code}: ${error.message}` : jobStatus ? `job ${jobStatus}${elapsed !== null ? ` · ${formatSeconds(elapsed)}` : ""}` : undefined,
       },
       {
@@ -861,6 +893,7 @@ function PromotionPanel({
               { label: "Harness ARN", value: <CopyText value={release.promotion.harnessArn} max={60} /> },
               { label: "Online evaluation", value: release.promotion.onlineEvaluationConfigId ? <CopyText value={release.promotion.onlineEvaluationConfigId} max={48} /> : "—" },
               { label: "Job", value: <CopyText value={release.promotion.jobId} max={32} /> },
+              { label: "Catalogue record", value: <CatalogueRecordCell entry={release.promotion.registryRecord} /> },
             ]}
           />
         ) : !showSteps ? (

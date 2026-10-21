@@ -182,6 +182,9 @@
         color: #d5dbdb;
         max-width: 980px;
       }
+      header.hero p a {
+        color: inherit;
+      }
       header.hero .hero-meta {
         max-width: none;
         display: flex;
@@ -1546,6 +1549,9 @@
         <p>
           This document serves as a reference guide for building an Agentic AI Platform with Amazon Bedrock AgentCore.
         </p>
+        <p>
+          Follow the <a href="v2/course/index.html">five-module learning path</a> for the course and its continuous decision and hands-on activities. This reference keeps the seven CLI build phases, whose numbers match <code>workshop apply N</code> and <code>design-record.yaml</code>; the <a href="v2/course/intro.html#setup-workspace-order">Introduction maps the commands to the learning modules</a>.
+        </p>
         
         <!-- Workshop at a glance -->
         <div class="cards pt-4">
@@ -1565,7 +1571,7 @@
             <div class="k">Format</div>
             <div class="v">
               Presentation<br />
-              7 modules: Explain 10 · Design 10 · Hands-on 20 min
+              7 CLI build phases across 5 learning modules
             </div>
           </div>
           <div class="card">
@@ -1573,7 +1579,7 @@
             <div class="v">
               Basic AWS and Python knowledge<br />
               A terminal, Git, uv, Node.js 20+, an editor<br />
-              No Docker, no AWS CLI
+              AWS CLI for the course's account checks
             </div>
           </div>
         </div>
@@ -4007,11 +4013,11 @@
               </li>
               <li>
                 The <strong>Agent developer</strong> runs
-                <code>workshop apply</code>: module 3 creates the domains and
+                <code>workshop apply</code>: build phase 3 creates the domains and
                 projects, and the control plane stamps each project's roles
-                and model-gateway team from templates; module 4 builds the
+                and model-gateway team from templates; build phase 4 builds the
                 gateways, targets and policies and only registers them with
-                the control plane; module 6 creates the memories, and the
+                the control plane; build phase 6 creates the memories, and the
                 worker deploys the harness from the blueprint. Everything
                 appears in the UI.
               </li>
@@ -5278,7 +5284,7 @@
                 <td><code>workshop status</code></td>
               </tr>
               <tr>
-                <td>Module 1 · Landing zone</td>
+                <td>Build phase 1 · Landing zone</td>
                 <td>40 min</td>
                 <td>
                   Landing zone including network and CDK stacks: Network,
@@ -5287,7 +5293,7 @@
                 <td><code>workshop apply 1</code></td>
               </tr>
               <tr>
-                <td>Module 2 · Identity</td>
+                <td>Build phase 2 · Identity</td>
                 <td>40 min</td>
                 <td>
                   Identity: Cognito personas; Keycloak, on behalf of
@@ -5296,13 +5302,13 @@
                 <td><code>workshop apply 2</code>, <code>workshop obo</code></td>
               </tr>
               <tr>
-                <td>Module 3 · Control plane and governance</td>
+                <td>Build phase 3 · Control plane and governance</td>
                 <td>40 min</td>
                 <td>Two domains, two projects, roles and budgets</td>
                 <td><code>workshop record</code>, <code>workshop apply 3</code></td>
               </tr>
               <tr>
-                <td>Module 4 · Tool plane</td>
+                <td>Build phase 4 · Tool plane</td>
                 <td>40 min</td>
                 <td>Gateways, targets, policies, on-behalf-of door</td>
                 <td>
@@ -5311,7 +5317,7 @@
                 </td>
               </tr>
               <tr>
-                <td>Module 5 · Model gateway</td>
+                <td>Build phase 5 · Model gateway</td>
                 <td>40 min</td>
                 <td>Model keys and caps; catalogue approvals</td>
                 <td>
@@ -5320,7 +5326,7 @@
                 </td>
               </tr>
               <tr>
-                <td>Module 6 · AgentOps</td>
+                <td>Build phase 6 · AgentOps</td>
                 <td>40 min</td>
                 <td>Memory, blueprint, Dev agent, release, Prod</td>
                 <td>
@@ -5329,7 +5335,7 @@
                 </td>
               </tr>
               <tr>
-                <td>Module 7 · Operate and observe</td>
+                <td>Build phase 7 · Operate and observe</td>
                 <td>40 min</td>
                 <td>Traffic, dashboard, online evaluation</td>
                 <td><code>workshop apply 7</code>, <code>workshop scores</code></td>
@@ -5370,8 +5376,8 @@
           <p>
             In addition, there is a <span data-term="platform">Finance Operations domain</span>
             (finance-ops) with a project invoice-helper, four IAM roles and a
-            budget, but no agent. It proves the boundary: module 3 with an
-            AccessDeniedException, module 4 with
+            budget, but no agent. It proves the boundary: build phase 3 with an
+            AccessDeniedException, build phase 4 with
             <code>workshop call --as finance-dev</code> (HTTP 403 from IAM, before
             any policy). The policy engine is proven by the HR agent itself: once
             the HR Dev gateway is in ENFORCE, its own 15-day leave request is
@@ -5414,7 +5420,7 @@
             You will configure a project, deploy to <span data-term="platform">Dev</span>, run tests and evaluations, review results and approve, promote to <span data-term="platform">Prod</span>. 
           </p>
           <p>
-            <span data-term="platform">Dev</span> and <span data-term="platform">Prod</span> are lifecycle labels on platform. Each has its own <span data-term="service" data-icon="aws">Gateway</span>, <span data-term="service" data-icon="aws">Memory</span>, <span data-term="service" data-icon="aws">Harness</span> and <span data-term="service" data-icon="aws">Key</span>. 
+            <span data-term="platform">Dev</span> and <span data-term="platform">Prod</span> are lifecycle labels on platform. Each has its own <span data-term="service" data-icon="aws">Gateway</span>, <span data-term="service" data-icon="aws">Memory</span>, <span data-term="service" data-icon="aws">Harness</span> and <span data-term="service" data-icon="aws">Key</span>.
             
           </p>
           <p>
@@ -5433,7 +5439,7 @@
               <br/>
               <strong>Version 2</strong> passes and waits for the Domain approver (PENDING_APPROVAL).
               <br/>
-              The spending cap demo is module 5: <code>workshop cap --dev low</code> makes the Dev key fail with BUDGET_EXCEEDED (the Playground shows "Spending cap reached"); <code>workshop cap --dev restore</code> lifts it again before module 6.
+              The spending cap demo is build phase 5: <code>workshop cap --dev low</code> makes the Dev key fail with BUDGET_EXCEEDED (the Playground shows "Spending cap reached"); <code>workshop cap --dev restore</code> lifts it again before build phase 6.
             </p>
             <p>
               At the end, Promotion records the approved version and repoints the Prod endpoint. A risk register anchors the responsible-AI and approval discussion.
@@ -5450,7 +5456,7 @@
             <strong>Not covered</strong>
             <ol>
               <li>Production hardening (Multi-AZ database and model gateway, scoped endpoint policies, AWS WAF, custom domains and certificates)</li>
-              <li>A SaaS identity provider tenant or federation (the workshop builds Keycloak and the RFC 8693 on-behalf-of chain in modules 2, 4 and 6)</li>
+              <li>A SaaS identity provider tenant or federation (the workshop builds Keycloak and the RFC 8693 on-behalf-of chain in build phases 2, 4 and 6)</li>
               <li>Multi-account landing zones</li>
               <li>External integrations</li>
               <li>LiteLLM Enterprise features (per-model budgets on a shared key, tags, aggregated reports)</li>
@@ -5847,7 +5853,7 @@
                 <td>
                   The <code>workshop</code> command runs from the attendee's
                   terminal against their AWS account; Node.js provides the CDK
-                  CLI. No Docker, no AWS CLI
+                  CLI. The course also uses the AWS CLI for account and identity checks.
                 </td>
               </tr>
             </tbody>
@@ -5943,12 +5949,12 @@
               </tr>
               <tr>
                 <td>09:40</td>
-                <td>Module 1 - Landing zone</td>
+                <td>Build phase 1 - Landing zone</td>
                 <td>40</td>
               </tr>
               <tr>
                 <td>10:20</td>
-                <td>Module 2 - Identity</td>
+                <td>Build phase 2 - Identity</td>
                 <td>40</td>
               </tr>
               <tr>
@@ -5958,12 +5964,12 @@
               </tr>
               <tr>
                 <td>11:10</td>
-                <td>Module 3 - Control plane and governance</td>
+                <td>Build phase 3 - Control plane and governance</td>
                 <td>40</td>
               </tr>
               <tr>
                 <td>11:50</td>
-                <td>Module 4 - Tool plane</td>
+                <td>Build phase 4 - Tool plane</td>
                 <td>40</td>
               </tr>
               <tr>
@@ -5973,12 +5979,12 @@
               </tr>
               <tr>
                 <td>13:15</td>
-                <td>Module 5 - Model gateway</td>
+                <td>Build phase 5 - Model gateway</td>
                 <td>40</td>
               </tr>
               <tr>
                 <td>13:55</td>
-                <td>Module 6 - AgentOps</td>
+                <td>Build phase 6 - AgentOps</td>
                 <td>40</td>
               </tr>
               <tr>
@@ -5988,7 +5994,7 @@
               </tr>
               <tr>
                 <td>14:45</td>
-                <td>Module 7 - Operate and observe</td>
+                <td>Build phase 7 - Operate and observe</td>
                 <td>40</td>
               </tr>
               <tr>
@@ -6060,7 +6066,7 @@
               three personas, IAM SigV4 between the harness, gateway and tools,
               API keys in the token vault for the model gateway. The corporate
               IdP (Keycloak) and the on-behalf-of token exchange (RFC 8693) are
-              built in modules 2, 4 and 6; a SaaS IdP tenant is not.
+              built in build phases 2, 4 and 6; a SaaS IdP tenant is not.
             </li>
           </ul>
         </section>
@@ -6075,9 +6081,9 @@
             </li>
             <li>
               A terminal (PowerShell on Windows), Git, <code>uv</code>, Node.js
-              20 or later (for the CDK CLI) and an editor. No Docker, no AWS
-              CLI; the AWS CLI is only needed to create a named profile for
-              your own account.
+              20 or later (for the CDK CLI) and an editor. The course uses the AWS
+              CLI for account and identity checks; it can also create a named
+              profile for your own account.
             </li>
           </ul>
           <h3>Steps</h3>

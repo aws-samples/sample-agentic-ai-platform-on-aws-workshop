@@ -148,6 +148,11 @@ class ProjectNames:
     def registry_record_tools(self) -> str:
         return f"{self.project_id}-tools"
 
+    @property
+    def registry_record_agent(self) -> str:
+        """The AGENT record the promote job writes for the project's Prod agent (one per project, whatever the environment)."""
+        return f"{self.project_id}-agent"
+
 
 def for_project(project_id: str) -> dict[str, ProjectNames]:
     """Names for both environments of a project, keyed by environment."""

@@ -143,7 +143,7 @@ export function ProjectDetailPage() {
           onChange={({ detail }) => setTab(detail.activeTabId)}
           tabs={[
             { id: "resources", label: "Resources", content: <ResourcesTab projectId={p.projectId} /> },
-            { id: "keys", label: "Keys", content: <KeysTab project={p} /> },
+            { id: "keys", label: "Agents", content: <KeysTab project={p} /> },
             { id: "blueprints", label: "Blueprints", content: <BlueprintsTab project={p} /> },
             { id: "releases", label: "Releases", content: <ReleasesTab projectId={p.projectId} /> },
           ]}
