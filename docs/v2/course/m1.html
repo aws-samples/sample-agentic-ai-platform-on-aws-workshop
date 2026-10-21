@@ -1,0 +1,1256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Module 1: Requirements, personas and architecture</title>
+    <link rel="stylesheet" href="course.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-inner">
+        <h1>Module 1: Requirements, personas and architecture</h1>
+        <p>Design the platform around a scaling problem you can explain and a result you can check. Decide who builds and operates it, what must be isolated, and how people consume its agents.</p>
+        <div class="meta"><span>Module 1 of 5</span><span>40 min</span><span>requirements</span><span>personas</span><span>boundaries</span><span>design</span></div>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <nav class="pager" aria-label="Previous and next page"><a href="intro.html">←&nbsp;Introduction</a><a href="m2.html">Module 2&nbsp;→</a></nav>
+      <main>
+
+
+<aside class="hands-on start-now" id="m1-overview" aria-label="Start the deployment">
+          <strong>Start now · deployment takes about 20 minutes</strong>
+          <p>Complete <a href="intro.html#setup-workspace-start">Get started</a>, then run <code>uv run workshop apply 1</code> in the implementation package. It deploys <strong>three stacks</strong> (network, shared services, model gateway) while you work through this design module. You read its output when <a href="m2.html#m2-1-hands-on">Module 2 verifies the foundation</a>.</p>
+        </aside>
+<section id="m1-overview-overview">
+<h2>What this module decides</h2>
+<p class="lead">Northstar, or the organisation you bring, has more teams building agents than its shared practices can support. This module turns that pressure into a design, one decision at a time: name the scaling problem, write requirements a reviewer can test, decide who owns what, place accounts and tenants, lay the landing zone and its telemetry, and finally review the complete target architecture those decisions point to. Each step answers a question the previous one raised. The output is a requirements brief, a persona and responsibility record, an account, tenant and telemetry boundary map, and a reviewed request flow that guide Module 2.</p>
+<p><strong>Role:</strong> platform architect. <strong>Points:</strong> 30 (requirements 10; architecture 20). This is a design module and needs no deployed resources; bring the success statement and journey record from setup, and use an anonymised customer context or the fictional Northstar example.</p>
+<p>Keep these decisions separate. A central team can operate workloads in several accounts; domain teams can practise federated responsibilities within one account; an ISV customer tenant may contain many users and workloads. Neither "federated" nor "one tenant" answers them all.</p>
+<table class="plain"><thead><tr><th>Decision</th><th>What you decide</th></tr></thead><tbody>
+<tr><td>Operating model and personas</td><td>Which teams build, release, support and operate shared services and workloads; who approves what</td></tr>
+<tr><td>Account placement</td><td>Where resources run and who can administer them</td></tr>
+<tr><td>Tenant boundary</td><td>Whose data, credentials, actions and records must be separated, and what enforces it</td></tr>
+<tr><td>Landing zone and telemetry</td><td>Network, infrastructure layers, where telemetry lives and who may read it</td></tr>
+<tr><td>Platform architecture</td><td>How shared services connect to workloads, and which identities cross each boundary</td></tr>
+</tbody></table>
+<p id="m1-overview-activities">Work through <strong>one scenario</strong> from start to finish. Write two sentences in your journey record: who should benefit from the platform, and which repeated work or failure should change. Add one exclusion, such as "This design does not replace the existing customer-record system." Keep the same context in every activity below, so each output becomes the input of the next.</p>
+<p>The lab stays in one AWS account. Customer multi-account choices are design adaptations; HR and Finance workload design happens in Module 3.</p>
+</section>
+
+
+
+<section id="m1-1-explain">
+<h2>Recognise the scaling problem <span class="time">5 min</span></h2>
+<p class="lead" id="m1-1">Start with what is going wrong today, not with services. A platform is useful when it removes repeated work or supplies a control that individual teams cannot sustain, so the first decision is which capability or control should become shared, judged by the observed failures it would remove. The table lists the usual symptoms; you will pick two, the boundary sharing must preserve, and a result for each that a reviewer could observe.</p>
+<table class="plain"><thead><tr><th>Challenge</th><th>Symptom</th><th>Platform response to consider</th></tr></thead><tbody>
+<tr><td>Agent sprawl</td><td>Teams rebuild similar agents without knowing what exists</td><td>Discoverable owners, versions, reusable tools and maintained blueprints</td></tr>
+<tr><td>Shadow AI</td><td>A deployed agent has no approved identity or release record</td><td>An accessible onboarding path with enforceable access and release controls</td></tr>
+<tr><td>Cost blindness</td><td>A bill increases but no owner can attribute the activity</td><td>Workload usage records and a defined basis for cost allocation</td></tr>
+<tr><td>Observability gap</td><td>A request ID cannot connect runtime and tool failures</td><td>Correlated telemetry with authorised operator access</td></tr>
+<tr><td>Integration chaos</td><td>Every team implements and patches the same connection</td><td>A versioned tool interface, credential handling and an onboarding contract</td></tr>
+<tr><td>Ownership ambiguity</td><td>A failed agent has no named maintainer or incident responder</td><td>Explicit delivery, business acceptance and support responsibilities</td></tr>
+</tbody></table>
+</section>
+<section id="m1-1-example">
+<h2>Worked example: Northstar</h2>
+<p>Northstar's Service and Sales teams each maintain a connector to the same customer-record system. A permission fix must be implemented twice. When a request fails between an agent and the connector, neither team can identify the responsible component from the request ID.</p>
+<p>Employees use agents through an existing staff portal. Service has engineers and an on-call rotation; Sales supplies domain experts but has no engineering team. A small central team can operate shared services. Each business unit must retain access only to its permitted records. These are exercise assumptions, not customer findings.</p>
+<p>Northstar can prioritise integration chaos and ownership ambiguity: the duplicated fix and unresolved failure are concrete evidence. Tenant isolation remains a required boundary even if it is not the first productivity improvement.</p>
+<p>A shared connector reduces duplicate maintenance, but its owner must manage compatibility and availability for both teams. Share the interface and onboarding process while preserving each caller's permissions. If the teams need incompatible data policies, a common contract with separate tool instances may fit better.</p>
+<p class="note">The <a href="https://aws-samples.github.io/sample-agentcore-enterprise-platform/#/PLATFORM_INTERFACE">enterprise platform sample's platform interface</a> shows how use cases depend on published configuration and authentication interfaces. A catalogue adds a separate discovery and publication concern: an endpoint configuration record alone is not an approved asset catalogue.</p>
+</section>
+<section id="m1-1-hands-on">
+<h2>Activity: choose your first improvements <span class="time">10 min</span></h2>
+<div class="hands-on"><strong>Write the problem statement</strong>
+<ol class="steps">
+<li><div><span class="pill tag record">record</span>Pick the two problems with the clearest consequence for your users. Cite an observation, or mark it as an assumption needing confirmation.</div></li>
+<li><div><span class="pill tag record">record</span>For each, write a result a reviewer could observe. "Improve governance" is too broad; "find the owner and approved version of the tool used by a failed request" is checkable.</div></li>
+<li><div><span class="pill tag record">record</span>Name the boundary that sharing must preserve and a reason to revisit the shared design.</div></li>
+</ol>
+<p class="caption">An expected Northstar output:</p>
+<p class="note">"Service and Sales will reuse one maintained customer-record tool interface. Each team will call it with its own authorised scope. Given a failed request ID, the operator will identify the workload version, failing dependency and responsible team. Separate tool instances remain an option if a shared instance cannot enforce the required data boundary."</p>
+</div>
+<p>A problem statement says what should change; it does not yet say how anyone would know. That is the job of the requirements next. A concurrency or response-time target can be added if relevant, but scale also means the number of teams, connections and support obligations.</p>
+</section>
+
+
+
+<section id="m1-2-explain">
+<h2>Write a testable requirement <span class="time">5 min</span></h2>
+<p class="lead" id="m1-2">Turn each priority into a requirement someone can accept or reject: who needs a capability, the boundary it preserves and an observable check, written before any implementation is chosen. The result is a short requirements brief with acceptance criteria, owners, assumptions and the questions that could change the design.</p>
+<p>"Use a gateway" names an implementation. "A second team can use an approved tool without copying its connector or receiving another team's credentials" explains the capability and why it matters. Gateway choices follow in Module 2.</p>
+<table class="plain"><thead><tr><th>ID and requirement</th><th>Acceptance</th><th>Owner and open input</th></tr></thead><tbody>
+<tr><td>REQ-001: callers access only their business unit's permitted records</td><td>A Service caller reads synthetic Service record <code>S-001</code>; a Sales caller requesting it receives a denial with no record content</td><td>Data owner; confirm the authoritative membership source and any permitted cross-unit roles</td></tr>
+<tr><td>REQ-002: teams reuse a maintained tool interface</td><td>The second team's workload calls the same approved tool version with its own authorised identity, without copying connector code or sharing credentials</td><td>Platform team; confirm compatibility with both teams' data-access rules</td></tr>
+<tr><td>REQ-003: failed requests have an accountable responder</td><td>For a seeded tool timeout, an operator follows the request ID to the workload version, failing tool and named incident owner</td><td>Service owner; agree telemetry access and the escalation route</td></tr>
+</tbody></table>
+<p>These are proposed checks on synthetic data, not executed results. REQ-001 constrains the design: reuse is acceptable only if it preserves the access boundary. REQ-003 needs both telemetry and people able to act on it. The workshop's own platform turns the same three kinds of requirement into executable checks: HR Dev calls a tool while Finance gets HTTP 403 (Module 3), a key is refused at its cap (Module 4), and a Prod trace leads to its release and owner (Module 5).</p>
+</section>
+<section id="m1-2-context">
+<h2>Capture the context that changes a design</h2>
+<p>Identify platform users and agent consumers separately. At Northstar, engineers and reviewers use the platform; employees consume agents in the staff portal. In an ISV scenario, identify the customer administrators, builders and consumers of the product. Record the channel owner and which actions each role may perform; the next section turns these into personas.</p>
+<p>Record engineering and support capacity for each team. "Service can develop and operate its workloads; Sales provides domain acceptance but needs engineering support" is enough to inform the operating model. Organisation size alone does not establish those responsibilities.</p>
+<p>Add non-functional constraints when they matter: permitted processing locations, data classification, retention and deletion, response time, expected concurrency, usage attribution and recovery. Give each a measurement context. A latency target needs a request type, workload size, concurrency, measurement window and threshold. An unknown retention period needs a data owner and a decision date.</p>
+</section>
+<section id="m1-2-hands-on">
+<h2>Activity: complete your brief <span class="time">10 min</span></h2>
+<div class="hands-on"><strong>Requirements brief</strong>
+<ol class="steps">
+<li><div><span class="pill tag record">record</span>Write three to five requirements covering permitted and denied access, reuse or delivery, and operations. Include the business outcome, not only the technology.</div></li>
+<li><div><span class="pill tag record">record</span>Mark hard constraints and the preferences you could trade off. Sharing one tool instance is a preference; preventing unauthorised access to records is a constraint.</div></li>
+<li><div><span class="pill tag record">record</span>Give every requirement an accountable owner and a check. Put assumptions and open questions in their own fields, with the decision they affect.</div></li>
+<li><div><span class="pill tag record">record</span>Review one requirement with a partner, or from a reviewer's perspective. If they cannot describe a test without guessing the expected result, refine it.</div></li>
+</ol></div>
+<p>Your brief explains what the platform must supply, where users consume agents and which teams can sustain delivery and operation. Keep questions such as "Who can approve cross-unit data access?" open until the right owner answers; that uncertainty shapes the tenant design further down this page. Worksheet: <a href="templates/journey-record.md">journey record</a>.</p>
+</section>
+
+
+
+<section id="m1-3-personas">
+<h2>Personas: who you are during the day <span class="time">5 min</span></h2>
+<p class="lead" id="m1-3">The brief separated the people who use the platform from the people who consume its agents, and it recorded which teams can build and support. Requirements need owners, so the next decisions are about people: the personas you will sign in as, how they differ from the employee who uses an agent, who builds, releases, supports and accepts, which rule lives at which level, and who approves what.</p>
+<p>You wear <strong>four hats</strong>, with <strong>three signed-in personas</strong>:</p>
+<table class="plain">
+  <thead><tr><th>Hat</th><th>What you do</th><th>Sign-in</th></tr></thead>
+  <tbody>
+    <tr><td><span class="pill persona">Platform architect</span></td><td>Make the design decisions</td><td>none</td></tr>
+    <tr><td><span class="pill persona">Platform admin</span></td><td>Create projects, approve catalogue records, set policies and caps</td><td><code>admin</code></td></tr>
+    <tr><td><span class="pill persona">Agent developer</span></td><td>Write blueprints, deploy to Dev, submit releases</td><td><code>developer</code></td></tr>
+    <tr><td><span class="pill persona">Domain approver</span></td><td>Approve or reject releases; promote to Prod</td><td><code>approver</code></td></tr>
+  </tbody>
+</table>
+<p class="note">You create these users at the start of <a href="m2.html#m2-1">Module 2</a>. Sign in once, then use <strong>Switch persona</strong> in the user menu to change roles.</p>
+<table class="plain"><thead><tr><th>Persona</th><th>Responsibilities</th><th>Authorisation boundary carried into the labs</th></tr></thead><tbody>
+<tr><td>Platform admin</td><td>Shared services and templates; domains and projects; model and tool envelopes; catalogue approval; budgets and caps; policy mode</td><td>Can change platform settings, but the API refuses it a release approval (HTTP 403 in Module 4). Platform administration does not authorise accepting a workload</td></tr>
+<tr><td>Agent developer</td><td>Workload resources, blueprint and prompt, Dev deployment, evaluation, release submission</td><td>Refused platform writes such as creating a domain (HTTP 403 in Module 2); refused approving its own release (Module 4)</td></tr>
+<tr><td>Domain approver</td><td>Reviews business behaviour and evaluation; approves or rejects and promotes releases</td><td>An approval names the exact candidate (release, blueprint version) and the intended domain and environment</td></tr>
+<tr><td>Employee or end user</td><td>Consumes an agent through a business channel</td><td>Signs in at the corporate identity provider, not the platform; employee identity and data entitlement differ from platform personas and from the execution roles agents and gateways run under</td></tr>
+</tbody></table>
+<p class="note">One more person appears when the corporate identity provider is built in <a href="m2.html#m2-1">Module 2</a>, when the HR tools learn who asked in <a href="m3.html#m3-1-1">Module 3</a> and <a href="m3.html#m3-1-2">its gateway exercise</a>, and when the on-behalf-of agent runs in <a href="m4.html#m4-4">Module 4</a>: <strong>Alex Rivera</strong>, employee E1001 in the sample data. Alex is not a hat you wear. Alex signs in at the corporate IdP, not at Cognito, and <code>workshop obo</code> performs that sign-in to show what an agent can do on an employee's behalf.</p>
+</section>
+<section id="m1-3-decisions">
+<h2>Decide who builds, governs and approves <span class="time">15 min</span></h2>
+<div class="card">
+            <h4 class="q" id="m1-3-d1-1"><span class="id">D1.1</span>Who builds and runs the agents?</h4>
+            <figure style="margin:0 0 10px">
+              <svg viewBox="0 0 960 300" role="img" aria-labelledby="m1-3-m1-fig1-d4-title">
+                <title id="m1-3-m1-fig1-d4-title">Centralised, federated or hybrid: who builds and runs the agents</title>
+                <defs><marker id="m1-3-m1-fig1-d4-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+                <text class="d-text d-title" x="22" y="24">A · Centralised</text>
+                <rect class="d-box d-account" x="12" y="34" width="290" height="230"/>
+                <rect class="d-box d-people" x="26" y="48" width="262" height="102"/>
+                <text class="d-text d-strong" x="157" y="66" text-anchor="middle">Platform team</text>
+                <rect class="d-box d-platform" x="36" y="76" width="242" height="28"/>
+                <text class="d-text" x="157" y="94" text-anchor="middle">shared services</text>
+                <rect class="d-box d-aws" x="36" y="112" width="242" height="28"/>
+                <text class="d-text" x="157" y="130" text-anchor="middle">every agent</text>
+                <path class="d-arrow" d="M157 188 L157 152" marker-end="url(#m1-3-m1-fig1-d4-arr)"/>
+                <rect class="d-box" x="105" y="190" width="120" height="24"/>
+                <rect class="d-box" x="101" y="196" width="120" height="24"/>
+                <rect class="d-box" x="97" y="202" width="120" height="24"/>
+                <text class="d-text d-small" x="157" y="218" text-anchor="middle" style="fill:#16191f">requests waiting</text>
+                <text class="d-text d-small" x="157" y="284" text-anchor="middle">consistent · a queue forms</text>
+
+                <text class="d-text d-title" x="347" y="24">B · Federated</text>
+                <rect class="d-box d-account d-ours d-glow" x="337" y="34" width="290" height="230"/>
+                <rect x="521" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
+                <text class="d-text" x="574" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+                <rect class="d-box d-people" x="351" y="48" width="262" height="44"/>
+                <text class="d-text d-strong" x="482" y="66" text-anchor="middle">Platform team</text>
+                <text class="d-text d-small" x="482" y="82" text-anchor="middle">shared services · templates</text>
+                <path class="d-arrow" d="M392 92 L392 126" marker-end="url(#m1-3-m1-fig1-d4-arr)"/>
+                <text class="d-text d-small" x="400" y="108">publishes</text>
+                <text class="d-text d-small" x="400" y="122">interfaces</text>
+                <path class="d-arrow d-dash" d="M600 128 L600 94" marker-end="url(#m1-3-m1-fig1-d4-arr)"/>
+                <text class="d-text d-small" x="592" y="108" text-anchor="end">escalation when a</text>
+                <text class="d-text d-small" x="592" y="122" text-anchor="end">shared service fails</text>
+                <rect class="d-group" x="351" y="128" width="262" height="78"/>
+                <rect class="d-box d-people" x="361" y="138" width="116" height="58"/>
+                <text class="d-text d-strong" x="419" y="156" text-anchor="middle">Project team</text>
+                <text class="d-text d-small" x="419" y="172" text-anchor="middle">build, release,</text>
+                <text class="d-text d-small" x="419" y="186" text-anchor="middle">operate its agent</text>
+                <rect class="d-box d-people" x="487" y="138" width="116" height="58"/>
+                <text class="d-text d-strong" x="545" y="156" text-anchor="middle">Project team</text>
+                <text class="d-text d-small" x="545" y="172" text-anchor="middle">build, release,</text>
+                <text class="d-text d-small" x="545" y="186" text-anchor="middle">operate its agent</text>
+                <path class="d-arrow" d="M482 206 L482 224" marker-end="url(#m1-3-m1-fig1-d4-arr)"/>
+                <text class="d-text d-small" x="490" y="219">submits a release</text>
+                <rect class="d-box d-people" x="351" y="226" width="262" height="28"/>
+                <text class="d-text d-strong" x="482" y="244" text-anchor="middle">Domain · accepts the release</text>
+                <text class="d-text d-small" x="482" y="284" text-anchor="middle">teams ship independently · every team needs on-call</text>
+
+                <text class="d-text d-title" x="672" y="24">C · Hybrid</text>
+                <rect class="d-box d-account" x="662" y="34" width="290" height="230"/>
+                <rect class="d-box d-people" x="676" y="48" width="126" height="72"/>
+                <text class="d-text d-strong" x="739" y="66" text-anchor="middle">Domain</text>
+                <text class="d-text d-small" x="739" y="81" text-anchor="middle">with engineers</text>
+                <text class="d-text d-small" x="739" y="95" text-anchor="middle">owns and runs</text>
+                <text class="d-text d-small" x="739" y="109" text-anchor="middle">its agent</text>
+                <rect class="d-box d-people" x="812" y="48" width="126" height="72"/>
+                <text class="d-text d-strong" x="875" y="66" text-anchor="middle">Domain</text>
+                <text class="d-text d-small" x="875" y="81" text-anchor="middle">without engineers</text>
+                <text class="d-text d-small" x="875" y="95" text-anchor="middle">the platform team</text>
+                <text class="d-text d-small" x="875" y="109" text-anchor="middle">runs its agent</text>
+                <path class="d-arrow" d="M739 154 L739 122" marker-end="url(#m1-3-m1-fig1-d4-arr)"/>
+                <path class="d-arrow" d="M875 154 L875 122" marker-end="url(#m1-3-m1-fig1-d4-arr)"/>
+                <rect class="d-box d-people" x="676" y="156" width="262" height="44"/>
+                <text class="d-text d-strong" x="807" y="174" text-anchor="middle">Platform team</text>
+                <text class="d-text d-small" x="807" y="190" text-anchor="middle">shared services · runs the rest</text>
+                <text class="d-text d-small" x="807" y="284" text-anchor="middle">fits uneven capacity · more handoffs</text>
+              </svg>
+              <figcaption>Compare <strong>three operating models</strong> for building, running and accepting agents. This workshop uses B: federated ownership, with domain approval of business behaviour.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr><td>Centralised: one platform team builds and operates the shared services and every agent</td><td class="good">consistent controls; one support boundary</td><td class="bad">delivery and incidents compete for one team's time; a queue forms</td><td class="when">a first platform; domains without engineers</td></tr>
+                <tr class="ours"><td>Federated: the platform team owns the shared services and templates; project teams build, release and operate their own agents; the domain accepts</td><td class="good">teams ship independently; the platform team stays small</td><td class="bad">every project team needs engineers and on-call; a shared change can break a consumer</td><td class="when">several domains with engineering capacity</td></tr>
+                <tr><td>Hybrid: capable domains own their agents; the platform team builds and runs the rest on a domain's behalf</td><td class="good">fits uneven capacity</td><td class="bad">more handoffs; each arrangement moves as staffing changes</td><td class="when">mixed capacity, the common case</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <div class="copy-group">
+                <p><strong>This workshop.</strong> The federated model maps to <strong>three personas</strong>:</p>
+                <ol class="concept-list">
+                  <li><span class="pill persona">Platform admin</span> represents the platform team and owns shared services and templates.</li>
+                  <li><span class="pill persona">Agent developer</span> represents the project team: writes the blueprint, evaluates the HR assistant and deploys it.</li>
+                  <li><span class="pill persona">Domain approver</span> represents the domain and accepts the agent's business behaviour.</li>
+                </ol>
+                <p>Today, Prod operations are shared, with <strong>one dashboard</strong> that everyone reads.</p>
+              </div>
+              <div class="copy-group prod">
+                <p><strong>Production path.</strong> Keep a responsibility record for each agent. It must answer <strong>four questions</strong>:</p>
+                <ol class="concept-list">
+                  <li>Who builds it?</li>
+                  <li>Who releases it?</li>
+                  <li>Who is on call?</li>
+                  <li>Who accepts its business behaviour?</li>
+                </ol>
+                <p>Define escalation from the agent owner to shared-service owners before the first incident.</p>
+              </div>
+            </div>
+            <table class="plain">
+              <thead><tr><th>Responsibility</th><th>Platform team</th><th>Project team</th><th>Domain</th></tr></thead>
+              <tbody>
+                <tr><td>Build and operate the shared services: gateways, policy engine, model gateway, catalogue</td><td>accountable</td><td>uses the published interfaces</td><td>no part</td></tr>
+                <tr><td>Maintain the blueprint format and the role templates</td><td>accountable; explains a breaking change</td><td>consumes them</td><td>no part</td></tr>
+                <tr><td>Build, test and deploy the agent</td><td>supplies the platform</td><td>accountable</td><td>supplies requirements and test cases</td></tr>
+                <tr><td>Operate the agent: first triage of a failed conversation</td><td>takes the escalation when a shared service failed</td><td>accountable; supplies the request id and the version</td><td>no part</td></tr>
+                <tr><td>Accept business behaviour; approve a release</td><td>no part</td><td>submits</td><td>accountable: the Domain approver</td></tr>
+              </tbody>
+            </table>
+            <p class="note">Choose an operating model that matches your teams' delivery and support capacity, not organisation size. Test it with <strong>two incidents</strong>:</p>
+            <ol class="concept-list">
+              <li><strong>Incorrect answer, healthy tools:</strong> the project team investigates; the domain assesses whether the answer was acceptable.</li>
+              <li><strong>Tool failures across teams after a gateway policy change:</strong> the platform team coordinates; projects supply request IDs and running versions.</li>
+            </ol>
+            <p class="note">Both cases need clear responsibilities. If ownership is unclear, the operating model needs more work.</p>
+          </div>
+<div class="card">
+            <h4 class="q" id="m1-3-d1-2"><span class="id">D1.2</span>Governance: which rule lives at which level?</h4>
+            <figure style="margin:0 0 10px">
+            <svg viewBox="0 0 960 272" role="img" aria-labelledby="m1-3-m3-fig3b-title">
+              <title id="m1-3-m3-fig3b-title">Three governance levels and one gate: platform, domain, project, and a release gate at every promotion</title>
+              <defs><marker id="m1-3-m3-arr3b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+              <rect class="d-box d-platform" x="20" y="14" width="850" height="56"/>
+              <text class="d-text d-title" x="36" y="36">Platform level</text>
+              <text class="d-text d-small" x="36" y="54">Platform admin</text>
+              <text class="d-text" x="240" y="36">models and safety filter for all · rulebook for tool calls · approved tools · default budgets</text>
+              <text class="d-text d-small" x="240" y="54">production: organisation-wide rules (SCPs) and resource policies</text>
+              <rect class="d-box d-people" x="20" y="78" width="850" height="56"/>
+              <text class="d-text d-title" x="36" y="100">Domain level</text>
+              <text class="d-text d-small" x="36" y="118">Domain approver</text>
+              <text class="d-text" x="240" y="100">says yes or no to a release, and sends it to Prod</text>
+              <text class="d-text d-small" x="240" y="118">production: domain gateways and policies, domain budgets, approvers bound to their domain</text>
+              <rect class="d-box d-aws" x="20" y="142" width="850" height="56"/>
+              <text class="d-text d-title" x="36" y="164">Project level</text>
+              <text class="d-text d-small" x="36" y="182">admin sets, team works inside</text>
+              <text class="d-text" x="240" y="164">the admin sets each project's tools, knowledge, models and budget</text>
+              <text class="d-text d-small" x="240" y="182">the team owns the agent and its quality bar · Modules 3 and 4 · production: tightened templates</text>
+              <rect class="d-box d-blue" x="60" y="206" width="810" height="56"/>
+              <text class="d-text d-title" x="76" y="228">Release gate</text>
+              <text class="d-text d-small" x="76" y="246">per environment · Dev → Prod</text>
+              <text class="d-text" x="280" y="228">the test before Prod · the approval · the promotion · the rollback</text>
+              <text class="d-text d-small" x="280" y="246">the project's release, the domain's approval · worker now, CI/CD in production · Module 4</text>
+              <path class="d-arrow" d="M898 20 L898 256" marker-end="url(#m1-3-m3-arr3b)"/>
+              <text class="d-text d-small" x="898" y="136" text-anchor="middle" transform="rotate(-90 898 140)" style="fill:#16191f">Governance flows down</text>
+              <path class="d-arrow d-dash" d="M934 256 L934 20" marker-end="url(#m1-3-m3-arr3b)"/>
+              <text class="d-text d-small" x="934" y="136" text-anchor="middle" transform="rotate(-90 934 140)" style="fill:#16191f">Evidence flows up</text>
+            </svg>
+            <figcaption>Rules flow down through three levels; a gate at every promotion. Evidence (tool calls, scores, spend and approvals) flows back up.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr><td>Everything at platform level</td><td class="good">one team, one rulebook</td><td class="bad">a bottleneck; rules far from the business</td><td class="when">one domain, a few agents</td></tr>
+                <tr class="ours"><td>Layered: the platform sets guardrails, domains approve, projects own the rest, with a gate at every promotion</td><td class="good">each rule sits with the people who know; evidence at every level</td><td class="bad">three levels and a gate to design; rollout needs care</td><td class="when">several domains sharing one platform</td></tr>
+                <tr><td>Each project governs itself</td><td class="good">fastest for teams</td><td class="bad">no shared rules; every team reinvents them</td><td class="when">never for shared tools or models</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <p><strong>This workshop.</strong> Governance has <strong>three levels and one gate</strong>. A level is defined by who owns its rules:</p>
+<ol class="concept-list">
+  <li><strong>Platform:</strong> models, guardrail, policy engine, catalogue approval and default caps.</li>
+  <li><strong>Domain:</strong> release approval.</li>
+  <li><strong>Project:</strong> the agent blueprint and thresholds, within admin-set allow-lists, roles, keys and budgets.</li>
+</ol>
+              <p class="also"><strong>Gate:</strong> evaluation before Prod, then promotion and rollback (<a href="m4.html#m4-4">Module 4</a>, through to <a href="m4.html#m4-5">approval and promotion</a>). The gate is not a fourth level, because it owns no rules of its own. At every promotion, here from Dev to Prod, it runs the project's release through the domain's approval. Today a worker runs it; in production a CI/CD pipeline does, with its checks in front of the platform API.</p>
+              <p class="also"><strong>SCPs are discussed, not built (<a href="#m1-4-scp">the three control layers</a> follow with the account decision).</strong> The event account cannot administer its AWS Organization. A security-team SCP would add a permission ceiling; IAM must still grant access.</p>
+              <p class="prod"><strong>Production path.</strong> Add organization SCPs and gateway resource policies; do not assume RCP coverage for these services. Document effective rules and exceptions. Give domains their own gateways and policies.</p>
+            </div>
+
+
+
+          </div>
+<div class="card">
+            <h4 class="q" id="m1-3-d1-3"><span class="id">D1.3</span>What needs approval, and who approves?</h4>
+            <figure style="margin:0 0 10px">
+              <svg viewBox="0 0 960 258" role="img" aria-labelledby="m1-3-m3-fig3-d3-title">
+                <title id="m1-3-m3-fig3-d3-title">Who approves what: a catalogue record, a release, a cap change</title>
+                <defs><marker id="m1-3-m3-fig3-d3-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker><marker id="m1-3-m3-fig3-d3-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b4471f"/></marker></defs>
+                <text class="d-text d-strong" x="12" y="42">Catalogue record</text>
+                <rect class="d-box d-platform" x="140" y="16" width="188" height="44"/><text class="d-text" x="234" y="42" text-anchor="middle">the apply command publishes</text>
+                <path class="d-arrow" d="M328 38 L358 38" marker-end="url(#m1-3-m3-fig3-d3-arr)"/>
+                <rect class="d-box" x="360" y="16" width="158" height="44"/><text class="d-text" x="439" y="42" text-anchor="middle">PENDING_APPROVAL</text>
+                <path class="d-arrow" d="M518 38 L548 38" marker-end="url(#m1-3-m3-fig3-d3-arr)"/>
+                <rect class="d-box d-people d-ours" x="550" y="16" width="162" height="44"/><text class="d-text" x="631" y="42" text-anchor="middle">Platform admin approves</text>
+                <path class="d-arrow" d="M712 38 L742 38" marker-end="url(#m1-3-m3-fig3-d3-arr)"/>
+                <rect class="d-box" x="744" y="16" width="204" height="44"/><text class="d-text" x="846" y="42" text-anchor="middle">APPROVED · a label, not a gate</text>
+
+                <text class="d-text d-strong" x="12" y="110">Release</text>
+                <rect class="d-box d-people" x="140" y="84" width="120" height="44"/>
+                <text class="d-text" x="200" y="102" text-anchor="middle">Agent developer</text>
+                <text class="d-text d-small" x="200" y="118" text-anchor="middle" style="fill:#16191f">submits</text>
+                <path class="d-arrow" d="M260 106 L298 106" marker-end="url(#m1-3-m3-fig3-d3-arr)"/>
+                <rect class="d-box d-blue" x="300" y="84" width="120" height="44"/>
+                <text class="d-text" x="360" y="102" text-anchor="middle">evaluation gate</text>
+                <text class="d-text d-small" x="360" y="118" text-anchor="middle" style="fill:#16191f">Module 4</text>
+                <path class="d-arrow" d="M420 106 L458 106" marker-end="url(#m1-3-m3-fig3-d3-arr)"/>
+                <rect class="d-box" x="460" y="84" width="162" height="44"/><text class="d-text" x="541" y="110" text-anchor="middle">PENDING_APPROVAL</text>
+                <path class="d-arrow" d="M622 106 L660 106" marker-end="url(#m1-3-m3-fig3-d3-arr)"/>
+                <rect class="d-box d-people d-ours" x="662" y="84" width="120" height="44"/>
+                <text class="d-text" x="722" y="102" text-anchor="middle">Domain approver</text>
+                <text class="d-text d-small" x="722" y="118" text-anchor="middle" style="fill:#16191f">approves</text>
+                <path class="d-arrow" d="M782 106 L820 106" marker-end="url(#m1-3-m3-fig3-d3-arr)"/>
+                <rect class="d-box" x="822" y="84" width="126" height="44"/><text class="d-text" x="885" y="110" text-anchor="middle">promoted to Prod</text>
+                <rect class="d-box d-people" x="667" y="150" width="110" height="28"/><text class="d-text" x="722" y="168" text-anchor="middle">Platform admin</text>
+                <path class="d-arrow d-deny" d="M722 150 L722 130" marker-end="url(#m1-3-m3-fig3-d3-deny)"/>
+                <text class="d-text d-small" x="657" y="168" text-anchor="end" style="fill:#7a2e12">403: admins are blocked (separation of duties)</text>
+
+                <text class="d-text d-strong" x="12" y="226">Cap change</text>
+                <rect class="d-box d-people" x="140" y="200" width="198" height="44"/><text class="d-text" x="239" y="226" text-anchor="middle">Platform admin sets the cap</text>
+                <path class="d-arrow" d="M338 222 L376 222" marker-end="url(#m1-3-m3-fig3-d3-arr)"/>
+                <rect class="d-box" x="378" y="200" width="160" height="44"/><text class="d-text" x="458" y="226" text-anchor="middle">applied · no approval</text>
+              </svg>
+              <figcaption>Two approvals: admin for catalogue records; Domain approver for releases. Release builders cannot approve their own release. Admin cap changes need no approval; catalogue approval is only a label today.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr><td>The Platform admin approves everything</td><td class="good">simple</td><td class="bad">a bottleneck without domain knowledge</td><td class="when">one domain</td></tr>
+                <tr class="ours"><td>A Domain approver for the domain's releases, the admin for shared assets</td><td class="good">accountability sits with the knowledge</td><td class="bad">owner fields and routing to build</td><td class="when">several domains</td></tr>
+                <tr><td>Auto-approve by policy; humans only for Prod and high risk; two approvers</td><td class="good">fast</td><td class="bad">the policy becomes the control</td><td class="when">mature operations</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <p><strong>This workshop.</strong> There are <strong>two approval routes</strong>:</p>
+<ul class="concept-list">
+  <li><strong>Catalogue record:</strong> Platform admin approves.</li>
+  <li><strong>Release:</strong> Domain approver approves; Platform admin cannot.</li>
+</ul>
+              <p class="prod"><strong>Production path.</strong> Bind approvers to domains, require two for Prod and bind approval to its evaluation evidence.</p>
+            </div>
+            <table class="plain">
+              <thead><tr><th>Action</th><th>Who, today</th><th>Approval, today</th><th>Where</th></tr></thead>
+              <tbody>
+                <tr><td>Create a domain or project; set caps, models, tools</td><td>Platform admin</td><td>none</td><td>Domains and projects</td></tr>
+                <tr><td>Approve a catalogue record</td><td>Platform admin</td><td>single stage; a label, not a gate</td><td>Catalogue</td></tr>
+                <tr><td>Flip a gateway from LOG_ONLY to ENFORCE</td><td>Platform admin</td><td>none</td><td>Governance</td></tr>
+                <tr><td>Deploy to Dev; submit a release</td><td>Agent developer</td><td>none; Dev only</td><td>Releases</td></tr>
+                <tr><td>Approve, reject, promote a release</td><td>Domain approver</td><td>single stage; admins get 403</td><td>Release detail</td></tr>
+              </tbody>
+            </table>
+          </div>
+</section>
+<section id="m1-3-example">
+<h2>Apply the operating model to Northstar</h2>
+<p>Northstar has Service engineers with on-call coverage, Sales domain experts without engineers, and a central platform team. A hybrid model lets Service own its delivery while the platform team builds and runs the Sales workload. This recommendation assumes the platform team has capacity for both.</p>
+<table class="plain"><thead><tr><th>Responsibility</th><th>Accountable</th><th>Handoff</th></tr></thead><tbody>
+<tr><td>Build and operate shared services</td><td>Platform</td><td>Publish supported interfaces and take shared-service incidents</td></tr>
+<tr><td>Maintain approved blueprints</td><td>Platform</td><td>Version controls and tests; explain compatibility changes to consumers</td></tr>
+<tr><td>Develop and deploy Service workloads</td><td>Service engineering</td><td>Use supported interfaces; provide versioned release evidence</td></tr>
+<tr><td>Operate Service workloads</td><td>Service engineering</td><td>Triage the request, then escalate a shared gateway failure to Platform</td></tr>
+<tr><td>Develop, deploy and operate Sales workloads</td><td>Platform</td><td>Agree changes and support needs with Sales</td></tr>
+<tr><td>Accept business behaviour</td><td>The Service or Sales domain owner (the Domain approver)</td><td>Review task outcomes; approve domain requirements and releases</td></tr>
+</tbody></table>
+<p>A blueprint is a reusable starting implementation with defined interfaces, security controls, tests and delivery checks; the platform team owns its supported versions. An example repository becomes an approved blueprint only after those controls and support commitments are checked for the intended use. The platform team could contribute its Sales connector to a maintained blueprint once it has a reusable interface and independent data and credential bindings.</p>
+<p>Keep account placement separate. This workshop practises any of the three models in one account. The enterprise platform sample's <code>centralized</code>, <code>distributed</code> and <code>federated</code> deployment strategies describe account and stack placement (decided next), not these team responsibilities; its <a href="https://aws-samples.github.io/sample-agentcore-enterprise-platform/#/OPERATING_MODEL">operating-model template</a> supplies ownership and support prompts but remains a draft until a customer assigns and accepts the roles.</p>
+</section>
+<section id="m1-3-hands-on">
+<h2>Activity: responsibility and approval matrix <span class="time">10 min</span></h2>
+<div class="hands-on"><strong>Assign build, approval, promotion, support and shared-service ownership</strong>
+<ol class="steps">
+<li><div><span class="pill tag record">record</span>For your scenario, fill one row per action: create a domain or project; set caps, models and tools; approve a catalogue record; switch a gateway to ENFORCE; deploy to Dev; submit a release; approve, reject and promote a release; first triage of a failed conversation; shared-service incident lead. Name the accountable persona or team for each and the boundary that stops anyone else.</div></li>
+<li><div><span class="pill tag record">record</span>Test the matrix with the two incidents of <a href="#m1-3-d1-1">D1.1</a>: an incorrect answer with healthy tools, and tool failures across teams after a gateway policy change. Write who coordinates, what each owner supplies (request id, running version) and the escalation route from workload owner to shared-service owner.</div></li>
+<li><div><span class="pill tag record">record</span>In <code>design-record.yaml</code> write <code>my_call</code> for <code>module_1.decisions.operating_model</code>, <code>module_3.decisions.governance</code> and <code>module_3.decisions.approvals</code>, each with a reason and a reconsideration trigger. "Sales hires developers" may change build ownership; operational ownership moves only when support coverage and recovery are also accepted.</div></li>
+</ol></div>
+<p>Your record names one accountable team per activity, domain contributors for requirements and acceptance, and an escalation route that works for both incidents. If a team cannot accept a responsibility, revise the arrangement before treating it as agreed. Module 2 creates the three personas and proves the first administrative denial.</p>
+<p class="note">Guide prompt: "Read my requirements and team-capacity notes. Recommend a centralised, federated or hybrid operating model with a trade-off and reconsideration trigger. Assign shared-service, blueprint, workload delivery, operations and domain acceptance owners. Walk through one workload failure and one shared-service failure. Ask only for missing information that changes the recommendation. Keep AWS account placement separate."</p>
+</section>
+
+
+
+<section id="m1-4-explain">
+<h2>Accounts, tenants and ownership: three decisions, not one <span class="time">5 min</span></h2>
+<p class="lead" id="m1-4">The operating model says who runs what. It does not say where resources run or whose data must stay apart, and the open question in your brief, who may approve cross-unit access, is exactly that kind of question. Make the account, tenant and ownership decisions separately, then trace a trusted identity through every boundary. The result is a resource-placement map and a tenant access contract, with the checks later labs must pass.</p>
+<p>Account placement limits where resources and administrative permissions live. Tenant isolation decides whose data and actions a request may reach. Administrative ownership decides who may change a resource. Several tenants can share an account, one tenant can span several accounts, and a central team can administer resources in accounts it does not own.</p>
+<p>Keep <strong>two related questions</strong> separate from ownership and account placement:</p>
+<ul class="concept-list">
+            <li><strong>Tenant boundaries:</strong> whose data, credentials, actions and records must stay separate, and what enforces that separation? This page introduces it in <a href="#m1-4-d1-4">D1.4</a> and the tenant layers below; <a href="m2.html#m2-4-d2-13">D2.13</a> builds it into the control plane. Tenants can share or span accounts; tenancy does not determine who runs the platform.</li>
+            <li><strong>Platform usage:</strong> who uses the platform, and through which business channel or interface? This workshop uses the platform's Playground and API, introduced in <a href="m4.html#m4-4">Module 4</a>; the <a href="#m1-6-trace">architecture review</a> at the end of this page follows these paths through the reference platform.</li>
+          </ul>
+</section>
+<section id="m1-4-decisions">
+<h2>Decide how many AWS accounts <span class="time">10 min</span></h2>
+<div class="card">
+            <h4 class="q" id="m1-4-d1-4"><span class="id">D1.4</span>How many AWS accounts?</h4>
+            <figure style="margin:0 0 10px">
+            <svg viewBox="0 0 960 250" role="img" aria-labelledby="m1-4-m1-fig1-title">
+              <title id="m1-4-m1-fig1-title">Three ways to place a platform across AWS accounts</title>
+              <defs><marker id="m1-4-m1-arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+              <rect class="d-box d-account d-ours d-glow" x="12" y="34" width="290" height="176"/>
+              <text class="d-text d-title" x="22" y="24">A · One account</text>
+              <rect x="196" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
+              <text class="d-text" x="249" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+              <text class="d-text d-small" x="26" y="58">Account</text>
+              <rect class="d-box d-platform" x="26" y="70" width="262" height="40"/>
+              <text class="d-text" x="157" y="95" text-anchor="middle">Control plane · shared services</text>
+              <rect class="d-box d-aws" x="26" y="124" width="122" height="66"/>
+              <text class="d-text d-title" x="87" y="150" text-anchor="middle">Dev</text>
+              <text class="d-text d-small" x="87" y="170" text-anchor="middle">hr-assistant-dev</text>
+              <rect class="d-box d-aws" x="166" y="124" width="122" height="66"/>
+              <text class="d-text d-title" x="227" y="150" text-anchor="middle">Prod</text>
+              <text class="d-text d-small" x="227" y="170" text-anchor="middle">hr-assistant-prod</text>
+              <text class="d-text d-small" x="157" y="232" text-anchor="middle">Names and IAM keep them apart</text>
+
+              <text class="d-text d-title" x="347" y="24">B · Platform + workload accounts</text>
+              <rect class="d-box d-account" x="337" y="34" width="290" height="68"/>
+              <text class="d-text d-small" x="351" y="52">Platform account</text>
+              <rect class="d-box d-platform" x="351" y="58" width="262" height="34"/>
+              <text class="d-text" x="482" y="80" text-anchor="middle">gateway · identity · catalogue</text>
+              <rect class="d-box d-account" x="337" y="142" width="136" height="68"/>
+              <text class="d-text d-small" x="351" y="160">Workload account</text>
+              <rect class="d-box d-aws" x="351" y="166" width="108" height="34"/>
+              <text class="d-text" x="405" y="188" text-anchor="middle">Team A agents</text>
+              <rect class="d-box d-account" x="491" y="142" width="136" height="68"/>
+              <text class="d-text d-small" x="505" y="160">Workload account</text>
+              <rect class="d-box d-aws" x="505" y="166" width="108" height="34"/>
+              <text class="d-text" x="559" y="188" text-anchor="middle">Team B agents</text>
+              <path class="d-arrow" d="M405 142 L405 108" marker-end="url(#m1-4-m1-arr1)"/>
+              <path class="d-arrow" d="M559 142 L559 108" marker-end="url(#m1-4-m1-arr1)"/>
+              <text class="d-text d-small" x="482" y="120" text-anchor="middle">cross-account trust:</text>
+              <text class="d-text d-small" x="482" y="135" text-anchor="middle">tokens or policies</text>
+              <text class="d-text d-small" x="482" y="232" text-anchor="middle">Central governance, teams own runtimes</text>
+
+              <text class="d-text d-title" x="672" y="24">C · A copy per team</text>
+              <rect x="662" y="34" width="290" height="22" rx="6" fill="#232f3e"/>
+              <text class="d-text" x="807" y="50" text-anchor="middle" style="fill:#fff;font-size:12px">Organization SCPs keep the copies alike</text>
+              <rect class="d-box d-account" x="662" y="70" width="136" height="140"/>
+              <text class="d-text d-small" x="676" y="88">Team A account</text>
+              <rect class="d-box d-platform" x="676" y="96" width="108" height="30"/><text class="d-text" x="730" y="116" text-anchor="middle">platform</text>
+              <rect class="d-box d-aws" x="676" y="136" width="108" height="30"/><text class="d-text" x="730" y="156" text-anchor="middle">agents</text>
+              <rect class="d-box d-account" x="816" y="70" width="136" height="140"/>
+              <text class="d-text d-small" x="830" y="88">Team B account</text>
+              <rect class="d-box d-platform" x="830" y="96" width="108" height="30"/><text class="d-text" x="884" y="116" text-anchor="middle">platform</text>
+              <rect class="d-box d-aws" x="830" y="136" width="108" height="30"/><text class="d-text" x="884" y="156" text-anchor="middle">agents</text>
+              <text class="d-text d-small" x="807" y="232" text-anchor="middle">Autonomy, duplicated governance</text>
+            </svg>
+            <figcaption>The figure shows <strong>three of four account layouts</strong>. The fourth, one account per environment, is A built twice: once for Dev and once for Prod. SCPs apply to B and C. This workshop uses A.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr class="ours"><td>One account, environments by name</td><td class="good">simplest, cheapest, fast promotion</td><td class="bad">names and IAM are the only walls; one mistake can affect everything</td><td class="when">a pilot, one team, a first platform</td></tr>
+                <tr><td>One account per environment</td><td class="good">Prod behind an account wall</td><td class="bad">moving to Prod crosses accounts; more plumbing</td><td class="when">compliance demands Prod isolation</td></tr>
+                <tr><td>Platform account + workload accounts</td><td class="good">central tool governance; teams own runtimes</td><td class="bad">cross-account trust to design; most moving parts</td><td class="when">many teams, central governance</td></tr>
+                <tr><td>A full copy per team</td><td class="good">autonomy; simple trust</td><td class="bad">duplicated governance; copies drift</td><td class="when">teams must not depend on each other</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <div class="copy-group">
+                <p><strong>This workshop.</strong> We use <strong>one AWS account</strong> with <strong>two environments</strong>, Dev and Prod. Names and IAM keep them apart. Promotion stays within the account, keeping it fast and simple.</p>
+              </div>
+              <div class="copy-group also">
+                <p>We also made <strong>two location choices</strong>:</p>
+                <ul class="concept-list">
+                  <li><strong>Platform Region:</strong> us-east-1.</li>
+                  <li><strong>Model processing:</strong> cross-Region inference profiles. A request entering us-east-1 may be answered in another US Region.</li>
+                </ul>
+                <p>Processing location is decided in <a href="m2.html#m2-2-d2-6">D2.6</a>; the organisation's SCP controls are below.</p>
+              </div>
+              <div class="copy-group also">
+                <p>The workshop has <strong>two tenants</strong>: People Operations and Finance Operations. Project IAM roles and gateways enforce their data boundaries.</p>
+                <p>A tenant name in a prompt, URL or request body is user-supplied text, not proof of membership.</p>
+              </div>
+              <div class="copy-group prod">
+                <p><strong>Production path.</strong> Our production path uses layout B with <strong>two account types</strong>:</p>
+                <ul class="concept-list">
+                  <li><strong>Platform account:</strong> shared services.</li>
+                  <li><strong>Workload accounts:</strong> each team's agents.</li>
+                </ul>
+                <p>SCPs apply consistent organisation-wide rules across them.</p>
+              </div>
+            </div>
+          </div>
+</section>
+<section id="m1-4-strategies">
+<h2>Compare customer account strategies</h2>
+<p>The <a href="https://aws-samples.github.io/sample-agentcore-enterprise-platform/#/MULTI_ACCOUNT">enterprise platform sample</a> names three <code>deployment.strategy</code> values. Use them to compare a customer's placement; the workshop's one-account placement is fixed.</p>
+<table class="plain"><thead><tr><th>Strategy</th><th>Placement and fit</th><th>Trade-off</th></tr></thead><tbody>
+<tr><td><code>centralized</code></td><td>Shared services and workloads in one account. Fits a pilot, or teams able to share administrative scope and quotas</td><td>Internal roles, data access and usage controls still need separation; account-wide changes can affect all workloads</td></tr>
+<tr><td><code>distributed</code></td><td>Each team account runs a full platform copy. Fits independent platform operation and administration</td><td>Repeated infrastructure, upgrades, controls and support; common interfaces drift between copies</td></tr>
+<tr><td><code>federated</code></td><td>A platform account shares authentication and gateway; workload accounts hold their credential providers, runtimes, memory and local observability</td><td>Workloads depend on shared services; credential rotation, onboarding, connectivity and cross-account investigation need owners</td></tr>
+</tbody></table>
+<p>That sample deploys its manifest separately with credentials for each account; accounts and deployment access must already exist, and it neither vends accounts nor deploys to every workload account automatically. A mixed arrangement needs its own design. Northstar's hybrid operating model could start with centralised placement if its administrative scope and quotas can be shared; a new requirement for separate Service and Sales administration would favour federated placement, with Platform still operating Sales. Changing the account strategy does not change who is responsible.</p>
+</section>
+<section id="m1-4-tenants">
+<h2>Define the tenant before selecting controls</h2>
+<p>A tenant is the business unit or customer whose permissions, credentials, data and usage must be bounded. In Northstar, Service and Sales are the proposed tenants; in this workshop they are People Operations and Finance Operations. In an ISV product, a customer organisation may be a tenant containing many users and workloads.</p>
+<p>Write how a verified caller maps to a permitted tenant and role. If a user belongs to more than one tenant, the server validates the requested tenant against that membership. A tenant name in a prompt, URL or request body is not proof of membership. Agents that derive a memory actor id from a verified token subject partition history by caller; that does not authorise business-tenant access to tools, retrieval or telemetry.</p>
+<p>For every shared layer, decide whether it is shared behind an enforced boundary or dedicated, including key and credential ownership, retention, deletion and usage limits. Dedicated resources can simplify a boundary but add provisioning, patching and clean-up.</p>
+<table class="plain">
+              <thead><tr><th>Layer</th><th>Shared, if this is what enforces the boundary</th><th>Dedicated when</th></tr></thead>
+              <tbody>
+                <tr><td>Account and network</td><td>project roles, scoped resources, an approved egress path</td><td>independent administration, a regulatory placement, or containment the shared account cannot give</td></tr>
+                <tr><td>Runtime and session</td><td>the runtime's session isolation; the caller bound to its session on the server side</td><td>different trust, credentials or capacity needs</td></tr>
+                <tr><td>Gateway and tools</td><td>a permit per tool and role; the target checks the caller's data scope</td><td>different credential owners or policy administrators; a tool that cannot scope per caller</td></tr>
+                <tr><td>Data and state</td><td>trusted tenant keys, a filter pinned at the target, scoped storage permissions</td><td>confidentiality, key ownership or deletion rules a filter cannot satisfy</td></tr>
+                <tr><td>Catalogue and telemetry</td><td>scoped record and trace read permissions; enforced approval gates</td><td>metadata or traces too sensitive for a shared view</td></tr>
+              </tbody>
+            </table>
+<p class="note">For every shared layer, record <strong>two boundaries</strong>:</p>
+<ul class="concept-list">
+  <li><strong>Enforcement:</strong> the permission or trusted filter that separates tenants. Namespaces, UI filters and session labels alone do not.</li>
+  <li><strong>Failure and ownership:</strong> outages, noisy tenants, revocation and data cleanup. Security isolation does not guarantee capacity isolation.</li>
+</ul>
+</section>
+<section id="m1-4-scp">
+<h2>Three layers of control on one call</h2>
+<p>An organisation's service control policies set a permission ceiling above IAM. The event account cannot administer its AWS Organization, so the workshop builds the IAM and request layers and discusses SCPs; record which SCPs your organisation would attach and the conflicts below.</p>
+<figure style="margin:10px 0 10px">
+            <svg viewBox="0 0 960 212" role="img" aria-labelledby="m1-4-m3-fig3c-title">
+              <title id="m1-4-m3-fig3c-title">Three layers of control on one call: SCP, IAM, the request</title>
+              <defs><marker id="m1-4-m3-arr3c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b4471f"/></marker></defs>
+              <rect class="d-box d-platform" x="20" y="14" width="850" height="56"/>
+              <text class="d-text d-title" x="36" y="36">Organization: SCP</text>
+              <text class="d-text d-small" x="36" y="54">the security team</text>
+              <text class="d-text" x="240" y="36">the ceiling: Regions, services, required settings · it grants nothing, IAM still must</text>
+              <text class="d-text d-small" x="240" y="54">production: a Region-deny SCP; a required ENFORCE mode; an exception process with an approver and a rollback</text>
+              <rect class="d-box d-aws" x="20" y="78" width="850" height="56"/>
+              <text class="d-text d-title" x="36" y="100">Account: IAM</text>
+              <text class="d-text d-small" x="36" y="118">the platform owner, by template</text>
+              <text class="d-text" x="240" y="100">which role may reach which resource: the agent role, its own gateway, its model-gateway key</text>
+              <text class="d-text d-small" x="240" y="118">this workshop: a role pair per project and environment; the agent role: no InvokeModel, no InvokeFunction</text>
+              <rect class="d-box d-blue" x="20" y="142" width="850" height="56"/>
+              <text class="d-text d-title" x="36" y="164">Request: the platform</text>
+              <text class="d-text d-small" x="36" y="182">Cedar · the API · the target</text>
+              <text class="d-text" x="240" y="164">which tool, which arguments, which rows: Cedar, the API's group check, the target's filter</text>
+              <text class="d-text d-small" x="240" y="182">this workshop: a permit per tool; leave over 10 days denied; department = HR pinned at the knowledge base</text>
+              <path class="d-arrow d-deny" d="M916 20 L916 192" marker-end="url(#m1-4-m3-arr3c)"/>
+              <text class="d-text d-small" x="916" y="98" text-anchor="middle" transform="rotate(-90 916 108)" style="fill:#16191f">a deny at any layer ends the call</text>
+            </svg>
+            <figcaption>Three possible control layers: SCP, IAM and request checks. The workshop builds the latter two. An applicable deny blocks the call. SCPs govern member-account roles, excluding service-linked roles; they do not govern the management account.</figcaption>
+            </figure>
+<details class="reference">
+  <summary>Reference · Three SCP compatibility checks</summary>
+  <table class="plain">
+    <thead><tr><th>SCP requirement</th><th>Effect</th><th>Response</th></tr></thead>
+    <tbody>
+      <tr><td>Every attached gateway must use ENFORCE</td><td>The LOG_ONLY rollout of <a href="m2.html#m2-3-2-d2-11">D2.11</a> is refused</td><td>Start with ENFORCE on known tools, or document an exception: attachment scope, workloads, approver, compatibility check and rollback</td></tr>
+      <tr><td>Region deny + geographic profile</td><td>A denied destination fails the request; routing does not shrink</td><td>Allow all destinations, or exempt the profile ARN using <code>bedrock:InferenceProfileArn</code>. Keep source-Region restrictions</td></tr>
+      <tr><td>Region deny + global profile</td><td><code>aws:RequestedRegion</code> is <code>unspecified</code></td><td>Allow that value or exempt <code>global.</code> profile ARNs; explicitly deny global routing where residency forbids it</td></tr>
+    </tbody>
+  </table>
+</details>
+<p class="note"><a href="m2.html#m2-2-d2-6">D2.6</a> covers model routing. To prove where a request ran, read CloudTrail's <code>inferenceRegion</code> in the source Region; the endpoint called is not that evidence.</p>
+<p class="note">The application's domains and projects are platform ownership groups; they do not create an AWS organisation unit, account or IAM boundary. The enterprise sample ships organisation SCPs as opt-in Terraform; requiring a gateway policy engine in ENFORCE mode conflicts with LOG_ONLY. Obtain sanitised effective-policy evidence from the organisation administrator, and record any exception with its attachment scope, affected workloads, approver, compatibility checks and rollback plan; attaching parent policies is outside this lab.</p>
+</section>
+<section id="m1-4-hands-on">
+<h2>Activity: a boundary map with expected results <span class="time">10 min</span></h2>
+<div class="hands-on"><strong>Place resources, then define the checks</strong>
+<p class="caption">This design is a proposal. In your lab record keep "workshop deployment: one AWS account" and represent only the boundaries actually built there.</p>
+<ol class="steps">
+<li><div><span class="pill tag record">record</span>Map placement and owners. A Northstar federated example: authentication and shared gateway in a platform account (Platform team; prove accepted tokens receive only entitled tools); Service runtime and state in a Service account; Sales runtime and state in a Sales account operated by Platform; the customer-record tool and data where they live today; logs and traces per account, readable by the relevant operator without another tenant's content.</div></li>
+<li><div><span class="pill tag record">record</span>Trace the consequences. <strong>Network:</strong> name user-to-runtime and runtime-to-model, tool and data paths separately, with destination, DNS, routes, endpoints, egress policy and owner (the landing-zone decisions below continue this). <strong>Identity:</strong> a shared gateway that validates a machine token does not establish the caller's account or business tenant; identify each authorisation point and whose identity the business tool sees (gateway identity in Module 2, the employee's identity in Module 3). IAM, organisation policies, gateway policies and data checks control different actions; LOG_ONLY records decisions without denying, and an organisation-scoped endpoint policy applies to SigV4 callers, not to JWT calls. <strong>Data and state:</strong> record the trusted tenant mapping and the check protecting each store. <strong>Observability and cost:</strong> decide who reads each record and how usage is allocated (the telemetry decisions below; Module 5 allocates cost).</div></li>
+<li><div><span class="pill tag record">record</span>Write expected results. Service caller requests permitted record <code>S-001</code>: succeeds. Sales caller requests <code>S-001</code>, including a forged <code>tenant=service</code>: denied; caller-supplied context cannot widen membership. Sales user requests Service operational records: denied unless an explicitly authorised cross-tenant operator role applies. A shared gateway dependency is unavailable: the caller receives a defined failure and the responsible operator can correlate it. For each, name the enforcing component, owner, evidence and missing implementation.</div></li>
+<li><div><span class="pill tag record">record</span>Write <code>my_call</code> for <code>module_1.decisions.accounts</code>: the strategy, why it fits, the trade-off and what would change it.</div></li>
+</ol></div>
+<p>The workshop's own versions of these checks run later: the Finance role is refused the HR gateway and both tool Lambdas (Modules 2 and 3), and the knowledge filter is pinned at its target (Module 3). The landing zone comes next because the network has to carry exactly these paths. Your map is ready for review when another reader can trace the trusted identity through every boundary; its checks stay pending until executed.</p>
+<p class="note">References: <a href="https://aws-samples.github.io/sample-agentcore-enterprise-platform/#/MULTI_ACCOUNT">multi-account strategies</a>, <a href="https://aws-samples.github.io/sample-agentcore-enterprise-platform/#/SECURITY_CONTROLS">security controls</a>, <a href="https://aws-samples.github.io/sample-agentcore-enterprise-platform/#/IDENTITY">caller identity</a>, <a href="https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html">SCPs</a>; worksheets: <a href="templates/journey-record.md">journey record</a>, <a href="templates/component-decision.md">component decision record</a>.</p>
+</section>
+
+
+
+<section id="m1-5-explain">
+<h2>Landing zone: why this layer comes first <span class="time">5 min</span></h2>
+<p class="lead" id="m1-5">With owners and boundaries decided, the next question is what everything stands on. Decide the network, the infrastructure layers and where telemetry lives before any shared service is built: endpoints, stores and readers, correlation, retention, redaction and sampling, and who pays.</p>
+<p>An agent platform stands on <strong>three things</strong>:</p>
+<ol class="concept-list">
+            <li><strong>AWS accounts:</strong> where the platform's resources live.</li>
+            <li><strong>Network:</strong> how those resources connect.</li>
+            <li><strong>Infrastructure code:</strong> how the foundation is provisioned.</li>
+          </ol>
+<p>These form the <strong>landing zone</strong>. Build it first: changing accounts or networking later means moving the resources that depend on them.</p>
+<p>The landing zone rests on <strong>four decisions</strong>. The accounts and the operating model are already decided above; this part makes the network and infrastructure decisions and adds two for telemetry:</p>
+<ol class="concept-list">
+            <li><a href="#m1-4-d1-4"><strong>Accounts:</strong></a> how many do you need, where do resources run, and who may administer them?</li>
+            <li><a href="#m1-5-d1-5"><strong>Network:</strong></a> public access, private access with NAT, or private endpoints only?</li>
+            <li><a href="#m1-5-d1-6"><strong>Infrastructure:</strong></a> who creates it, and how?</li>
+            <li><a href="#m1-3-d1-1"><strong>Operating model:</strong></a> who builds, releases, supports and operates the shared services and agents?</li>
+          </ol>
+<p class="note">Agree who runs what before finalising the layout. A federated operating model does not determine account count. Account layouts can change without changing responsibilities.</p>
+<figure>
+            <svg viewBox="0 0 960 272" role="img" aria-labelledby="m1-5-m1-fig1-open-title">
+              <title id="m1-5-m1-fig1-open-title">The landing zone: who runs the platform, where it lives, how it is built</title>
+              <defs><marker id="m1-5-m1-fig1-open-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+              <text class="d-text d-title" x="22" y="24">WHO · D1.1 Operating model</text>
+              <rect class="d-box d-people" x="12" y="34" width="290" height="185"/>
+              <rect class="d-box" x="26" y="48" width="262" height="44"/>
+              <text class="d-text d-strong" x="157" y="66" text-anchor="middle">Platform team</text>
+              <text class="d-text d-small" x="157" y="82" text-anchor="middle">shared services · templates</text>
+              <rect class="d-box" x="26" y="100" width="262" height="44"/>
+              <text class="d-text d-strong" x="157" y="118" text-anchor="middle">Project teams</text>
+              <text class="d-text d-small" x="157" y="134" text-anchor="middle">build, release, operate their agents</text>
+              <rect class="d-box" x="26" y="152" width="262" height="44"/>
+              <text class="d-text d-strong" x="157" y="170" text-anchor="middle">Domain</text>
+              <text class="d-text d-small" x="157" y="186" text-anchor="middle">accepts a release</text>
+              <text class="d-text d-small" x="157" y="241" text-anchor="middle">federated: the platform shares, project teams build</text>
+
+              <path class="d-arrow" d="M304 120 L335 120" marker-end="url(#m1-5-m1-fig1-open-arr)"/>
+
+              <text class="d-text d-title" x="347" y="24">WHERE · D1.4 Accounts, D1.5 Network</text>
+              <rect class="d-box d-account" x="337" y="34" width="290" height="185"/>
+              <text class="d-text d-small" x="351" y="54">One AWS account · us-east-1</text>
+              <rect class="d-box d-aws" x="351" y="66" width="126" height="44"/>
+              <text class="d-text d-strong" x="414" y="84" text-anchor="middle">Dev</text>
+              <text class="d-text d-small" x="414" y="100" text-anchor="middle">by name</text>
+              <rect class="d-box d-aws" x="487" y="66" width="126" height="44"/>
+              <text class="d-text d-strong" x="550" y="84" text-anchor="middle">Prod</text>
+              <text class="d-text d-small" x="550" y="100" text-anchor="middle">by name</text>
+              <rect class="d-vpc" x="351" y="124" width="262" height="58"/>
+              <text class="d-text d-strong" x="482" y="142" text-anchor="middle">one private VPC</text>
+              <text class="d-text d-small" x="482" y="158" text-anchor="middle">model gateway · relay · agents (Module 4)</text>
+              <text class="d-text d-small" x="482" y="172" text-anchor="middle">endpoints only · no internet path</text>
+              <text class="d-text d-tiny" x="482" y="203" text-anchor="middle">+ the corporate IdP's own public VPC (Module 2)</text>
+              <text class="d-text d-small" x="482" y="241" text-anchor="middle">names and IAM are the walls</text>
+
+              <path class="d-arrow" d="M629 120 L660 120" marker-end="url(#m1-5-m1-fig1-open-arr)"/>
+
+              <text class="d-text d-title" x="672" y="24">HOW · D1.6 Infrastructure</text>
+              <rect class="d-box d-platform" x="662" y="34" width="290" height="185"/>
+              <rect class="d-box" x="676" y="48" width="262" height="97"/>
+              <text class="d-text d-strong" x="807" y="66" text-anchor="middle">7 platform stacks + 1 stand-in</text>
+              <text class="d-text d-small" x="807" y="81" text-anchor="middle">Network · SharedServices · ModelGateway</text>
+              <text class="d-text d-tiny" x="807" y="94" text-anchor="middle">built in Module 2</text>
+              <text class="d-text d-small" x="807" y="109" text-anchor="middle">Web · Auth · Platform · Scenario</text>
+              <text class="d-text d-tiny" x="807" y="122" text-anchor="middle">deployed before the day</text>
+              <text class="d-text d-tiny" x="807" y="135" text-anchor="middle">Idp · Module 2 · the corporate IdP stand-in</text>
+              <rect class="d-box" x="676" y="151" width="262" height="58"/>
+              <text class="d-text d-strong" x="807" y="169" text-anchor="middle">Control plane</text>
+              <text class="d-text d-small" x="807" y="185" text-anchor="middle">per-project objects at run time:</text>
+              <text class="d-text d-small" x="807" y="199" text-anchor="middle">roles · budgets · keys · harness</text>
+              <text class="d-text d-small" x="807" y="241" text-anchor="middle">code for the foundation,</text>
+              <text class="d-text d-small" x="807" y="254" text-anchor="middle">the platform for the projects,</text>
+              <text class="d-text d-small" x="807" y="267" text-anchor="middle">the CLI for the developer</text>
+            </svg>
+            <figcaption><strong>Three questions</strong> frame the landing zone: who runs it, where it runs, and how it is built. Ownership informs the account, network and infrastructure choices.</figcaption>
+          </figure>
+</section>
+<section id="m1-5-decisions">
+<h2>Decide the network, infrastructure and telemetry <span class="time">15 min</span></h2>
+<div class="card">
+            <h4 class="q" id="m1-5-d1-5"><span class="id">D1.5</span>Public or private network?</h4>
+            <figure style="margin:0 0 10px">
+              <svg viewBox="0 0 960 300" role="img" aria-labelledby="m1-5-m1-fig1-d2-title">
+                <title id="m1-5-m1-fig1-d2-title">Public, private, or endpoints only: three network shapes for the model gateway and the agents</title>
+                <defs><marker id="m1-5-m1-fig1-d2-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+                <text class="d-text d-title" x="22" y="24">A · Public</text>
+                <rect class="d-box d-account" x="12" y="34" width="290" height="236"/>
+                <rect class="d-vpc" x="26" y="50" width="262" height="142"/>
+                <rect class="d-box d-aws" x="182" y="41" width="96" height="18" style="rx:4"/>
+                <text class="d-text d-tiny" x="230" y="54" text-anchor="middle" style="fill:#16191f">Internet gateway</text>
+                <text class="d-text d-small" x="36" y="68">VPC · 2 AZs</text>
+                <rect class="d-subnet-pub" x="36" y="74" width="242" height="58"/>
+                <text class="d-text d-strong" x="157" y="92" text-anchor="middle">Public subnets</text>
+                <text class="d-text d-small" x="157" y="108" text-anchor="middle">LiteLLM proxy · internet-facing</text>
+                <text class="d-text d-small" x="157" y="122" text-anchor="middle">load balancer · public IPs</text>
+                <rect class="d-subnet-iso" x="36" y="140" width="242" height="44"/>
+                <text class="d-text d-strong" x="157" y="158" text-anchor="middle">Isolated subnets</text>
+                <text class="d-text d-small" x="157" y="174" text-anchor="middle">RDS · no route out</text>
+                <rect class="d-box d-aws" x="26" y="202" width="262" height="58"/>
+                <text class="d-text d-strong" x="157" y="220" text-anchor="middle">Agents on AgentCore's</text>
+                <text class="d-text d-strong" x="157" y="236" text-anchor="middle">managed network</text>
+                <text class="d-text d-small" x="157" y="250" text-anchor="middle">not in this VPC</text>
+                <text class="d-text d-small" x="157" y="290" text-anchor="middle">no hourly network cost · outbound not inspected</text>
+
+                <text class="d-text d-title" x="347" y="24">B · Private</text>
+                <rect class="d-box d-account" x="337" y="34" width="290" height="236"/>
+                <rect class="d-vpc" x="351" y="50" width="262" height="196"/>
+                <text class="d-text d-small" x="361" y="68">VPC</text>
+                <rect class="d-subnet-iso" x="361" y="74" width="242" height="58"/>
+                <text class="d-text d-strong" x="482" y="92" text-anchor="middle">Private subnets</text>
+                <text class="d-text d-small" x="482" y="108" text-anchor="middle">proxy · internal load balancer</text>
+                <text class="d-text d-small" x="482" y="122" text-anchor="middle">no public IPs</text>
+                <rect class="d-box d-aws" x="361" y="140" width="242" height="44"/>
+                <text class="d-text d-strong" x="482" y="158" text-anchor="middle">Agents in VPC mode</text>
+                <text class="d-text d-small" x="482" y="174" text-anchor="middle">ENIs in your subnets</text>
+                <rect class="d-box d-aws" x="361" y="192" width="116" height="44"/>
+                <text class="d-text d-strong" x="419" y="210" text-anchor="middle">NAT gateway</text>
+                <text class="d-text d-small" x="419" y="226" text-anchor="middle">one shared exit</text>
+                <rect class="d-box d-aws" x="487" y="192" width="116" height="44"/>
+                <text class="d-text d-strong" x="545" y="210" text-anchor="middle">VPC endpoints</text>
+                <text class="d-text d-small" x="545" y="226" text-anchor="middle">for AWS services</text>
+                <text class="d-text d-small" x="482" y="290" text-anchor="middle">hourly cost · some AZs only · more to debug</text>
+
+                <text class="d-text d-title" x="672" y="24">C · Endpoints only</text>
+                <rect class="d-box d-account d-ours d-glow" x="662" y="34" width="290" height="236"/>
+                <rect x="846" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
+                <text class="d-text" x="899" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+                <rect class="d-vpc" x="676" y="50" width="262" height="212"/>
+                <text class="d-text d-small" x="686" y="68">VPC · 3 AZs</text>
+                <text class="d-text d-small" x="928" y="68" text-anchor="end">no internet gateway · no NAT</text>
+                <rect class="d-subnet-iso" x="686" y="74" width="242" height="58"/>
+                <text class="d-text d-strong" x="807" y="92" text-anchor="middle">App subnets · isolated</text>
+                <text class="d-text d-small" x="807" y="108" text-anchor="middle">proxy · internal load balancer</text>
+                <text class="d-text d-small" x="807" y="122" text-anchor="middle">agents in VPC mode · relay Lambda</text>
+                <rect class="d-subnet-iso" x="686" y="138" width="242" height="28"/>
+                <text class="d-text" x="807" y="156" text-anchor="middle"><tspan class="d-strong">Data subnets</tspan> <tspan class="d-small">RDS · no route out</tspan></text>
+                <rect class="d-group" x="686" y="172" width="242" height="84"/>
+                <text class="d-text d-small" x="807" y="188" text-anchor="middle">one interface endpoint per service</text>
+                <rect class="d-box d-aws" x="692" y="196" width="112" height="22"/>
+                <text class="d-text d-tiny" x="748" y="211" text-anchor="middle" style="fill:#16191f">Bedrock</text>
+                <rect class="d-box d-aws" x="810" y="196" width="112" height="22"/>
+                <text class="d-text d-tiny" x="866" y="211" text-anchor="middle" style="fill:#16191f">AgentCore</text>
+                <rect class="d-box d-aws" x="692" y="224" width="112" height="22"/>
+                <text class="d-text d-tiny" x="748" y="239" text-anchor="middle" style="fill:#16191f">Secrets Manager</text>
+                <rect class="d-box d-aws" x="810" y="224" width="112" height="22"/>
+                <text class="d-text d-tiny" x="866" y="239" text-anchor="middle" style="fill:#16191f">CloudWatch · ECR</text>
+                <text class="d-text d-small" x="807" y="290" text-anchor="middle">tightest outbound · an endpoint for every service</text>
+              </svg>
+              <figcaption>Compare <strong>three network patterns</strong> for the model gateway and agents. This workshop uses C: private endpoints only, with no internet path. The app subnets hold the proxy and agent network interfaces; separate data subnets hold RDS.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr><td>Public: managed network for agents; proxy on public subnets, no NAT</td><td class="good">no hourly network cost; fewest failure modes</td><td class="bad">you cannot inspect outbound traffic; the proxy has a public address</td><td class="when">no private data sources yet</td></tr>
+                <tr><td>Private: your VPC with NAT and endpoints</td><td class="good">private path; outbound controlled by security groups</td><td class="bad">hourly cost; only some Availability Zones work; more to debug</td><td class="when">private data sources, or a network policy</td></tr>
+                <tr class="ours"><td>Private: interface endpoints only, no internet path</td><td class="good">tightest outbound: nothing in the VPC can reach the internet; the proxy has no public address</td><td class="bad">an endpoint for every service the agent calls, each billed by the hour (about 0.18 USD per hour here); only some Availability Zones work; a relay for every caller outside the VPC; slower cold starts</td><td class="when">regulated, mature operations; or when the platform must be safe from its first day</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <div class="copy-group">
+                <p><strong>This workshop.</strong> We choose C to prevent internet access from the VPC. <strong>One private VPC</strong> spans the <strong>three Availability Zones</strong> supported by AgentCore Runtime and has <strong>two subnet types</strong>:</p>
+                <ul class="concept-list">
+                  <li><strong>App subnets:</strong> the LiteLLM proxy and its internal load balancer, the relay Lambda, the interface endpoints and, from <a href="m4.html#m4-4">Module 4</a>, the network interfaces of the agent harnesses. A harness is AgentCore's configuration-driven agent, the form our agents take in <a href="m4.html#m4-4">Module 4</a>; <code>workshop apply 1</code> already creates the security group <code>agent-platform-harness</code> for them.</li>
+                  <li><strong>Data subnets:</strong> the database, and nothing else.</li>
+                </ul>
+                <p>Both groups are isolated subnets. Their route tables know the VPC itself and the S3 gateway endpoint, nothing more, so neither has a path to the internet. The data subnets are a separate group only so the database sits in its own address range, apart from the application components; its security group accepts PostgreSQL from the LiteLLM tasks alone and allows no outbound connection at all. The agent harnesses run in VPC mode. There is no internet gateway, NAT gateway or public IP anywhere in the VPC.</p>
+              </div>
+              <div class="copy-group">
+                <p>AWS services are reached through <strong>two kinds of endpoint</strong>:</p>
+                <ul class="concept-list">
+                  <li><strong>Nine interface endpoints</strong>, which the VPC console and the <code>workshop apply 1</code> output name by service: <code>bedrock-runtime</code> (the proxy's model calls), <code>bedrock-agentcore</code> (the AgentCore data plane: Runtime, Memory and Identity), <code>bedrock-agentcore.gateway</code>, <code>secretsmanager</code>, <code>logs</code> and <code>monitoring</code> (CloudWatch logs and metrics), <code>xray</code>, and <code>ecr.api</code> with <code>ecr.dkr</code> for image pulls. There is no endpoint for the AgentCore control plane: nothing inside the VPC creates or configures AgentCore resources; the control plane does that from outside.</li>
+                  <li><strong>One gateway endpoint:</strong> S3.</li>
+                </ul>
+                <p>Without internet access, tasks must pull the LiteLLM image from private ECR. <code>workshop apply 1</code> copies it into your account first, adding a few minutes to deployment.</p>
+              </div>
+              <div class="copy-group also">
+                <p>The quoted hourly estimates cover <strong>two components</strong>:</p>
+                <ul class="concept-list">
+                  <li><strong>Endpoints:</strong> about 0.18 USD per hour (nine endpoints in two zones).</li>
+                  <li><strong>Proxy:</strong> about 0.10 USD per hour.</li>
+                </ul>
+                <p>The database is single-AZ for the workshop.</p>
+              </div>
+              <div class="copy-group also">
+                <p><strong>Outside the VPC.</strong> The control plane's web UI, API and worker remain outside, along with Cognito and Agent Registry.</p>
+                <p>Those <strong>two services</strong> have no PrivateLink endpoints. A control plane in an isolated VPC could not manage sign-in or read the catalogue. Its AWS management calls use IAM authentication and TLS.</p>
+                <p><a href="m2.html#m2-1">Module 2</a> adds one more thing outside this VPC: the corporate identity provider, Keycloak, which stands in for the Okta or Entra ID a company already runs. <code>workshop apply 2</code> gives it a small public VPC of its own (10.1.0.0/16: two public subnets, an internet gateway, no NAT, no endpoints), because a company's identity provider must be reachable over the public internet: AgentCore Identity and API Gateway fetch its discovery document and call its token endpoint there, exactly as they would for a SaaS provider. Keycloak itself sits behind an internal load balancer, with an API Gateway HTTP API as its HTTPS door. The two VPCs are never connected, and the landing zone you build here stays as described.</p>
+              </div>
+              <div class="copy-group also">
+                <p>The internal load balancer cannot be called directly from outside the VPC. <strong>Three callers</strong> therefore use the relay Lambda:</p>
+                <ul class="concept-list">
+                  <li><strong>The control plane:</strong> the platform API and worker Lambdas.</li>
+                  <li><strong>The <code>workshop</code> command and the doctor</strong> on your laptop (the doctor runs at the end of <code>workshop apply 1</code>).</li>
+                  <li><strong>Other code on your laptop:</strong> the agent code exported in <a href="m4.html#m4-4">Module 4</a>. <code>workshop export --run</code> starts a small local proxy that forwards its calls through the relay.</li>
+                </ul>
+                <p>The relay forwards HTTP requests without adding credentials. IAM controls relay invocation; the proxy also requires its master key. The <a href="m2.html#m2-2">model route in Module 2</a> revisits this flow and explains why the proxy's admin console is unavailable in a browser.</p>
+              </div>
+              <div class="copy-group prod">
+                <p><strong>Production path.</strong> Add <strong>three controls</strong> to this private network:</p>
+                <ol class="concept-list">
+                  <li><strong>Multi-AZ database:</strong> run the database across more than one Availability Zone.</li>
+                  <li><strong>Endpoint policies:</strong> restrict each interface endpoint's access and scope the S3 endpoint to the platform's buckets.</li>
+                  <li><strong>AWS WAF:</strong> protect the internet-facing web UI and API.</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+<div class="card">
+            <h4 class="q" id="m1-5-d1-6"><span class="id">D1.6</span>Who creates infrastructure, and how?</h4>
+            <figure style="margin:0 0 10px">
+              <svg viewBox="0 0 960 280" role="img" aria-labelledby="m1-5-m1-fig1-d3-title">
+                <title id="m1-5-m1-fig1-d3-title">Who creates infrastructure, in three layers: CDK stacks and the control plane, a stack per project in Git, and the agentcore CLI as the developer's loop used with either</title>
+                <defs><marker id="m1-5-m1-fig1-d3-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+                <text class="d-text d-title" x="22" y="24">A · CDK + control plane</text>
+                <rect class="d-box d-account d-ours d-glow" x="12" y="34" width="290" height="200"/>
+                <rect x="196" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
+                <text class="d-text" x="249" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+                <rect class="d-box d-platform" x="26" y="48" width="262" height="44"/>
+                <text class="d-text d-strong" x="157" y="66" text-anchor="middle">7 platform stacks + 1 stand-in</text>
+                <text class="d-text d-small" x="157" y="82" text-anchor="middle">deployed once · the foundation</text>
+                <path class="d-arrow" d="M157 92 L157 106" marker-end="url(#m1-5-m1-fig1-d3-arr)"/>
+                <rect class="d-box d-platform" x="26" y="108" width="262" height="44"/>
+                <text class="d-text d-strong" x="157" y="126" text-anchor="middle">Control plane</text>
+                <text class="d-text d-small" x="157" y="142" text-anchor="middle">creates per-project objects at run time</text>
+                <path class="d-arrow" d="M55 152 L55 174" marker-end="url(#m1-5-m1-fig1-d3-arr)"/>
+                <path class="d-arrow" d="M123 152 L123 174" marker-end="url(#m1-5-m1-fig1-d3-arr)"/>
+                <path class="d-arrow" d="M191 152 L191 174" marker-end="url(#m1-5-m1-fig1-d3-arr)"/>
+                <path class="d-arrow" d="M259 152 L259 174" marker-end="url(#m1-5-m1-fig1-d3-arr)"/>
+                <rect class="d-box d-aws" x="26" y="176" width="58" height="28"/>
+                <text class="d-text d-tiny" x="55" y="194" text-anchor="middle" style="fill:#16191f">roles</text>
+                <rect class="d-box d-aws" x="94" y="176" width="58" height="28"/>
+                <text class="d-text d-tiny" x="123" y="194" text-anchor="middle" style="fill:#16191f">budget</text>
+                <rect class="d-box d-aws" x="162" y="176" width="58" height="28"/>
+                <text class="d-text d-tiny" x="191" y="194" text-anchor="middle" style="fill:#16191f">keys</text>
+                <rect class="d-box d-aws" x="230" y="176" width="58" height="28"/>
+                <text class="d-text d-tiny" x="259" y="194" text-anchor="middle" style="fill:#16191f">harness</text>
+                <text class="d-text d-small" x="157" y="222" text-anchor="middle">per project, at run time, from templates</text>
+                <text class="d-text d-small" x="157" y="254" text-anchor="middle">onboarding in minutes</text>
+                <text class="d-text d-small" x="157" y="269" text-anchor="middle">bound the control plane with IAM</text>
+
+                <text class="d-text d-title" x="347" y="24">B · A stack per project in Git</text>
+                <rect class="d-box d-account" x="337" y="34" width="290" height="200"/>
+                <rect class="d-box d-blue" x="351" y="48" width="262" height="28"/>
+                <text class="d-text d-strong" x="482" y="66" text-anchor="middle">Pull request</text>
+                <path class="d-arrow" d="M482 76 L482 90" marker-end="url(#m1-5-m1-fig1-d3-arr)"/>
+                <rect class="d-box d-people" x="351" y="92" width="262" height="44"/>
+                <text class="d-text d-strong" x="482" y="110" text-anchor="middle">Review</text>
+                <text class="d-text d-small" x="482" y="126" text-anchor="middle">the platform team in the loop</text>
+                <path class="d-arrow" d="M482 136 L482 150" marker-end="url(#m1-5-m1-fig1-d3-arr)"/>
+                <rect class="d-box d-blue" x="351" y="152" width="262" height="28"/>
+                <text class="d-text d-strong" x="482" y="170" text-anchor="middle">Pipeline</text>
+                <path class="d-arrow" d="M482 180 L482 194" marker-end="url(#m1-5-m1-fig1-d3-arr)"/>
+                <rect class="d-box d-platform" x="351" y="196" width="262" height="28"/>
+                <text class="d-text d-strong" x="482" y="214" text-anchor="middle">Stack per project</text>
+                <text class="d-text d-small" x="482" y="254" text-anchor="middle">auditable · slow onboarding</text>
+
+                <text class="d-text d-title" x="672" y="24">C · agentcore CLI: the developer's loop</text>
+                <rect class="d-box d-account" x="662" y="34" width="290" height="200"/>
+                <rect class="d-box d-platform" x="676" y="48" width="262" height="44"/>
+                <text class="d-text d-strong" x="807" y="66" text-anchor="middle">Developer laptop</text>
+                <text class="d-text d-small" x="807" y="82" text-anchor="middle" style="font-family:ui-monospace,Menlo,monospace">agentcore dev · agentcore deploy</text>
+                <path class="d-arrow" d="M807 92 L807 106" marker-end="url(#m1-5-m1-fig1-d3-arr)"/>
+                <rect class="d-box d-aws" x="676" y="108" width="262" height="44"/>
+                <text class="d-text d-strong" x="807" y="126" text-anchor="middle">One agent's own stack</text>
+                <text class="d-text d-small" x="807" y="142" text-anchor="middle">AgentCore Runtime, deployed with CDK</text>
+                <rect class="d-box d-ghost" x="676" y="160" width="262" height="44"/>
+                <text class="d-text d-strong d-ghost-text" x="807" y="178" text-anchor="middle">Shared platform: from A or B</text>
+                <text class="d-text d-small d-ghost-text" x="807" y="194" text-anchor="middle">the CLI never creates it</text>
+                <text class="d-text d-small" x="807" y="254" text-anchor="middle">deploys one agent · governs nothing shared</text>
+                <text class="d-text d-small" x="807" y="269" text-anchor="middle">used with A or B, not instead of them</text>
+              </svg>
+              <figcaption><strong>Three layers</strong>, used together rather than chosen between: code builds the foundation; the control plane (A) or a per-project pipeline (B) creates each project's objects; the <code>agentcore</code> CLI (C) runs on the developer's laptop and deploys one agent's own stack. This workshop uses A for the platform: CDK builds the shared foundation; the control plane creates project resources at run time (the role pair, the model gateway team and its keys, the agent's harness); the gateways, targets and policies of <a href="m3.html">Module 3</a> are created by the workshop command and registered with the control plane.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr class="ours"><td>CDK stacks for the foundation; the control plane creates per-project objects at run time</td><td class="good">onboarding in minutes; consistent names and tags</td><td class="bad">the control plane can create a lot; bound it with IAM</td><td class="when">many projects, a small platform team</td></tr>
+                <tr><td>A stack per project, reviewed in Git</td><td class="good">auditable, reviewable</td><td class="bad">slow onboarding; the platform team in the loop</td><td class="when">few projects, strict change control</td></tr>
+                <tr><td>The <code>agentcore</code> CLI: the developer's loop, used with A or B</td><td class="good">fastest way to run and deploy one agent; <code>agentcore deploy</code> deploys the agent's own CDK stack</td><td class="bad">governs nothing shared: it creates its own project's resources, never the platform's roles, budgets or gateways</td><td class="when">always, for local development; alone only when there is no platform yet</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <div class="copy-group">
+                <p><strong>This workshop.</strong> Workshop scripts deploy <strong>eight CDK stacks</strong>: seven for the platform and one stand-in.</p>
+                <ul class="concept-list">
+                  <li><strong>Four pre-deployed:</strong> web UI, authentication, platform API and sample data.</li>
+                  <li><strong>Three you deploy here:</strong> network, shared services and model gateway.</li>
+                  <li><strong>One more in <a href="m2.html#m2-1">Module 2</a>:</strong> the corporate identity provider, Keycloak, with the HR API behind it. It stands in for the Okta or Entra ID a company already runs, so it sits in a small VPC of its own outside your platform; <code>workshop apply 2</code> deploys it.</li>
+                </ul>
+              </div>
+              <div class="copy-group">
+                <p>The stacks provide the shared foundation. The control plane then creates each project's resources, including:</p>
+                <ul class="concept-list">
+                  <li><strong>IAM roles:</strong> created from templates.</li>
+                  <li><strong>Model budget:</strong> created for the project.</li>
+                  <li><strong>Model keys:</strong> the first in <a href="m4.html#m4-2">Module 4</a>, then those needed for each deployment and promotion.</li>
+                </ul>
+              </div>
+              <div class="copy-group">
+                <p>Real platforms use all three layers together: CDK for the foundation, the control plane or a pipeline for each project's objects, and the <code>agentcore</code> CLI on the developer's laptop to run and deploy one agent's code. In this course the laptop step is <code>workshop export --run</code> in <a href="m4.html#m4-4">Module 4</a>, which runs the exported agent locally through the relay.</p>
+              </div>
+              <div class="copy-group prod">
+                <p><strong>Production path.</strong> Deploy through an automated pipeline with an approval before each stack change. A person reviews every foundation change before it is applied.</p>
+              </div>
+            </div>
+          </div>
+<div class="card">
+            <h4 class="q" id="m1-5-d1-7"><span class="id">D1.7</span>What do we watch, and from where?</h4>
+            <figure style="margin:0 0 10px">
+              <svg viewBox="0 0 960 300" role="img" aria-labelledby="m1-5-m7-fig7-d1-title">
+                <title id="m1-5-m7-fig7-d1-title">Four ways to watch: Transaction Search and GenAI observability, CloudWatch Omni, a third-party backend, logs only</title>
+                <defs><marker id="m1-5-m7-fig7-d1-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+                <text class="d-text d-title" x="22" y="24">A · Transaction Search and GenAI observability</text>
+                <rect x="842" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
+                <text class="d-text" x="895" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+                <rect class="d-box d-account d-ours d-glow" x="12" y="36" width="936" height="144"/>
+                <rect class="d-box d-aws" x="26" y="86" width="206" height="44"/>
+                <text class="d-text" x="129" y="104" text-anchor="middle">Harness Dev and Prod</text>
+                <text class="d-text d-small" x="129" y="120" text-anchor="middle">OpenTelemetry spans and metrics</text>
+                <path class="d-arrow" d="M232 108 L256 108" marker-end="url(#m1-5-m7-fig7-d1-arr)"/>
+                <rect class="d-box d-blue d-ours" x="258" y="86" width="214" height="44"/>
+                <text class="d-text" x="365" y="104" text-anchor="middle">CloudWatch Transaction Search</text>
+                <text class="d-text d-small" x="365" y="120" text-anchor="middle">X-Ray spans → CloudWatch Logs</text>
+                <path class="d-arrow" d="M472 100 L496 76" marker-end="url(#m1-5-m7-fig7-d1-arr)"/>
+                <path class="d-arrow" d="M472 116 L496 132" marker-end="url(#m1-5-m7-fig7-d1-arr)"/>
+                <rect class="d-box d-blue" x="498" y="51" width="236" height="44"/>
+                <text class="d-text" x="616" y="69" text-anchor="middle">GenAI observability</text>
+                <text class="d-text d-small" x="616" y="85" text-anchor="middle">a trace per request</text>
+                <rect class="d-box d-blue" x="498" y="107" width="236" height="58"/>
+                <text class="d-text" x="616" y="125" text-anchor="middle">CloudWatch metrics</text>
+                <text class="d-text d-small" x="616" y="141" text-anchor="middle">invocations · latency · errors</text>
+                <text class="d-text d-small" x="616" y="155" text-anchor="middle">policy decisions</text>
+                <path class="d-arrow" d="M734 73 L758 100" marker-end="url(#m1-5-m7-fig7-d1-arr)"/>
+                <path class="d-arrow" d="M734 136 L758 116" marker-end="url(#m1-5-m7-fig7-d1-arr)"/>
+                <rect class="d-box d-platform d-ours" x="760" y="79" width="174" height="58"/>
+                <text class="d-text" x="847" y="97" text-anchor="middle">Platform dashboard</text>
+                <text class="d-text d-small" x="847" y="113" text-anchor="middle">Overview</text>
+                <text class="d-text d-small" x="847" y="127" text-anchor="middle">metrics, not CloudWatch Logs</text>
+                <text class="d-text d-small" x="480" y="198" text-anchor="middle">native · a trace per request, grouped by session, kept per endpoint · an account-level setting · trace ingestion is billed</text>
+                <text class="d-text d-small" x="480" y="214" text-anchor="middle">spend never comes from traces: a sampled trace is not a ledger; the model gateway's logs are</text>
+                <rect class="d-box" x="12" y="230" width="300" height="58"/>
+                <text class="d-text d-strong" x="162" y="248" text-anchor="middle">B · CloudWatch Omni</text>
+                <text class="d-text d-small" x="162" y="264" text-anchor="middle">agent-aware front end over the same data</text>
+                <text class="d-text d-small" x="162" y="278" text-anchor="middle">information only · nothing to re-instrument</text>
+                <rect class="d-box" x="336" y="230" width="300" height="58"/>
+                <text class="d-text d-strong" x="486" y="248" text-anchor="middle">C · Export to a third-party backend</text>
+                <text class="d-text d-small" x="486" y="264" text-anchor="middle">OTLP → your APM</text>
+                <text class="d-text d-small" x="486" y="278" text-anchor="middle">one tool for everything · export plumbing</text>
+                <rect class="d-box" x="660" y="230" width="288" height="58" style="stroke:#b4471f"/>
+                <text class="d-text d-strong" x="804" y="248" text-anchor="middle">D · Logs only</text>
+                <text class="d-text d-small" x="804" y="264" text-anchor="middle">no traces</text>
+                <text class="d-text d-small" x="804" y="278" text-anchor="middle">never for Prod</text>
+              </svg>
+              <figcaption>There are four ways to watch an agent. In option A, which this workshop uses, the spans and metrics from both harnesses reach CloudWatch through Transaction Search. GenAI observability then shows one trace per request, grouped into sessions: a one-turn conversation, like today's traffic, is one session with one trace, and a multi-turn Playground conversation is one session with several traces. The Platform dashboard reads the metrics. Options B, C and D are the alternatives, and D, logs only, is never acceptable for Prod.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr class="ours"><td>Transaction Search and GenAI observability</td><td class="good">native; a trace per request, grouped by session, kept per endpoint</td><td class="bad">an account-level setting; trace ingestion is billed</td><td class="when">AWS-native operations</td></tr>
+                <tr><td>CloudWatch Omni, the agent-aware front end over the same CloudWatch data</td><td class="good">traces, sessions, quality scores and plain-language queries in one place; nothing to re-instrument</td><td class="bad">one space per account and Region; its own access model to learn</td><td class="when">operators want sessions, traces and scores in one investigation</td></tr>
+                <tr><td>Export to a third-party observability backend</td><td class="good">one tool for everything</td><td class="bad">export plumbing</td><td class="when">an existing APM</td></tr>
+                <tr><td>Logs only</td><td class="good">nothing to set up</td><td class="bad">no traces</td><td class="when">never for Prod</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <p><strong>This workshop.</strong> Transaction Search is enabled by the foundation. <strong>Overview</strong> reads the first three sources as CloudWatch metrics and the fourth from the model gateway's spend logs through its API; nothing on it comes from CloudWatch Logs. Open CloudWatch for a conversation's traces.</p>
+              <p class="also">CloudWatch Omni is another front end over the same data. It is listed as an option, but not set up today.</p>
+              <p class="also">For changes, read <strong>two audit records</strong>:</p>
+<ul class="concept-list">
+  <li><strong>Platform releases:</strong> who created, submitted, approved and promoted.</li>
+  <li><strong>CloudTrail:</strong> which AWS API changed a resource, under which identity.</li>
+</ul>
+              <p class="also">A trace ID correlates requests; it does not identify the user. Sampled traces miss some usage, so spend comes from model-gateway logs that see every call.</p>
+              <p class="prod"><strong>Production path.</strong> Alarm on errors, latency, budget burn and quality. Give every alarm a notification target and no-data rule. A heartbeat distinguishes idle traffic from a broken pipeline.</p>
+            </div>
+          </div>
+<div class="card">
+            <h4 class="q" id="m1-5-d1-8"><span class="id">D1.8</span>What may telemetry keep, and who may read it?</h4>
+            <figure style="margin:0 0 10px">
+              <svg viewBox="0 0 960 300" role="img" aria-labelledby="m1-5-m7-fig7-d3-title">
+                <title id="m1-5-m7-fig7-d3-title">One span has metadata and content; three options keep all of it, metadata only, or content with named fields blanked</title>
+                <defs><marker id="m1-5-m7-fig7-d3-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+                <rect class="d-box d-platform" x="12" y="12" width="936" height="64"/>
+                <text class="d-text d-strong" x="26" y="48">one span</text>
+                <rect class="d-box" x="104" y="22" width="410" height="44"/>
+                <text class="d-text d-strong" x="309" y="40" text-anchor="middle">metadata</text>
+                <text class="d-text d-small" x="309" y="56" text-anchor="middle">session id · timings · token counts · tool names</text>
+                <rect class="d-box d-ours" x="530" y="22" width="404" height="44"/>
+                <text class="d-text d-strong" x="732" y="40" text-anchor="middle">content</text>
+                <text class="d-text d-small" x="732" y="56" text-anchor="middle">prompt · answer · tool arguments</text>
+
+                <text class="d-text d-title" x="22" y="100">A · Full content</text>
+                <rect x="196" y="88" width="106" height="20" rx="10" fill="#ffe3b3"/>
+                <text class="d-text" x="249" y="102" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+                <rect class="d-box d-account d-ours d-glow" x="12" y="110" width="290" height="122"/>
+                <rect class="d-box" x="26" y="122" width="124" height="44"/>
+                <text class="d-text" x="88" y="140" text-anchor="middle">metadata</text>
+                <text class="d-text d-small" x="88" y="156" text-anchor="middle">kept</text>
+                <rect class="d-box d-ours" x="164" y="122" width="124" height="44"/>
+                <text class="d-text" x="226" y="140" text-anchor="middle">content</text>
+                <text class="d-text d-small" x="226" y="156" text-anchor="middle">kept</text>
+                <text class="d-text d-small" x="157" y="186" text-anchor="middle">readers: CloudWatch IAM</text>
+                <text class="d-text d-small" x="157" y="202" text-anchor="middle">not platform personas</text>
+                <text class="d-text d-small" x="157" y="250" text-anchor="middle">richest detail · personal data in the trace store</text>
+
+                <text class="d-text d-title" x="347" y="100">B · Metadata only</text>
+                <rect class="d-box d-account" x="337" y="110" width="290" height="122"/>
+                <rect class="d-box" x="351" y="122" width="124" height="44"/>
+                <text class="d-text" x="413" y="140" text-anchor="middle">metadata</text>
+                <text class="d-text d-small" x="413" y="156" text-anchor="middle">kept</text>
+                <rect class="d-box d-ghost" x="489" y="122" width="124" height="44"/>
+                <text class="d-text d-ghost-text" x="551" y="140" text-anchor="middle">content</text>
+                <text class="d-text d-small d-ghost-text" x="551" y="156" text-anchor="middle">not kept</text>
+                <text class="d-text d-small" x="482" y="250" text-anchor="middle">safe by default · a wrong answer cannot be read back</text>
+
+                <text class="d-text d-title" x="672" y="100">C · Redact at capture</text>
+                <rect class="d-box d-account" x="662" y="110" width="290" height="122"/>
+                <rect class="d-box" x="676" y="122" width="100" height="44"/>
+                <text class="d-text" x="726" y="140" text-anchor="middle">metadata</text>
+                <text class="d-text d-small" x="726" y="156" text-anchor="middle">kept</text>
+                <rect class="d-box" x="790" y="122" width="148" height="44"/>
+                <text class="d-text" x="864" y="140" text-anchor="middle">content</text>
+                <text class="d-text d-small" x="864" y="156" text-anchor="middle">named fields blanked</text>
+                <text class="d-text d-small" x="807" y="186" text-anchor="middle" style="font-family:ui-monospace,Menlo,monospace;font-size:11.5px;fill:#16191f">AWS_REDACT_SPAN_ATTRIBUTES</text>
+                <text class="d-text d-small" x="807" y="202" text-anchor="middle">names the fields to blank before export</text>
+                <text class="d-text d-small" x="807" y="250" text-anchor="middle">detail without the names · rules to maintain</text>
+
+                <text class="d-text d-small" x="480" y="286" text-anchor="middle">a read-time filter hides rows from a reader; the stored copy stays whole</text>
+              </svg>
+              <figcaption>Two field groups: metadata (IDs, timings, tokens, tools) and content (prompts, answers, arguments). We keep both. Metadata-only and redacted content are production choices.</figcaption>
+            </figure>
+            <table class="options">
+              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <tbody>
+                <tr class="ours"><td>Full content: prompts, answers and tool arguments in every trace</td><td class="good">the richest debugging and evaluation detail</td><td class="bad">personal data lands in the trace store; every reader sees everything; retention becomes a data decision</td><td class="when">synthetic data; Dev; a workshop</td></tr>
+                <tr><td>Metadata only: ids, timings, token counts, tool names</td><td class="good">safe by default; cheap</td><td class="bad">a wrong answer cannot be read back; judge-based evaluators need content</td><td class="when">production by default, until a data owner approves more</td></tr>
+                <tr><td>Redact at capture: content kept, named fields removed before export</td><td class="good">debugging detail without the names</td><td class="bad">redaction rules to maintain; collector filters and log masking are extra layers, not substitutes</td><td class="when">production, with a data owner's approval</td></tr>
+              </tbody>
+            </table>
+            <div class="ours-box">
+              <p><strong>This workshop.</strong> Full traces use synthetic HR data. <strong>CloudWatch IAM permissions</strong> control trace access, independently of platform personas. Online judges read the same stored content.</p>
+              <p class="prod"><strong>Production path.</strong> Start with metadata only. Keep redacted content when the data owner approves it; judge-based evaluation needs content. Define readers and retention per source. Tenant trace access is a data boundary.</p>
+            </div>
+            <p class="note">Filtering and redaction happen at different points:</p>
+<figure>
+  <svg viewBox="0 0 960 166" role="img" aria-labelledby="m1-5-m7-fig7-redact-title m1-5-m7-fig7-redact-desc">
+    <title id="m1-5-m7-fig7-redact-title">Redact before storage; apply reader filtering after storage</title>
+    <desc id="m1-5-m7-fig7-redact-desc">Captured content passes through source redaction before export to the trace store. Reader permissions and row filters act on the stored copy; they do not remove stored fields.</desc>
+    <defs><marker id="m1-5-m7-fig7-redact-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+    <rect class="d-box" x="12" y="38" width="174" height="58"/>
+    <text class="d-text d-title" x="99" y="60" text-anchor="middle">Capture</text>
+    <text class="d-text d-small" x="99" y="80" text-anchor="middle">prompt · answer · arguments</text>
+    <path class="d-arrow" d="M186 67 L230 67" marker-end="url(#m1-5-m7-fig7-redact-arrow)"/>
+    <rect class="d-box d-ours" x="232" y="38" width="208" height="58"/>
+    <text class="d-text d-title" x="336" y="60" text-anchor="middle">Redact at source</text>
+    <text class="d-text d-small" x="336" y="80" text-anchor="middle">remove fields before export</text>
+    <path class="d-arrow" d="M440 67 L484 67" marker-end="url(#m1-5-m7-fig7-redact-arrow)"/>
+    <rect class="d-box d-aws" x="486" y="38" width="178" height="58"/>
+    <text class="d-text d-title" x="575" y="60" text-anchor="middle">Trace store</text>
+    <text class="d-text d-small" x="575" y="80" text-anchor="middle">saved content</text>
+    <path class="d-arrow" d="M664 67 L708 67" marker-end="url(#m1-5-m7-fig7-redact-arrow)"/>
+    <rect class="d-box d-blue" x="710" y="38" width="238" height="58"/>
+    <text class="d-text d-title" x="829" y="60" text-anchor="middle">Reader access</text>
+    <text class="d-text d-small" x="829" y="80" text-anchor="middle">permissions + row filters</text>
+    <text class="d-text d-small" x="480" y="128" text-anchor="middle">Reader filtering does not erase fields from the stored copy.</text>
+  </svg>
+</figure>
+<ul class="concept-list">
+  <li><strong>Before export:</strong> ADOT's <code>AWS_REDACT_SPAN_ATTRIBUTES</code> names attributes to blank.</li>
+  <li><strong>After storage:</strong> reader filters select rows; they do not redact fields.</li>
+</ul>
+<p class="note"><code>AWS_GENAI_CONTENT_EXTRACTION_OPT_OUT=true</code> still keeps prompts and answers on spans. It is not a privacy opt-out.</p>
+          </div>
+</section>
+<section id="m1-5-telemetry">
+<h2>Place telemetry and its readers</h2>
+<p>Each evidence source needs a placement, a reader identity and an owner before a dashboard exists. A domain filter on a dashboard is not tenant authorisation; platform persona permissions do not grant CloudWatch access, and CloudWatch access does not follow platform personas.</p>
+<table class="plain"><thead><tr><th>Evidence</th><th>Source in this workshop</th><th>Boundary to record</th></tr></thead><tbody>
+<tr><td>Requests, errors, latency, sessions</td><td>AgentCore Runtime metrics in CloudWatch</td><td>Account and Region; project and environment attribution</td></tr>
+<tr><td>Tool allow and deny</td><td>Gateway policy metrics (<code>AllowDecisions</code>, <code>DenyDecisions</code>)</td><td>Gateway and policy version; LOG_ONLY versus ENFORCE</td></tr>
+<tr><td>Model and tool conversation path</td><td>OpenTelemetry spans, CloudWatch Transaction Search and GenAI observability</td><td>Content kept, retention, reader IAM, session and version correlation</td></tr>
+<tr><td>Quality</td><td>AgentCore Evaluations online evaluation</td><td>Evaluators, sampling, quiet timeout, delay, reader</td></tr>
+<tr><td>Model spend</td><td>The model gateway's spend logs, read through its API</td><td>Key and team ownership; approved financial audience</td></tr>
+<tr><td>Changes</td><td>Platform release records and CloudTrail</td><td>Who changed what, the deployed version, audit coverage</td></tr>
+</tbody></table>
+<p>Transaction Search is an account and Region setting, not a project dashboard: <code>workshop apply 1</code> enables it in the SharedServices stack together with the baseline guardrail and the evaluation role. Promotion in Module 4 registers online evaluation; traces and scores exist only after runtime traffic (Module 5).</p>
+<details class="reference"><summary>Reference · An agent-aware front end, and more than one account</summary>
+<p>Choose CloudWatch Omni (option B of <a href="#m1-5-d1-7">D1.7</a>) when operators need application and agent traces, sessions, shared investigations and quality signals in one place. A <em>domain</em> provides the sign-in entry point; a <em>space</em> belongs to one account and Region; its CloudWatch dataset makes telemetry queryable. One space per account and Region; no cross-space queries.</p>
+<table class="plain"><thead><tr><th>Topology</th><th>Why</th><th>Cost or constraint</th></tr></thead><tbody>
+<tr><td>Local spaces under an organisation domain</td><td>Teams keep telemetry in their own accounts while sharing a sign-in entry point</td><td>Investigations across spaces need an explicit handoff</td></tr>
+<tr><td>Central operations space</td><td>Operators correlate approved telemetry across accounts and Regions</td><td>Centralisation rules replicate data into the space's account; review residency, duplicated storage and ingestion, retention and central-reader access</td></tr>
+<tr><td>Local spaces plus selected centralisation</td><td>Local ownership with shared fleet signals</td><td>Two views and stored copies need named owners and deletion procedures</td></tr>
+</tbody></table>
+<p>The organisation administrator creates an organisation domain from the management account; centralisation rules need the management account or a delegated administrator. Trace centralisation needs Transaction Search in each source account. Centralisation copies new telemetry once a rule is active; it does not backfill, while first-time enablement can backfill up to seven days of eligible local data (not data encrypted with a customer-managed key).</p>
+<p>Access: members read the whole space by default; grants combine, including group grants, and have no explicit denies. Data scopes filter log and trace rows at read time, not fields within a visible row, and do not isolate metrics, dataset export, AI summaries or prompt playgrounds. A tenant attribute or dashboard filter cannot establish customer isolation; for strict separation use account or space boundaries, or a separately authorised customer view. Both a member's grant and the space's underlying access role must permit an operation.</p>
+<p>Per request, require service name, environment, trace and span context, version identifiers, result and duration; propagate trace context across calls and link asynchronous work explicitly. Publish <code>session.id</code> on each turn's root span; <code>gen_ai.conversation.id</code> alone does not group sessions. The trace endpoint requires SigV4. These are correlation fields, never authorisation claims. Keep control-plane audit events separate from execution traces.</p>
+<p>Content: redact at capture when content must never leave the process; collector filters and log masking are extra layers, not substitutes. A customer-managed key needs attaching-principal, service, forwarding-role and reader permissions. Record retention for source logs, datasets, centralised copies, evaluation artefacts and exports.</p>
+<p>Detection: choose trace sampling and online-evaluation sampling separately; sampled spans make request and token counts incomplete. An alert needs its own access profile, a no-data rule and a notification rule; without one it sends nothing. A short-lived heartbeat distinguishes an idle workshop from a broken pipeline.</p>
+</details>
+</section>
+<section id="m1-5-record">
+<h2>Your design record: <code>module_1</code></h2>
+<pre class="code-dark"><code><span class="k">module_1</span>:
+  <span class="in">inputs</span>: <span class="s">none</span>                                      <span class="c"># workshop apply 1 deploys the landing zone as designed</span>
+  <span class="k">decisions</span>:
+    <span class="k">accounts</span>:        {<span class="k">workshop</span>: <span class="s">one-account</span>,         <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># Dev and Prod by name</span>
+    <span class="k">network</span>:         {<span class="k">workshop</span>: <span class="s">private-endpoints</span>,   <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># one private VPC, endpoints only: no internet path</span>
+    <span class="k">iac</span>:             {<span class="k">workshop</span>: <span class="s">cdk + control-plane</span>, <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># 7 platform stacks + the IdP stand-in (Module 2); per-project objects at run time; the agentcore CLI on the developer's laptop</span>
+    <span class="k">operating_model</span>: {<span class="k">workshop</span>: <span class="s">federated</span>,           <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># the platform team shares, project teams build</span></code></pre>
+<p class="caption">Each build phase has <strong>one design-record block</strong> with <strong>two parts</strong>:</p>
+<ul class="concept-list">
+            <li><code>inputs</code> (shown in bold): values read by the apply command. <code>module_1</code> has none because its landing zone is predefined.</li>
+            <li><code>decisions</code>: <code>workshop</code> records our choice; <code>my_call</code> records your organisation's choice and why.</li>
+          </ul>
+<p class="note">The two telemetry decisions belong to the <code>module_7</code> block: <code>observability</code> (<a href="#m1-5-d1-7">D1.7</a>) and <code>telemetry_content</code> (<a href="#m1-5-d1-8">D1.8</a>). Write their <code>my_call</code> now; <a href="m5.html">Module 5</a> checks them against what you observe.</p>
+</section>
+<section id="m1-5-hands-on">
+<h2>Activity: telemetry placement record <span class="time">10 min</span></h2>
+<div class="hands-on"><strong>Decide where evidence lives and who may read it</strong>
+<ol class="steps">
+<li><div><span class="pill tag command">command</span>Check the deployment you started at the beginning of the module: <code>uv run workshop status</code>. The three landing-zone stacks move through <code>CREATE_IN_PROGRESS</code>; you read their result at the <a href="m2.html#m2-1-hands-on">start of Module 2</a>.</div></li>
+<li><div><span class="pill tag record">record</span>For each account in your design, name the collector or export path, the storage location, the encryption and retention owner, the authorised operator and any permitted cross-account query path.</div></li>
+<li><div><span class="pill tag record">record</span>Decide whether full content is necessary. This workshop captures full synthetic conversations; production usually starts with metadata only or pre-storage redaction. <code>AWS_REDACT_SPAN_ATTRIBUTES</code> blanks named attributes; <code>AWS_GENAI_CONTENT_EXTRACTION_OPT_OUT=true</code> does not remove prompts and answers from spans.</div></li>
+<li><div><span class="pill tag record">record</span>Choose trace sampling and online-evaluation sampling separately. The lab evaluates 100% of Prod conversations with a one-minute quiet timeout; pick representative, affordable settings for production.</div></li>
+<li><div><span class="pill tag record">record</span>Name alert recipients and no-data behaviour. The implementation configures no alarms and no automatic rollback; record them as implementation and acceptance work with an owner.</div></li>
+<li><div><span class="pill tag record">record</span>For several accounts, define correlation, reader grants, shared-gateway versus workload traces and cost ownership (Module 5 allocates shared cost). Aggregation does not follow from account provisioning.</div></li>
+<li><div><span class="pill tag record">record</span>Write <code>my_call</code> for <code>module_1.decisions.network</code>, <code>module_1.decisions.iac</code>, <code>module_7.decisions.observability</code> and <code>module_7.decisions.telemetry_content</code>.</div></li>
+</ol></div>
+<p>You verify this record twice: at the start of Module 2, inspect the SharedServices stack, the evaluation role and the endpoints (no agent trace exists yet); in Module 5, follow a real synthetic Prod trace and compare metrics, spend and quality. Keep absent or unexecuted evidence pending.</p>
+</section>
+
+
+
+<section id="m1-6-trace">
+<h2>Review the complete target architecture: follow the two request paths</h2>
+<p class="lead" id="m1-6">Every decision so far constrains one platform. The <a href="#m1-6-usage">target architecture at the end of this page</a> is that platform as the workshop plans to build it over Modules 2 to 5; it is the planned target, not something already deployed. Before reviewing it as a whole, follow the two kinds of request it must carry, because each one crosses the boundaries you placed above.</p>
+<p><strong>Platform actions:</strong> a persona signs in through Cognito, calls the authenticated platform API, and receives only actions allowed by their role. The API records state and dispatches work. The worker coordinates deployment, evaluation, invocation and promotion.</p>
+<p><strong>Agent invocation:</strong> the Playground or <code>workshop ask</code> reaches the HR runtime through the control plane. The runtime calls the private model gateway with its scoped model key and calls tools through its configured AgentCore Gateway. Tool targets and the HR Knowledge Base supply the result. Traces and metrics connect the request to its runtime, tool calls and outcome.</p>
+<p>The employee-aware variant uses a different identity path: a corporate employee token enters the on-behalf-of runtime and gateway, and an outbound token exchange supplies the HR API's required audience. Keep that employee identity separate from the platform persona and the runtime's AWS execution role.</p>
+</section>
+<section id="m1-6-hands-on">
+<h2>Activity: review the target architecture <span class="time">15 min</span></h2>
+<div class="hands-on"><strong>Review the platform, then continue to its shared services</strong>
+<ol class="steps">
+<li><div>Open the <a href="#m1-6-usage">target architecture</a> below (full size from its link) beside these steps. Identify which components are already deployed and which the next module will configure. Use the outputs from <a href="intro.html#setup-workspace">workspace setup</a> to locate the control plane.</div></li>
+<li><div>Trace a platform administration action and an HR invocation. Name the identity and permission check at each boundary; identify where a denied call and a failed dependency would be investigated.</div></li>
+<li><div>Record the shared-service owner, workload owner and domain approver in your design record. Note any customer account, tenancy or network requirement that differs from this lab.</div></li>
+<li><div>Carry those decisions into Module 2. Reuse this architecture when reviewing each module's new resources and connections.</div></li>
+</ol></div>
+<p id="m1-overview-handoff"><strong>Check the design handoff.</strong> Another participant should be able to trace one requirement to its owner, shared capability, workload responsibility and acceptance check, name the consumer application and follow a request across its access boundaries. Record the trade-off and reconsideration trigger for each major choice. Keep missing controls and integrations visible, with an owner and the checkpoint they block. A reviewed design establishes what to build and test; implementation evidence follows in Module 2.</p>
+</section>
+<section id="m1-reference">
+<h2>Module 1 glossary</h2>
+<p class="note">Terms used on this page, in the order they first appear. Open the list when a term is unfamiliar.</p>
+<details class="reference" id="m1-glossary"><summary>Reference · Module 1 glossary</summary>
+<div class="glossary"><dl>
+<dt><span id="m1-3-glossary"></span>Operating model</dt>
+<dd>Who builds, releases, supports and operates the shared services and agents.</dd>
+<dt>Governance</dt>
+<dd>Rules, their owners, where they are enforced and who may change them.</dd>
+<dt>Separation of duties</dt>
+<dd>Different people build and approve a release.</dd>
+<dt>Control plane</dt>
+<dd>The platform's own web UI, API, state table and worker job.</dd>
+<dt><span id="m1-4-glossary"></span>Account</dt>
+<dd>AWS's strongest isolation boundary.</dd>
+<dt>IAM</dt>
+<dd>AWS permissions: which role may call what.</dd>
+<dt>Tenant</dt>
+<dd>A business unit or customer whose data, credentials, actions and records must stay separate.</dd>
+<dt>SCP</dt>
+<dd>An AWS Organizations permission ceiling for member accounts. It grants no permissions; IAM must still allow the action.</dd>
+<dt><span id="m1-5-glossary"></span>Landing zone</dt>
+<dd>The accounts, network and tooling a platform is built on.</dd>
+<dt>Model gateway</dt>
+<dd>The shared entry point for model requests. This workshop uses the LiteLLM proxy.</dd>
+<dt>Harness</dt>
+<dd>AgentCore's configuration-driven agent, the form our agents take from <a href="m4.html#m4-4">Module 4</a>. One is deployed per environment into the app subnets, in VPC mode, behind the security group <code>agent-platform-harness</code>.</dd>
+<dt>NAT, endpoint</dt>
+<dd>NAT provides an internet exit; an endpoint provides private access to an AWS service. This VPC uses endpoints only.</dd>
+<dt>PrivateLink</dt>
+<dd>The feature behind interface endpoints: a network interface in your subnet answers the service's normal name, keeping the call on the AWS network.</dd>
+<dt>CDK</dt>
+<dd>Infrastructure written as code and deployed as stacks.</dd>
+<dt>Trace, span</dt>
+<dd>A trace records one request (one turn); spans record its individual steps.</dd>
+<dt>Session</dt>
+<dd>One conversation under one session id, kept until you start a new session in the Playground or pass a new one to <code>workshop ask --session</code>; each turn of it is a trace.</dd>
+<dt>Transaction Search</dt>
+<dd>CloudWatch search over spans, including agent conversations.</dd>
+<dt>Sampling</dt>
+<dd>The fraction of conversations recorded or evaluated.</dd>
+<dt>Redaction</dt>
+<dd>Remove sensitive fields before telemetry is stored or exported.</dd>
+<dt>Retention</dt>
+<dd>How long telemetry is kept.</dd>
+</dl></div>
+</details>
+</section>
+<section id="m1-6-usage">
+<h2>The target platform</h2>
+<p class="lead">This is where the decisions of this module lead: the reference platform the workshop builds and operates. Today only the four pre-deployed stacks (web UI, authentication, platform API and sample data) and the three landing-zone stacks that <code>workshop apply 1</code> is creating exist; everything else in the view is planned and arrives module by module.</p>
+<figure class="arch">
+<a href="arch/arch-5-operation.svg" target="_blank" rel="noopener"><img src="arch/arch-5-operation.svg" alt="Target platform architecture: the consumer and control plane, private model gateway, AgentCore runtimes and shared services, HR and Finance resources, corporate identity, and governance and observability." width="1600" height="1340" /></a>
+<figcaption>The planned target: the complete platform as it will stand at the end of Module 5, not what is deployed today. The operations services are highlighted in this view; each later module ends with its own view, highlighting the services added at that stage. Open the diagram at full size to read the service and connection labels.</figcaption>
+</figure>
+<h3 id="m1-6-map">Read the platform by layer</h3>
+<table class="plain">
+<thead><tr><th>Layer</th><th>Components and responsibility</th></tr></thead>
+<tbody>
+<tr><td>Consumer and control plane</td><td>CloudFront and S3 serve the platform UI. Cognito authenticates the three personas. API Gateway, the API Lambda and the worker coordinate authorised actions; DynamoDB holds project, blueprint, job and release state</td></tr>
+<tr><td>Private network and model access</td><td>Isolated subnets and VPC endpoints connect the workloads to AWS services. LiteLLM runs on Fargate behind an internal load balancer, with PostgreSQL for teams, keys and spend. A Lambda relay gives the control plane its administrative path to the proxy</td></tr>
+<tr><td>Agent workloads</td><td>AgentCore Runtime runs the Dev and Prod HR harnesses. Memory and Evaluations support the workload lifecycle. The on-behalf-of variant receives an employee token</td></tr>
+<tr><td>Shared agent services</td><td>Agent Registry holds discoverable records. Gateway connects tools and knowledge; Policy controls permitted calls. Identity manages the workload's outbound credentials and token exchange</td></tr>
+<tr><td>Tools, knowledge and data</td><td>HR and Finance Lambda tools access their DynamoDB tables. Bedrock supplies models, guardrails and the HR Knowledge Base. S3, ECR and Secrets Manager hold the supporting documents, images, configuration and credentials</td></tr>
+<tr><td>Corporate identity</td><td>Keycloak stands in for a corporate identity provider such as Okta or Entra ID. Its separate VPC and HTTPS entry point support the employee-aware HR path</td></tr>
+<tr><td>Governance and observability</td><td>IAM roles, evaluation evidence, CloudWatch and X-Ray support access control and operation. CloudTrail supplies applicable change records. Organizations and SCPs are customer design options, not resources built by this lab</td></tr>
+</tbody>
+</table>
+<h3 id="m1-6-basis">Match the later module views</h3>
+<table class="plain">
+<thead><tr><th>Module</th><th>Where to look on this architecture</th></tr></thead>
+<tbody>
+<tr><td>1 — Requirements and architecture</td><td>Choose operating responsibilities, account and tenant boundaries, network placement, and telemetry ownership</td></tr>
+<tr><td>2 — Build the shared platform</td><td>Verify the landing zone and identity, configure model access, set up Registry and the required gateway access, and inspect the control plane</td></tr>
+<tr><td>3 — Workloads and blueprints</td><td>Follow the HR and Finance gateway targets, workload identities, knowledge bindings and blueprint inputs</td></tr>
+<tr><td>4 — Access, governance and AgentOps</td><td>Issue model permissions and caps, deploy and evaluate HR in Dev, then approve and promote its accepted version to Prod</td></tr>
+<tr><td>5 — Operate and improve</td><td>Follow runtime traces, policy metrics, spend, online quality scores and change records</td></tr>
+</tbody>
+</table>
+<p>The lab uses one AWS account, with Dev and Prod separated by resource names and IAM. Its executable gateway fixture is per project and environment. Shared platform/domain gateway layouts are design alternatives. Finance supplies an invoice tool and isolation fixture; a deployed Finance agent remains a design extension.</p>
+<div class="remember"><strong>Remember.</strong> Agree who runs what before choosing where it runs. Accounts provide the strongest boundary; this workshop uses names and IAM for Dev and Prod. A small platform can move to separate accounts as it grows.</div>
+<p>Module 2 starts building it: it verifies the landing zone you just designed, adds identity, the model route, the registry and gateway access, and the control plane, and ends with the shared platform in place.</p>
+<p class="note">Further reading: <a href="https://aws-samples.github.io/sample-agentcore-enterprise-platform/#/MULTI_ACCOUNT">account strategies</a>, <a href="https://docs.aws.amazon.com/organizations/latest/userguide/orgs_reference_limits.html">Organizations and SCP limits</a>, and an <a href="https://aws-samples.github.io/sample-agentcore-enterprise-platform/#/OPERATING_MODEL">operating model template</a>.</p>
+</section>
+
+
+      </main>
+      <nav class="pager" aria-label="Previous and next page"><a href="intro.html">←&nbsp;Introduction</a><a href="m2.html">Module 2&nbsp;→</a></nav>
+
+      <details class="toc-disclosure" id="course-contents">
+        <summary class="toc-toggle" aria-label="Table of contents" title="Table of contents" aria-controls="contents-navigation">
+          <svg class="toc-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h11M4 12h11M4 19h11m3-10 3 3-3 3" /></svg>
+          <svg class="toc-collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </summary>
+        <nav class="toc" id="contents-navigation" aria-label="Table of contents">
+          <strong>Contents</strong>
+          <a href="index.html">The learning path</a>
+          <a href="intro.html">Introduction</a>
+          <a href="m1.html">Module 1 · Requirements, personas and architecture</a>
+          <a href="m2.html">Module 2 · Build the shared platform</a>
+          <a href="m3.html">Module 3 · Workloads and blueprints</a>
+          <a href="m4.html">Module 4 · Access, governance and AgentOps</a>
+          <a href="m5.html">Module 5 · Operate and improve</a>
+          <a href="handoff.html">Handoff</a>
+          <a href="cleanup.html">Clean up</a>
+        </nav>
+      </details>
+    </div>
+    <script src="course.js"></script>
+  </body>
+</html>

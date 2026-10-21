@@ -30,5 +30,7 @@ def model_gateway_credentials(request) -> tuple[int, dict, dict]:
 
 
 def project_options(request) -> dict:
-    """Admin only: pick lists for the project form (tool Lambdas, knowledge bases)."""
+    """Admin only: the tool Lambdas and knowledge bases the platform knows, each with the projects allowing it and an
+    `inventoried` flag. Two consumers: the project form's pick lists (inventoried rows only) and the Governance screen's
+    Knowledge bases / Tools tabs (every row)."""
     return governance_service.project_options()

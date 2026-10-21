@@ -110,6 +110,7 @@ ROUTES: tuple[Route, ...] = (
     Route("PATCH", "/projects/{projectId}/keys/{env}/{model}", keys.patch, (ADMIN,)),
     Route("GET", "/catalogue", catalogue.list_records, ANY),
     Route("GET", "/catalogue/search", catalogue.search, ANY),
+    Route("POST", "/catalogue/agents/sync", catalogue.sync_agents, (ADMIN,)),
     Route("GET", "/catalogue/{recordId}", catalogue.get_record, ANY),
     Route("POST", "/catalogue/{recordId}/status", catalogue.set_status, (ADMIN,)),
     Route("GET", "/governance", governance.get, ANY),

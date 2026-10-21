@@ -2191,7 +2191,7 @@ OK   the employee's token can be exchanged on alex.rivera's behalf; nothing down
                     <figure class="arch">
                         <!-- arch-svg:start -->
                         <a href="arch/module-2.svg" target="_blank" rel="noopener">
-                            <img src="arch/module-2.svg" alt="AWS architecture after module 2: Module 2 · identity" loading="lazy">
+                            <img src="arch/module-2.svg" width="1600" height="1340" alt="AWS architecture after module 2: Module 2 · identity" loading="lazy">
                         </a>
                         <!-- arch-svg:end -->
                         <figcaption><strong>Changed:</strong> Amazon Cognito (three groups and three users); AgentCore Identity (the two OAuth2 credential providers <code>kc-hr-agent</code> and <code>kc-hr-obo-gateway</code>; the model keys follow in module 5); outside the figure, the IdP stack with Keycloak and the HR API. The API maps token groups to platform roles; employees sign in at Keycloak. Dev and Prod agents use IAM and vault credentials; module 6's on-behalf-of agent presents the employee's token instead. Click to open full size.</figcaption>
@@ -2285,9 +2285,21 @@ OK   the employee's token can be exchanged on alex.rivera's behalf; nothing down
                     <a href="cleanup.html">Clean up
                         <span class="d">35 min</span>
                     </a>
-                <a href="#glossary">Glossary</a>
-        </nav>
+                </nav>
             </details>
+            <a class="to-top at-top" href="#top" aria-label="Back to top" title="Back to top">
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <path d="M12 19V5m-7 7 7-7 7 7"/>
+                </svg>
+            </a>
         </div>
         <script src="course.js"></script>
     </body>

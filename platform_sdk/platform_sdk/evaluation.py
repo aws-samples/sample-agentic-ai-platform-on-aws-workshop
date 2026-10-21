@@ -5,9 +5,16 @@ scenario is invoked, telemetry is given `delay_seconds` to land in CloudWatch, t
 scenario. `summarize` folds the result into `scores[evaluator] = {mean, min, passRate, count, errors, failed}` plus compact
 per-scenario results, and `apply_thresholds` gives the verdict the platform stores on the release.
 
-A scenario whose invocation failed (timeout, budget_exceeded refusal, missing spans: status FAILED, no evaluator results)
-is never dropped silently: it scores 0.0 on every floor evaluator, lowers every passRate, is listed in `failedScenarios`, and
-`apply_thresholds` adds a `_scenarios` failure so the release is BLOCKED.
+A scenario without a score is never dropped silently. Two cases: the invocation failed (timeout, budget_exceeded refusal:
+status FAILED, no evaluator results) or every evaluator errored (status UNSCORED; the usual cause is an incomplete span set,
+which the Evaluate API rejects with "Provided input has no spans to evaluate"). Both score 0.0 on every floor evaluator,
+lower every passRate, are listed in `failedScenarios`, and `apply_thresholds` adds a `_scenarios` failure so the release is
+BLOCKED and the Releases screen names the scenario.
+
+Span collection: the SDK's `CloudWatchAgentSpanCollector` returns on the first non-empty Logs Insights result, and a session's
+records land in several batches (log records with trace context first, the model and tool spans after), so a poll between
+batches is a partial read. `collect_complete` keeps polling until the set holds an invocation span and is unchanged across two
+polls (seen 2026-10-20: one scenario in ten lost that way, which turned a passing run into BLOCKED).
 
 Evaluator scales (read from GetEvaluator on 8 Oct 2026): every built-in evaluator returns `value` in [0, 1] with 1 = good
 (Correctness: Incorrect 0 / Partially correct 0.5 / Correct 1; GoalSuccessRate, Trajectory*, ToolSelectionAccuracy: No 0 / Yes 1;
@@ -24,7 +31,9 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
+from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
@@ -61,6 +70,62 @@ def is_upper_bound(evaluator: str) -> bool:
     return "harmfulness" in evaluator_key(evaluator).lower()
 
 
+# ---- spans --------------------------------------------------------------------------------------------------------
+# `gen_ai.operation.name` values of the spans the evaluators score (Strands tracer: invoke_agent, chat, execute_tool); a session
+# whose collected records carry none of them is a partial read, whatever else (memory calls, credential logs) has landed.
+INVOCATION_OPERATIONS = ("chat", "invoke_agent", "execute_tool")
+SPAN_CONFIRM_SECONDS = 10  # a span set counts as complete once it is unchanged across two fetches this far apart
+
+
+def is_invocation_span(span: Any) -> bool:
+    """A model, agent or tool invocation span (OTel GenAI `gen_ai.operation.name` or OpenInference `openinference.span.kind`)."""
+    attrs = span.get("attributes") if isinstance(span, dict) else None
+    if not isinstance(attrs, dict):
+        return False
+    return attrs.get("gen_ai.operation.name") in INVOCATION_OPERATIONS or attrs.get("openinference.span.kind") in (
+        "LLM",
+        "AGENT",
+        "TOOL",
+    )
+
+
+def span_keys(spans: list) -> frozenset:
+    """(traceId, spanId) pairs of a span list: two fetches that return the same pairs saw the same records."""
+    return frozenset((s.get("traceId"), s.get("spanId")) for s in spans if isinstance(s, dict))
+
+
+def collect_complete(
+    fetch: Callable[[], list],
+    max_wait_seconds: float,
+    confirm_seconds: float = SPAN_CONFIRM_SECONDS,
+    label: str = "",
+    clock: Callable[[], float] = time.monotonic,
+    sleep: Callable[[float], None] = time.sleep,
+) -> list:
+    """Poll `fetch()` (one Logs Insights read of a session's records) until the set holds an invocation span and is unchanged
+    since the previous poll; at `max_wait_seconds` return the last set and let the evaluators report what is missing."""
+    deadline = clock() + max_wait_seconds
+    previous: frozenset | None = None
+    while True:
+        spans = fetch()
+        keys = span_keys(spans)
+        invocations = sum(1 for s in spans if is_invocation_span(s))
+        if spans and invocations and keys == previous:
+            return spans
+        if clock() + confirm_seconds > deadline:
+            logger.warning(
+                "span set for %s %s after %.0f s: %d record(s), %d invocation span(s); evaluating what there is",
+                label or "the session",
+                "still changing" if keys != previous else "without an invocation span",
+                max_wait_seconds,
+                len(spans),
+                invocations,
+            )
+            return spans
+        previous = keys
+        sleep(confirm_seconds)
+
+
 # ---- results ------------------------------------------------------------------------------------------------------
 @dataclass
 class RunSummary:
@@ -93,6 +158,10 @@ class RunSummary:
     def table(self) -> list[dict]:
         """Rows for a quick printout: one per evaluator with mean, min, passRate and error count."""
         return [{"evaluator": k, **v} for k, v in self.scores.items()]
+
+    def problems(self) -> list[dict]:
+        """The per-scenario rows that produced no score: status FAILED (invocation) or UNSCORED (every evaluator errored)."""
+        return [row for row in self.results if is_failed_row(row)]
 
     def save(self, path: str | Path) -> Path:
         path = Path(path)
@@ -145,7 +214,8 @@ def result_value(entry: dict) -> float | None:
 
 
 def is_failed_row(row: dict) -> bool:
-    """A per-scenario result row whose invocation or scoring failed (status other than COMPLETED, or an error message)."""
+    """A per-scenario result row without a score: status other than COMPLETED (FAILED invocation, UNSCORED evaluation) or an
+    error message on the scenario itself."""
     return (row.get("status") or "COMPLETED") != "COMPLETED" or bool(row.get("error"))
 
 
@@ -161,6 +231,9 @@ def summarize(result: Any, evaluator_ids: list[str] | None = None) -> tuple[dict
     (for example a trajectory evaluator without a reference) are excluded from the statistics and counted in `errors`.
     A failed scenario (status != COMPLETED or `error` set) counts as 0.0 on every floor evaluator and as "not passed" in
     every passRate; the Harmfulness harm rate ignores it (no answer is not a harmful answer) and `failed` carries the count.
+    A COMPLETED scenario whose evaluators all errored (an incomplete span set rejected by the Evaluate API, no evaluator
+    result at all) becomes status UNSCORED with the first error as its `error`, and is treated like a failed one: it would
+    otherwise vanish from every mean (eight of nine instead of eight of ten) with nothing on the verdict to show for it.
     `evaluator_ids` names the evaluators of the run (`run_dataset` passes them); without it the evaluators seen in the
     scored scenarios are used. results: [{scenarioId, sessionId, status, scores{evaluator: value}, labels{}, error,
     errors{evaluator: message}}].
@@ -202,6 +275,10 @@ def summarize(result: Any, evaluator_ids: list[str] | None = None) -> tuple[dict
                 per_evaluator[key].append(scenario_value)
                 if labels:
                     row["labels"][key] = labels[0] if len(labels) == 1 else labels
+        if row["status"] == "COMPLETED" and not row["scores"]:
+            first_error = next(iter(row["errors"].values()), "no evaluator returned a result")
+            row["status"] = "UNSCORED"
+            row["error"] = f"no evaluator produced a score: {first_error[:300]}"
         results.append(row)
 
     failed = len(failed_scenario_ids(results))
@@ -322,6 +399,17 @@ def run_dataset(
             on_turn(inp.session_id, prompt, result)
         return AgentInvokerOutput(agent_output=result.text)
 
+    class CompleteSpanCollector(CloudWatchAgentSpanCollector):
+        """The SDK collector (bedrock-agentcore 1.24.x) returns on the first non-empty poll; this one returns a set with an
+        invocation span that is unchanged across two polls, or whatever it has at `max_wait_seconds` (see `collect_complete`)."""
+
+        def collect(self, session_id, start_time, end_time):
+            # the SDK's own 60 s buffer: Logs Insights treats endTime as exclusive and ingestion lags by seconds
+            query_end = end_time + timedelta(seconds=60)
+            return collect_complete(
+                lambda: self._fetch_spans(session_id, start_time, query_end), self.max_wait_seconds, label=session_id
+            )
+
     started = time.monotonic()
     dataset = FileDatasetProvider(str(dataset_path)).get_dataset()
     runner = OnDemandEvaluationDatasetRunner(region=region)
@@ -333,7 +421,7 @@ def run_dataset(
         ),
         dataset=dataset,
         agent_invoker=agent_invoker,
-        span_collector=CloudWatchAgentSpanCollector(
+        span_collector=CompleteSpanCollector(
             log_group_name=log_group_name, region=region, max_wait_seconds=span_wait_seconds
         ),
     )

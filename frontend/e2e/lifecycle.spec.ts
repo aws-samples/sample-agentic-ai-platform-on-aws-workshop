@@ -142,6 +142,14 @@ test("admin: lists, project tabs, governance, catalogue, Overview equals the API
   await expect(page.getByText("Approved models").first()).toBeVisible();
   await expect(page.getByText("claude-sonnet-5").first()).toBeVisible();
   await expect(page.getByText("hr-baseline").first()).toBeVisible();
+  // the approved inventory's two other tabs render against the live API (GET /governance/project-options) and sit in the URL
+  await page.getByRole("tab", { name: "Tools" }).click();
+  await expect(page.getByRole("heading", { name: /Approved tools/ })).toBeVisible();
+  await expect(page).toHaveURL(/tab=tools/);
+  await page.getByRole("tab", { name: "Knowledge bases" }).click();
+  await expect(page.getByRole("heading", { name: /Approved knowledge bases/ })).toBeVisible();
+  await page.getByRole("tab", { name: "Models" }).click();
+  await expect(page.getByText("Approved models").first()).toBeVisible();
   await expect(page.getByText("Policy engine and gateways").first()).toBeVisible();
   // Section guidance sits behind the round (i) icon next to each heading: click pins it in a popover, Escape closes it.
   await expect(page.getByText(/Agent Registry/)).toHaveCount(0);
@@ -196,7 +204,7 @@ test("admin: lists, project tabs, governance, catalogue, Overview equals the API
   // --- Catalogue: whatever the Agent Registry holds right now (the workshop state may be mid-rebuild: `workshop cleanup` empties the
   // registry, modules 4 and 5 fill and approve it again), so the expectations follow GET /catalogue?status=APPROVED
   await nav(page, "/catalogue");
-  const records = await api.get<Array<{ name: string; status: string }>>("/catalogue");
+  const records = await api.get<Array<{ name: string; status: string; recordType: string }>>("/catalogue");
   const approved = records.body.filter((r) => r.status === "APPROVED");
   const searchBox = page.getByTestId("catalogue-search").locator("input");
   if (records.body.length) {
@@ -206,6 +214,22 @@ test("admin: lists, project tabs, governance, catalogue, Overview equals the API
   } else {
     await expect(page.getByText(/^No records$|No Agent Registry configured/).first()).toBeVisible();
   }
+  // the Records tabs (All / Models / Knowledge bases / Tools / Agents) filter by the backend's category and sit in the URL
+  await page.getByRole("tab", { name: /^Agents/ }).click();
+  await expect(page).toHaveURL(/tab=agent/);
+  await expect(page.getByRole("tab", { name: /^Agents/ })).toHaveAttribute("aria-selected", "true");
+  const agents = records.body.filter((r) => r.recordType === "AGENT");
+  const notAgent = records.body.find((r) => r.recordType !== "AGENT");
+  if (agents.length) {
+    await expect(page.getByText(agents[0].name, { exact: true }).first()).toBeVisible();
+  } else if (records.body.length) {
+    await expect(page.getByText("No agents").first()).toBeVisible();
+  }
+  if (notAgent) {
+    await expect(page.getByText(notAgent.name, { exact: true })).toHaveCount(0); // filtered out of the Agents tab
+  }
+  await page.getByRole("tab", { name: /^All/ }).click();
+  await expect(page.getByRole("tab", { name: /^All/ })).toHaveAttribute("aria-selected", "true");
   await shot(page, "admin-catalogue");
   if (approved.length) {
     await searchBox.fill(approved[0].name.slice(0, 2));

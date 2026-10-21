@@ -18,6 +18,7 @@ import { useBreadcrumbs } from "../../layout/breadcrumbs";
 import { formatDateTime } from "../../utils/format";
 import { CreateReleaseModal } from "./CreateReleaseModal";
 import { STATUS_ORDER, describeFailure, evaluationIsPrevious, runProgressLabel, sortNewestFirst } from "./releaseHelpers";
+import Badge from "@cloudscape-design/components/badge";
 
 const LIVE_STATUSES: ReadonlyArray<string> = ["EVALUATING", "PROMOTING"];
 
@@ -126,7 +127,7 @@ export function ReleasesPage() {
             {
               id: "releaseId",
               header: "Release",
-              minWidth: 260,
+              minWidth: 160,
               isRowHeader: true,
               cell: (r) => (
                 <Link
@@ -140,9 +141,8 @@ export function ReleasesPage() {
                 </Link>
               ),
             },
-            { id: "project", header: "Project", cell: (r) => r.projectId },
-            { id: "version", header: "Blueprint", cell: (r) => `v${r.blueprintVersion}` },
-            { id: "notes", header: "Notes", minWidth: 220, cell: (r) => r.notes || "—" },
+            { id: "project", header: "Project", minWidth: 140, cell: (r) => r.projectId },
+            { id: "version", header: "Blueprint", minWidth: 100, cell: (r) => <Badge color="blue">v{r.blueprintVersion}</Badge> },
             { id: "status", header: "Status", minWidth: 150, cell: (r) => <ReleaseStatus status={r.status} /> },
             {
               id: "evaluation",
@@ -152,10 +152,11 @@ export function ReleasesPage() {
                 <span title={(r.evaluation?.failures ?? []).map(describeFailure).join("\n")}>{evaluationSummary(r)}</span>
               ),
             },
-            { id: "approval", header: "Decision", cell: (r) => (r.approval ? `${r.approval.decision} by ${r.approval.by} (${formatDateTime(r.approval.at)})` : "—") },
+            { id: "approval", header: "Decision", minWidth: 220, cell: (r) => (r.approval ? `${r.approval.decision} by ${r.approval.by} (${formatDateTime(r.approval.at)})` : "—") },
             {
               id: "promotion",
               header: "Promotion",
+              minWidth: 220,
               cell: (r) =>
                 r.status === "PROMOTED" && r.promotion
                   ? `harness v${r.promotion.harnessVersion ?? "?"} on ${r.promotion.endpoint ?? "live"} (${formatDateTime(r.promotion.at)})`
@@ -165,7 +166,8 @@ export function ReleasesPage() {
                       ? r.error?.code ?? "failed"
                       : "—",
             },
-            { id: "created", header: "Created", cell: (r) => `${formatDateTime(r.createdAt)} by ${r.createdBy}` },
+            { id: "created", header: "Created", minWidth: 220, cell: (r) => `${formatDateTime(r.createdAt)} by ${r.createdBy}` },
+            { id: "notes", header: "Notes", minWidth: 220, cell: (r) => r.notes || "—" },
           ]}
           empty={
             <EmptyState

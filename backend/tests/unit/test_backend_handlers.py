@@ -1030,6 +1030,8 @@ class FakeTargetsControl:
 
 
 class FakeBedrockAgent:
+    looked_up: list[str] = []  # class-level: the service creates a client per call; the test resets it
+
     def list_knowledge_bases(self, nextToken=None):
         if nextToken is None:
             return {
@@ -1046,9 +1048,13 @@ class FakeBedrockAgent:
         return {"knowledgeBaseSummaries": [{"knowledgeBaseId": "KB999", "name": "legal-docs", "status": "ACTIVE"}]}
 
     def get_knowledge_base(self, knowledgeBaseId):
-        assert knowledgeBaseId == "KB777", (
-            knowledgeBaseId
-        )  # only the registered id the list did not return is looked up
+        # only ids the list did not return are looked up: the registered KB777 and an allow-listed id nobody knows
+        FakeBedrockAgent.looked_up.append(knowledgeBaseId)
+        if knowledgeBaseId != "KB777":
+            raise ClientError(
+                {"Error": {"Code": "ResourceNotFoundException", "Message": f"{knowledgeBaseId} not found"}},
+                "GetKnowledgeBase",
+            )
         return {"knowledgeBase": {"knowledgeBaseId": "KB777", "name": "hr-policies-registered", "status": "ACTIVE"}}
 
 
@@ -1063,24 +1069,31 @@ def register_target(env, name, target_id, attributes):
 
 def test_project_options(fakes, monkeypatch):
     create_domain()
-    create_project()
+    create_project()  # allow-lists the HR tools Lambda and KB123
+    legacy_arn = f"arn:aws:lambda:us-east-1:{ACCOUNT}:function:legacy-tool"
+    kb_arn = f"arn:aws:bedrock:us-east-1:{ACCOUNT}:knowledge-base/KB123"
+    # a second project allow-lists a gateway target's Lambda, a Lambda no inventory knows, KB123 by ARN and an unknown id
+    create_project(
+        project_id="payroll-helper", allowedToolArns=[EXTRA_TOOL_ARN, legacy_arn], knowledgeBaseIds=[kb_arn, "KBGONE"]
+    )
     register_target("dev", "hrtools", "t1", {"kind": "lambda", "lambdaArn": HR_TOOLS_ARN})
     register_target("dev", "hrkb", "t2", {"kind": "knowledge_base", "knowledgeBaseId": "KB777"})
-    kb_arn = f"arn:aws:bedrock:us-east-1:{ACCOUNT}:knowledge-base/KB123"
     register_target("prod", "hrkb", "t2p", {"kind": "knowledge_base", "knowledgeBaseId": kb_arn})
     control = FakeTargetsControl()
     monkeypatch.setattr(clients, "agentcore_control", lambda: control)
     monkeypatch.setattr(clients, "bedrock_agent", lambda: FakeBedrockAgent())
+    FakeBedrockAgent.looked_up.clear()
 
     status, body = call("GET", "/governance/project-options")
     assert status == 200, body
+    assert FakeBedrockAgent.looked_up == ["KB777", "KBGONE"]  # named rows are never looked up
     # the vanished gateway is skipped silently; the unreadable target is reported by name; everything else is listed
     assert body["warnings"] == [
         "gateway hr-assistant-dev-gw: target broken could not be read (GetGatewayTarget failed: InternalServerException: boom)"
     ]
     assert control.fetched == ["t1", "t4", "t3"]  # the CONNECTOR target is never fetched
     tools = {t["arn"]: t for t in body["tools"]}
-    assert [t["name"] for t in body["tools"]] == ["agent-platform-hr-tools", "payroll-tools"]
+    assert [t["name"] for t in body["tools"]] == ["agent-platform-hr-tools", "legacy-tool", "payroll-tools"]
     assert tools[HR_TOOLS_ARN]["description"].startswith("AnyCompany HR tools")
     assert tools[HR_TOOLS_ARN]["sources"] == [
         "scenario",
@@ -1088,8 +1101,20 @@ def test_project_options(fakes, monkeypatch):
         "gateway hr-assistant-dev-gw target hrtools",
     ]
     assert tools[EXTRA_TOOL_ARN]["sources"] == ["gateway invoice-helper-dev-gw target payroll"]
+    # the Governance screen's "allowed in projects" comes from the projects' allow-lists; an allow-listed Lambda that no
+    # inventory returned is still a row, so the screen shows everything a project may call
+    assert tools[HR_TOOLS_ARN]["projects"] == ["hr-assistant"] and tools[HR_TOOLS_ARN]["inventoried"] is True
+    assert tools[EXTRA_TOOL_ARN]["projects"] == ["payroll-helper"]
+    assert tools[legacy_arn] == {
+        "arn": legacy_arn,
+        "name": "legacy-tool",
+        "description": None,
+        "sources": ["project allow-list only"],
+        "projects": ["payroll-helper"],
+        "inventoried": False,  # the project form leaves it out of its pick list; the Governance screen still shows it
+    }
     kbs = {k["id"]: k for k in body["knowledgeBases"]}
-    assert set(kbs) == {"KB123", "KB999", "KB777"}
+    assert set(kbs) == {"KB123", "KB999", "KB777", "KBGONE"}
     assert kbs["KB123"]["name"] == "agent-platform-policies" and kbs["KB123"]["status"] == "ACTIVE"
     # a knowledge base registered by ARN merges into its id row
     assert kbs["KB123"]["sources"] == ["bedrock", "scenario", "registered: hr-assistant/prod target hrkb"]
@@ -1097,6 +1122,12 @@ def test_project_options(fakes, monkeypatch):
     # a registered id the list did not return gets its name from GetKnowledgeBase
     assert kbs["KB777"]["name"] == "hr-policies-registered"
     assert kbs["KB777"]["sources"] == ["registered: hr-assistant/dev target hrkb"]
+    # allow-lists by id or ARN both count; an allow-listed id nobody knows keeps its id as the label
+    assert kbs["KB123"]["projects"] == ["hr-assistant", "payroll-helper"]
+    assert kbs["KB999"]["projects"] == [] and kbs["KB777"]["projects"] == []
+    assert kbs["KBGONE"]["sources"] == ["project allow-list only"] and kbs["KBGONE"]["projects"] == ["payroll-helper"]
+    assert kbs["KBGONE"]["name"] == "KBGONE" and kbs["KBGONE"]["status"] == "NOT_FOUND"  # deleted, still allowed
+    assert kbs["KBGONE"]["inventoried"] is False and kbs["KB123"]["inventoried"] is True
     assert call("GET", "/governance/project-options", persona="developer")[0] == 403
 
 
@@ -1138,6 +1169,8 @@ def test_project_options_degrade_without_permissions(fakes, monkeypatch):
     assert [t["arn"] for t in body["tools"]] == [HR_TOOLS_ARN] and body["tools"][0]["sources"] == ["scenario"]
     assert [k["id"] for k in body["knowledgeBases"]] == ["KB123"]
     assert body["knowledgeBases"][0]["name"] == "HR policy knowledge base (scenario)"
+    assert body["tools"][0]["projects"] == [] and body["knowledgeBases"][0]["projects"] == []  # no project exists
+    assert body["tools"][0]["inventoried"] is True and body["knowledgeBases"][0]["inventoried"] is True
     assert len(body["warnings"]) == 2 and all("not authorized" in w for w in body["warnings"])
 
 
@@ -1197,6 +1230,8 @@ def test_catalogue_requires_a_registry_then_lists_searches_and_updates(fakes, mo
     class Control:
         def __init__(self):
             self.calls = []
+            self.r2_updated_at = datetime(2026, 10, 9, tzinfo=UTC)
+            self.fail_r2 = False  # a throttled GetRegistryRecord while classifying
 
         def list_registry_records(self, **kwargs):
             self.calls.append(kwargs)
@@ -1215,7 +1250,14 @@ def test_catalogue_requires_a_registry_then_lists_searches_and_updates(fakes, mo
                 }
             return {
                 "registryRecords": [
-                    {"recordId": "r2", "name": "kb-hr-policies", "recordType": "CUSTOM", "status": "APPROVED"}
+                    {
+                        "recordId": "r2",
+                        "name": "kb-hr-policies",
+                        "recordType": "CUSTOM",
+                        "status": "APPROVED",
+                        "updatedAt": self.r2_updated_at,
+                    },
+                    {"recordId": "r4", "name": "hr-assistant-agent", "recordType": "AGENT", "status": "APPROVED"},
                 ]
             }
 
@@ -1231,6 +1273,21 @@ def test_catalogue_requires_a_registry_then_lists_searches_and_updates(fakes, mo
 
         def get_registry_record(self, **kwargs):
             self.calls.append(kwargs)
+            # the list carries no descriptors: the CUSTOM row is read once to classify it
+            if kwargs["recordId"] == "r2" and self.fail_r2:
+                raise ClientError(
+                    {"Error": {"Code": "ThrottlingException", "Message": "slow down"}}, "GetRegistryRecord"
+                )
+            if kwargs["recordId"] == "r2":
+                return {
+                    "recordId": "r2",
+                    "name": "kb-hr-policies",
+                    "recordType": "CUSTOM",
+                    "status": "APPROVED",
+                    "descriptors": {
+                        "custom": {"data": json.dumps({"kind": "knowledge-base", "knowledgeBaseId": "KB1"})}
+                    },
+                }
             if kwargs["recordId"] != "r1":
                 raise ClientError(
                     {"Error": {"Code": "ResourceNotFoundException", "Message": "no such record"}}, "GetRegistryRecord"
@@ -1248,22 +1305,54 @@ def test_catalogue_requires_a_registry_then_lists_searches_and_updates(fakes, mo
     class Data:
         def search_discoverable_registry_records(self, **kwargs):
             self.kwargs = kwargs
-            return {"registryRecords": [{"recordId": "r2", "name": "kb-hr-policies", "status": "APPROVED"}]}
+            # search hits carry their descriptors (data plane): no extra read to classify them
+            return {
+                "registryRecords": [
+                    {
+                        "recordId": "r2",
+                        "name": "kb-hr-policies",
+                        "recordType": "CUSTOM",
+                        "status": "APPROVED",
+                        "descriptors": {"custom": {"data": json.dumps({"kind": "knowledge-base"})}},
+                    },
+                    {
+                        "recordId": "r3",
+                        "name": "model-claude-sonnet-5",
+                        "recordType": "CUSTOM",
+                        "status": "APPROVED",
+                        "descriptors": {"custom": {"data": json.dumps({"kind": "model", "alias": "claude-sonnet-5"})}},
+                    },
+                ]
+            }
 
     control, data = Control(), Data()
     monkeypatch.setattr(clients, "registry_control", lambda: control)
     monkeypatch.setattr(clients, "registry_data", lambda: data)
 
+    # a throttled read while classifying: the row is `other` for this response only (nothing is cached)
+    control.fail_r2 = True
     status, body = call("GET", "/catalogue", persona="developer")
-    assert status == 200 and [r["recordId"] for r in body] == ["r1", "r2"]
+    assert status == 200 and [r["recordId"] for r in body] == ["r1", "r2", "r4"]
     assert body[0]["createdAt"] == "2026-10-08T00:00:00+00:00" and body[0]["recordType"] == "MCP"
+    assert [r["category"] for r in body] == ["tool", "other", "agent"]
     assert control.calls[0] == {"registryId": "reg-1", "maxResults": 100} and control.calls[1]["nextToken"] == "n1"
+    assert control.calls[2] == {"registryId": "reg-1", "recordId": "r2"} and len(control.calls) == 3
+    control.fail_r2 = False
+    # the Catalogue tabs: MCP -> tool, AGENT -> agent, CUSTOM by the descriptor's kind (one GetRegistryRecord, then cached)
+    status, body = call("GET", "/catalogue", persona="developer")
+    assert [r["category"] for r in body] == ["tool", "knowledge-base", "agent"]
+    assert control.calls[-1] == {"registryId": "reg-1", "recordId": "r2"} and len(control.calls) == 6
     call("GET", "/catalogue", query={"status": "APPROVED"})
-    assert control.calls[-2]["filters"] == [{"name": "status", "values": ["APPROVED"]}]
+    assert control.calls[-1]["filters"] == [{"name": "status", "values": ["APPROVED"]}] and len(control.calls) == 8
+    assert sum(1 for c in control.calls if c.get("recordId") == "r2") == 2  # classified from the cache this time
+    control.r2_updated_at = datetime(2026, 10, 10, tzinfo=UTC)  # the record changed: read again
+    call("GET", "/catalogue")
+    assert control.calls[-1] == {"registryId": "reg-1", "recordId": "r2"} and len(control.calls) == 11
     assert call("GET", "/catalogue", query={"status": "WHATEVER"})[0] == 400
 
     status, body = call("GET", "/catalogue/search", query={"q": "policies"}, persona="approver")
-    assert status == 200 and body[0]["recordId"] == "r2"
+    assert status == 200 and [r["recordId"] for r in body] == ["r2", "r3"]
+    assert [r["category"] for r in body] == ["knowledge-base", "model"]
     assert data.kwargs == {"searchQuery": "policies", "registryIds": ["reg-1"], "maxResults": 20}
     assert call("GET", "/catalogue/search")[0] == 400
     status, body = call("GET", "/catalogue/search", query={"q": "x" * 257})  # the search API caps searchQuery at 256
@@ -1272,6 +1361,7 @@ def test_catalogue_requires_a_registry_then_lists_searches_and_updates(fakes, mo
     # one record with its descriptors (the detail panel; DRAFT / PENDING_APPROVAL records are not searchable)
     status, body = call("GET", "/catalogue/r1", persona="developer")
     assert status == 200 and body["recordId"] == "r1" and body["status"] == "PENDING_APPROVAL"
+    assert body["category"] == "tool"
     assert body["descriptors"]["mcpServer"]["dataSchemaVersion"] == "2025-12-11" and body["createdAt"].startswith(
         "2026"
     )

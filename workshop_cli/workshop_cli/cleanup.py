@@ -123,8 +123,9 @@ class Cleanup:
         )
 
     def is_our_record(self, record) -> bool:
+        # "platform": the AGENT record the promote job writes for a Prod agent (platform_api.services.registry.register_agent)
         tags = self.registry_control.list_tags_for_resource(resourceArn=record["recordArn"]).get("tags") or {}
-        return tags.get("ManagedBy") in ("workshop", "notebook") or record["name"] in self.record_names
+        return tags.get("ManagedBy") in ("workshop", "notebook", "platform") or record["name"] in self.record_names
 
     def log_groups(self) -> list[str]:
         return [

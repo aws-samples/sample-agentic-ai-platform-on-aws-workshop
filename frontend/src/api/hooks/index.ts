@@ -113,6 +113,8 @@ export function useProject(projectId: string | undefined, overrides?: QueryOverr
 function invalidateProjects(queryClient: ReturnType<typeof useQueryClient>, projectId?: string) {
   void queryClient.invalidateQueries({ queryKey: ["projects"] });
   void queryClient.invalidateQueries({ queryKey: qk.domains() });
+  // the project-options rows carry each project's allow-lists ("allowed in projects" on the Governance screen)
+  void queryClient.invalidateQueries({ queryKey: qk.projectOptions() });
   if (projectId) {
     void queryClient.invalidateQueries({ queryKey: qk.project(projectId) });
   }
@@ -284,6 +286,19 @@ export function useSetCatalogueStatus() {
     mutationFn: ({ recordId, status, reason }: { recordId: string; status: DecisionStatus; reason?: string }) =>
       api.setCatalogueStatus(recordId, status, reason),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["catalogue"] }),
+  });
+}
+
+/** Admin only: the Catalogue's "Register promoted agents" button; the records and the releases' promotion panels change. */
+export function useSyncCatalogueAgents() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.syncCatalogueAgents(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["catalogue"] });
+      void queryClient.invalidateQueries({ queryKey: ["releases"] });
+    },
   });
 }
 

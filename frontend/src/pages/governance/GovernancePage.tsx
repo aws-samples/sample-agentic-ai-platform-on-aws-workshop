@@ -1,4 +1,3 @@
-import Badge from "@cloudscape-design/components/badge";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import ColumnLayout from "@cloudscape-design/components/column-layout";
@@ -7,15 +6,14 @@ import ContentLayout from "@cloudscape-design/components/content-layout";
 import Grid from "@cloudscape-design/components/grid";
 import Header from "@cloudscape-design/components/header";
 import KeyValuePairs from "@cloudscape-design/components/key-value-pairs";
-import Link from "@cloudscape-design/components/link";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Table from "@cloudscape-design/components/table";
 import Toggle from "@cloudscape-design/components/toggle";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
-import { useGovernance, useModelGatewayCredentials, useSetGatewayMode, useSettings } from "../../api/hooks";
+import { useGovernance, useModelGatewayCredentials, useProjectOptions, useSetGatewayMode, useSettings } from "../../api/hooks";
 import type { GatewayMode, GovernanceGateway } from "../../api/types";
 import { useMe } from "../../auth/MeContext";
 import { ConfirmModal } from "../../components/ConfirmModal";
@@ -28,14 +26,16 @@ import { GenericStatus, ModeBadge } from "../../components/StatusBadge";
 import { useConfig } from "../../config/ConfigContext";
 import { useBreadcrumbs } from "../../layout/breadcrumbs";
 import { useNotifications } from "../../layout/notifications";
-import { formatPricePerMillion } from "../../utils/format";
+import { ApprovedTabs } from "./ApprovedTabs";
 import { SettingsForm } from "./SettingsForm";
+import { type ApprovedTabId, isApprovedTab } from "./tabIds";
 
 export function GovernancePage() {
   useBreadcrumbs([{ text: "Governance", href: "/governance" }]);
   const config = useConfig();
   const me = useMe();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
   const governance = useGovernance();
   const settings = useSettings();
   const setMode = useSetGatewayMode();
@@ -44,6 +44,21 @@ export function GovernancePage() {
   const canWrite = me.can("governance:write");
   // the LiteLLM admin sign-in is an admin-only route; the password stays masked until the eye icon is clicked
   const credentials = useModelGatewayCredentials(canWrite);
+  // the approved inventory's active tab lives in the URL (?tab=), like the project detail page's tabs
+  const requestedTab = params.get("tab");
+  const activeTab: ApprovedTabId = isApprovedTab(requestedTab) ? requestedTab : "models";
+  const setTab = (tab: ApprovedTabId) => {
+    const next = new URLSearchParams(params);
+    next.set("tab", tab);
+    setParams(next, { replace: true });
+  };
+  // the knowledge bases and tools of the approved tabs: the same admin request that feeds the project form's pick lists.
+  // It fans out to several AgentCore and Bedrock calls, so it starts with the first visit of one of those two tabs.
+  const [inventoryWanted, setInventoryWanted] = useState(activeTab !== "models");
+  if (activeTab !== "models" && !inventoryWanted) {
+    setInventoryWanted(true);
+  }
+  const options = useProjectOptions(inventoryWanted);
   const data = governance.data;
   // the model gateway URL comes from the API (SSM at run time); config.json is the fallback of older deployments
   const gatewayUrl = data?.modelGateway?.url ?? config.modelGatewayUrl ?? "";
@@ -70,7 +85,7 @@ export function GovernancePage() {
   return (
     <ContentLayout
       header={
-        <Header variant="h1" description="Approved models and their guardrail, the shared policy engine and its gateways, the catalogue registry, and the platform defaults.">
+        <Header variant="h1" description="Approved models, knowledge bases and tools, the baseline guardrail, the shared policy engine and its gateways, the catalogue registry, and the platform defaults.">
           Governance
         </Header>
       }
@@ -78,49 +93,16 @@ export function GovernancePage() {
       <SpaceBetween size="l">
         {governance.error ? <ErrorAlert header="Governance data could not be loaded" error={governance.error} onRetry={() => void governance.refetch()} /> : null}
 
-        <Table
-          header={
-            <InfoHeader
-              counter={data ? `(${data.models.length})` : undefined}
-              help="Model aliases exposed by the model gateway (LiteLLM /model/info, falling back to the SSM list); agents reach models only through these aliases."
-              actions={
-                <Button href={`${gatewayUrl}/ui`} iconAlign="right" iconName="external" target="_blank" rel="noopener noreferrer" disabled={!gatewayUrl || gatewayPrivate}>
-                  LiteLLM admin UI
-                </Button>
-              }
-            >
-              Approved models
-            </InfoHeader>
-          }
-          items={data?.models ?? []}
-          loading={governance.isLoading}
-          loadingText="Loading models"
-          trackBy="alias"
-          wrapLines
-          columnDefinitions={[
-            { id: "alias", header: "Alias", minWidth: 200, cell: (m) => <CopyText value={m.alias} />, isRowHeader: true },
-            { id: "modelId", header: "Model id", minWidth: 260, cell: (m) => <CopyText value={m.modelId ?? m.litellmModel} max={56} /> },
-            { id: "tier", header: "Tier", cell: (m) => (m.tier ? <Badge color={m.tier === "premium" ? "blue" : "grey"}>{m.tier}</Badge> : "—") },
-            { id: "input", header: "Input price", minWidth: 150, cell: (m) => formatPricePerMillion(m.inputCostPerToken) },
-            { id: "output", header: "Output price", minWidth: 150, cell: (m) => formatPricePerMillion(m.outputCostPerToken) },
-            {
-              id: "guardrail",
-              header: "Guardrail",
-              minWidth: 160,
-              // the guardrail's name (resolved by the backend) reads better than its id; the id stays in the tooltip
-              cell: (m) =>
-                m.guardrail?.id ? (
-                  <span title={`${m.guardrail.id} v${m.guardrail.version}`}>
-                    <Badge color="green">{`${m.guardrail.name ?? m.guardrail.id} v${m.guardrail.version}`}</Badge>
-                  </span>
-                ) : (
-                  <Badge color="red">none</Badge>
-                ),
-            },
-            { id: "description", header: "Description", cell: (m) => m.description ?? "—" },
-            { id: "source", header: "Source", cell: (m) => (m.source === "litellm" ? "model gateway" : "SSM list (gateway unavailable)") },
-          ]}
-          empty={<EmptyState title="No approved models" description={gatewayDeployed ? "The ModelGateway stack publishes the alias list in SSM and LiteLLM's config." : "The model gateway is not deployed yet (landing zone)."} />}
+        <ApprovedTabs
+          activeTab={activeTab}
+          onTabChange={setTab}
+          models={data?.models}
+          modelsLoading={governance.isLoading}
+          modelsEmptyDescription={gatewayDeployed ? "The ModelGateway stack publishes the alias list in SSM and LiteLLM's config." : "The model gateway is not deployed yet (landing zone)."}
+          options={options.data}
+          optionsLoading={options.isLoading}
+          optionsError={options.error}
+          onRetryOptions={() => void options.refetch()}
         />
 
         <ColumnLayout columns={2}>
@@ -188,7 +170,33 @@ export function GovernancePage() {
                 <EmptyState title="No registry configured" description="PUT /settings {registryId} points the Catalogue at an Agent Registry." />
               )}
             </Container>
-            <Container header={<InfoHeader help="LiteLLM proxy: teams per project, virtual keys per agent, spend and budgets">Model gateway</InfoHeader>}>
+            <Container
+              header={
+                <InfoHeader
+                  help="LiteLLM proxy: teams per project, virtual keys per agent, spend and budgets. The LiteLLM admin UI button in this card's header opens the proxy's console; on the private landing zone it opens only from inside the VPC."
+                  actions={
+                    // kept on purpose while the proxy is private: the button says where the admin UI is, its tooltip why it will not open from here
+                    <Button
+                      href={gatewayUrl ? `${gatewayUrl}/ui` : undefined}
+                      external
+                      loading={governance.isLoading && !gatewayUrl}
+                      disabled={!gatewayUrl || gatewayPrivate}
+                      disabledReason={
+                        !gatewayDeployed
+                          ? "The model gateway is not deployed yet (landing zone)."
+                          : !gatewayUrl
+                            ? "The model gateway URL is not published."
+                            : "The proxy is private: this URL opens only from inside the VPC. Copy it from the Admin UI field of this card."
+                      }
+                    >
+                      LiteLLM admin UI
+                    </Button>
+                  }
+                >
+                  Model gateway
+                </InfoHeader>
+              }
+            >
               <SpaceBetween size="l">
                 <KeyValuePairs
                   columns={1}
@@ -205,22 +213,18 @@ export function GovernancePage() {
                     },
                     { label: "OpenAI-compatible base URL", value: <CopyText value={gatewayUrl ? `${gatewayUrl}/v1` : null} max={80} /> },
                     {
+                      // the header button is the one opener of this URL; the field is for copying it (from inside the VPC when private)
                       label: "Admin UI",
                       value: gatewayUrl ? (
-                        gatewayPrivate ? (
-                          <SpaceBetween size="xxs">
-                            <CopyText value={`${gatewayUrl}/ui`} max={80} />
+                        <SpaceBetween size="xxs">
+                          <CopyText value={`${gatewayUrl}/ui`} max={80} />
+                          {gatewayPrivate ? (
                             <Box variant="small" color="text-body-secondary">
-                              Not reachable from a browser: the proxy is private
-                              {data?.modelGateway?.reachableFrom ? ` and answers only ${data.modelGateway.reachableFrom}` : ""}. The platform
-                              reaches it through the relay; the credentials below stay valid.
+                              Opens only {data?.modelGateway?.reachableFrom ?? "from inside the VPC"}; the platform reaches it through the relay and the
+                              credentials below stay valid.
                             </Box>
-                          </SpaceBetween>
-                        ) : (
-                          <Link href={`${gatewayUrl}/ui`} external>
-                            {`${gatewayUrl}/ui`}
-                          </Link>
-                        )
+                          ) : null}
+                        </SpaceBetween>
                       ) : gatewayDeployed ? (
                         "—"
                       ) : (

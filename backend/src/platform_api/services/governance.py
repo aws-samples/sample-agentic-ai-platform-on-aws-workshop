@@ -280,21 +280,68 @@ def lambda_function_name(arn: str) -> str:
     return tail.split(":", 1)[0]
 
 
-def _registered_targets() -> list[dict]:
+def _projects() -> list[dict]:
+    """Every project item (one GSI walk; the callers below share the result instead of walking twice)."""
+    return list(db.query_gsi1("PROJECT"))
+
+
+def _registered_targets(projects: list[dict] | None = None) -> list[dict]:
     """Every registered `gateway_target` / `tool` / `knowledge_base` resource across all projects."""
     rows: list[dict] = []
-    for project in db.query_gsi1("PROJECT"):
+    for project in projects if projects is not None else _projects():
         for item in db.query(project["PK"], db.resource_prefix()):
             if item.get("type") in ("gateway_target", "tool", "knowledge_base"):
                 rows.append(db.strip_keys(item))
     return rows
 
 
-def tool_options(registered: list[dict] | None = None) -> tuple[list[dict], list[str]]:
-    """Lambda tool candidates: the scenario tools (SSM), the Lambda targets of every AgentCore gateway, registered targets."""
+def _knowledge_base_id(value: str) -> str:
+    """A knowledge base id from an id or a `...:knowledge-base/<id>` ARN."""
+    return value.rsplit("/", 1)[-1] if value.startswith("arn:") else value.strip()
+
+
+def _project_allow_lists(projects: list[dict] | None = None) -> list[dict]:
+    """Every project's allow-lists, [{projectId, tools: {lambda arn}, knowledgeBases: {kb id}}]: what the Governance screen
+    shows as "allowed in projects" next to each tool and knowledge base."""
+    rows: list[dict] = []
+    for project in projects if projects is not None else _projects():
+        rows.append(
+            {
+                "projectId": project.get("projectId"),
+                "tools": {arn for arn in project.get("allowedToolArns") or [] if _is_lambda_arn(arn)},
+                "knowledgeBases": {
+                    _knowledge_base_id(kb)
+                    for kb in project.get("knowledgeBaseIds") or []
+                    if isinstance(kb, str) and kb.strip()
+                },
+            }
+        )
+    return rows
+
+
+ALLOW_LIST_SOURCE = "project allow-list only"  # approved for a project, yet found in no inventory the platform can read
+
+
+def _mark_inventoried(rows: dict[str, dict]) -> None:
+    """`inventoried`: False for a row that exists only in a project's allow-list. The Governance screen shows such rows (a
+    deleted Lambda or a mistyped knowledge base id a project still allows); the project form's pick lists leave them out, so
+    one project's stale entry is never offered to the others."""
+    for row in rows.values():
+        row["inventoried"] = row["sources"] != [ALLOW_LIST_SOURCE]
+
+
+def tool_options(
+    registered: list[dict] | None = None, projects: list[dict] | None = None
+) -> tuple[list[dict], list[str]]:
+    """Lambda tool candidates: the scenario tools (SSM), the Lambda targets of every AgentCore gateway, registered targets.
+
+    Each row carries `projects`, the ids of the projects whose allow-list (allowedToolArns) names it; an allow-listed Lambda
+    that no inventory returned is still a row (source `project allow-list only`), so the Governance screen shows everything
+    a project may call."""
     cfg = clients.cfg()
     warnings: list[str] = []
     options: dict[str, dict] = {}
+    allow_lists = projects if projects is not None else _project_allow_lists()
 
     def add(arn: str | None, source: str, description: str | None = None) -> None:
         if not _is_lambda_arn(arn):
@@ -350,14 +397,27 @@ def tool_options(registered: list[dict] | None = None) -> tuple[list[dict], list
                 continue
             lambda_cfg = ((detail.get("targetConfiguration") or {}).get("mcp") or {}).get("lambda") or {}
             add(lambda_cfg.get("lambdaArn"), f"gateway {gateway_name} target {detail.get('name') or target_id}")
+    for project in allow_lists:
+        for arn in sorted(project["tools"]):
+            if arn not in options:
+                add(arn, ALLOW_LIST_SOURCE)
+    for row in options.values():
+        row["projects"] = sorted(p["projectId"] for p in allow_lists if row["arn"] in p["tools"])
+    _mark_inventoried(options)
     return sorted(options.values(), key=lambda row: (row["name"], row["arn"])), warnings
 
 
-def knowledge_base_options(registered: list[dict] | None = None) -> tuple[list[dict], list[str]]:
-    """Knowledge base candidates: Bedrock ListKnowledgeBases, the scenario knowledge base (SSM), registered targets."""
+def knowledge_base_options(
+    registered: list[dict] | None = None, projects: list[dict] | None = None
+) -> tuple[list[dict], list[str]]:
+    """Knowledge base candidates: Bedrock ListKnowledgeBases, the scenario knowledge base (SSM), registered targets.
+
+    Each row carries `projects`, the ids of the projects whose allow-list (knowledgeBaseIds, ids or ARNs) names it; an
+    allow-listed knowledge base that no inventory returned is still a row (source `project allow-list only`)."""
     cfg = clients.cfg()
     warnings: list[str] = []
     options: dict[str, dict] = {}
+    allow_lists = projects if projects is not None else _project_allow_lists()
 
     def add(
         kb_id: str | None, source: str, name: str | None = None, description: str | None = None, status=None
@@ -398,7 +458,15 @@ def knowledge_base_options(registered: list[dict] | None = None) -> tuple[list[d
         attributes = item.get("attributes") or {}
         kb_id = attributes.get("knowledgeBaseId") or (item.get("id") if item.get("type") == "knowledge_base" else None)
         add(kb_id, f"registered: {item.get('projectId')}/{item.get('env')} target {item.get('name')}")
-    # a registered knowledge base that ListKnowledgeBases did not return (or could not list): one GetKnowledgeBase for its name
+    for project in allow_lists:
+        for kb_id in sorted(project["knowledgeBases"]):
+            if kb_id not in options:
+                add(kb_id, ALLOW_LIST_SOURCE)
+    for row in options.values():
+        row["projects"] = sorted(p["projectId"] for p in allow_lists if row["id"] in p["knowledgeBases"])
+    _mark_inventoried(options)
+    # a registered or allow-listed knowledge base that ListKnowledgeBases did not return (or could not list): one
+    # GetKnowledgeBase for its name; a deleted one is reported NOT_FOUND so the screen can tell it from an unreadable one
     for row in options.values():
         if row["name"]:
             continue
@@ -411,15 +479,21 @@ def knowledge_base_options(registered: list[dict] | None = None) -> tuple[list[d
             )
         except Exception as exc:  # noqa: BLE001 - the id is still a valid label
             logger.info("GetKnowledgeBase(%s) failed: %s", row["id"], exc)
+            if _not_found(exc):
+                row["status"] = "NOT_FOUND"
         row["name"] = row["name"] or row["id"]
     return sorted(options.values(), key=lambda row: (row["name"], row["id"])), warnings
 
 
 def project_options() -> dict:
-    """GET /governance/project-options: what the project form offers for allowedToolArns and knowledgeBaseIds."""
-    registered = _registered_targets()
-    tools, tool_warnings = tool_options(registered)
-    knowledge_bases, kb_warnings = knowledge_base_options(registered)
+    """GET /governance/project-options: what the project form offers for allowedToolArns and knowledgeBaseIds (rows with
+    `inventoried` true), and what the Governance screen lists under its Knowledge bases and Tools tabs (every row, each with
+    the projects that allow it)."""
+    projects = _projects()
+    registered = _registered_targets(projects)
+    allow_lists = _project_allow_lists(projects)
+    tools, tool_warnings = tool_options(registered, allow_lists)
+    knowledge_bases, kb_warnings = knowledge_base_options(registered, allow_lists)
     return {"tools": tools, "knowledgeBases": knowledge_bases, "warnings": tool_warnings + kb_warnings}
 
 

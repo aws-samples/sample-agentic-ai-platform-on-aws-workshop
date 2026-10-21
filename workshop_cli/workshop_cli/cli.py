@@ -11,6 +11,7 @@ workshop ask --env dev "What is my leave balance? My employee id is E1001."
 workshop mode ENFORCE [--gateway hr-dev]
 workshop approve catalogue | release [--release-id ID]      fallbacks for the UI steps
 workshop promote [--release-id ID]
+workshop register-agents             the promoted Prod agents as AGENT records of the catalogue (fallback for the Catalogue button)
 workshop inventory                   every platform object, by name ("platform complete")
 workshop traffic --prod 3
 workshop scores                      online evaluation results so far
@@ -90,6 +91,12 @@ def _parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("promote", help="promote an APPROVED release to Prod (fallback for the UI button)")
     p.add_argument("--release-id", default=None)
+
+    sub.add_parser(
+        "register-agents",
+        help="register every promoted Prod agent in the catalogue (fallback for the Catalogue button; catch-up for agents "
+        "promoted before the promote job wrote AGENT records)",
+    )
 
     sub.add_parser("inventory", help="list every platform object by name")
 
@@ -180,6 +187,8 @@ def main(argv: list[str] | None = None) -> int:
             return tools.approve(ctx, args.what, release_id=args.release_id)
         if args.command == "promote":
             return tools.promote(ctx, release_id=args.release_id)
+        if args.command == "register-agents":
+            return tools.register_agents(ctx)
         if args.command == "inventory":
             return tools.inventory(ctx)
         if args.command == "traffic":

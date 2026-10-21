@@ -22,6 +22,12 @@ function tag(text: string | null | undefined): string[] | undefined {
   return [text.length > TAG_MAX ? `${text.slice(0, TAG_MAX - 1)}…` : text];
 }
 
+/** The candidates the form may offer: a row that exists only in some project's allow-list (`inventoried: false`, a deleted
+ * Lambda or a mistyped id) is not one of them; the owning project's own value still appears through the fallback below. */
+function inventoried<T extends { inventoried?: boolean }>(candidates: T[] | undefined): T[] {
+  return (candidates ?? []).filter((candidate) => candidate.inventoried !== false);
+}
+
 /**
  * Options of the tool pick list: the name on the first line, the ARN as the muted second line. The project's current
  * values that are not among the candidates stay selectable (labelled from the ARN) so an edit never drops them silently.
@@ -29,7 +35,7 @@ function tag(text: string | null | undefined): string[] | undefined {
 export function toolPickerOptions(candidates: ToolOption[] | undefined, current: ReadonlyArray<string>): MultiselectProps.Option[] {
   // while the candidates are still loading (or failed to load) a current value is simply unknown, not "not in the list"
   const fallbackTags = candidates ? ["not in the pick list"] : undefined;
-  const options: MultiselectProps.Option[] = (candidates ?? []).map((tool) => ({
+  const options: MultiselectProps.Option[] = inventoried(candidates).map((tool) => ({
     value: tool.arn,
     label: tool.name,
     description: tool.arn,
@@ -49,7 +55,7 @@ export function knowledgeBasePickerOptions(
   current: ReadonlyArray<string>,
 ): MultiselectProps.Option[] {
   const fallbackTags = candidates ? ["not in the pick list"] : undefined;
-  const options: MultiselectProps.Option[] = (candidates ?? []).map((kb) => ({
+  const options: MultiselectProps.Option[] = inventoried(candidates).map((kb) => ({
     value: kb.id,
     label: kb.name,
     description: kb.id,

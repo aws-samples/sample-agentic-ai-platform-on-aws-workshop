@@ -18,7 +18,7 @@ import time
 from platform_sdk import agentcore
 
 from . import db, errors, jobs
-from .handlers import blueprints, projects, releases
+from .handlers import blueprints, catalogue, projects, releases
 from .services import clients, evaluation_run
 from .services import harness as harness_service
 
@@ -56,7 +56,13 @@ def run_promote(job: dict) -> dict:
         "at": db.now_iso(),
         "jobId": job["jobId"],
     }
+    # Prod is live: say so first (one put, as before), then the catalogue entry, which may poll the registry for a while
     releases.save(release, "PROMOTED", promotion=promotion, error=None)
+    # the Catalogue's Agents tab: the Prod agent becomes an approved AGENT record (best effort, the agent is live already;
+    # POST /catalogue/agents/sync repeats this step for every project when it was skipped or failed)
+    promotion["registryRecord"] = catalogue.register_promoted_agent(project, item, release, promotion, job["createdBy"])
+    output["registryRecord"] = promotion["registryRecord"]
+    releases.save(release, promotion=promotion)
     return output
 
 

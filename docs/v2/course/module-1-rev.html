@@ -610,7 +610,7 @@
           <p class="caption">The figure uses AWS service icons. Faded boxes show later modules; the control plane reaches the model gateway only through the relay.</p>
           <figure class="arch">
             <!-- arch-svg:start -->
-            <a href="arch/module-1.svg" target="_blank" rel="noopener"><img src="arch/module-1.svg" alt="AWS architecture after module 1: Module 1 · the landing zone" loading="lazy"/></a>
+            <a href="arch/module-1.svg" target="_blank" rel="noopener"><img src="arch/module-1.svg" width="1600" height="1340" alt="AWS architecture after module 1: Module 1 · the landing zone" loading="lazy"/></a>
             <!-- arch-svg:end -->
             <figcaption><strong>Private network:</strong> no internet gateway, NAT or public IPs. Tasks pull images from ECR and reach AWS services through endpoints; the database has no outbound route. The SharedServices stack has no box of its own: its pieces appear as labels on the ECS node (3 aliases, each guardrailed), under CloudWatch (Transaction Search) and under IAM (evaluation role); the resources themselves are account-level, outside the VPC. Click the figure to open it full size.</figcaption>
           </figure>
@@ -659,6 +659,9 @@
           <a href="cleanup.html">Clean up <span class="d">35 min</span></a>
         </nav>
       </details>
+      <a class="to-top at-top" href="#top" aria-label="Back to top" title="Back to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-7 7 7-7 7 7" /></svg>
+      </a>
     </div>
     <script src="course.js"></script>
   </body>
