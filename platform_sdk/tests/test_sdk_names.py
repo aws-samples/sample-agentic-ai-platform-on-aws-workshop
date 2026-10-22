@@ -10,7 +10,8 @@ def test_all_derived_names_for_dev_and_prod():
     assert prod.gateway == "hr-assistant-prod-gw"
     assert dev.memory == "hr_assistant_dev_memory"
     assert dev.harness == "hr_assistant_dev" and prod.harness == "hr_assistant_prod"
-    assert dev.harness_endpoint == "DEFAULT" and prod.harness_endpoint == "live"
+    assert dev.harness_endpoint == "DEFAULT" and prod.harness_endpoint == "DEFAULT"
+    assert dev.invoke_qualifier is None and prod.invoke_qualifier is None
     assert prod.online_evaluation == "hr_assistant_prod_online_eval"
     assert dev.policy("allow_leave_balance") == "hr_assistant_dev_allow_leave_balance"
     assert dev.agent_role == "agent-platform-proj-hr-assistant-dev-agent"
@@ -37,10 +38,10 @@ def test_cedar_principal_matches_the_sts_assumed_role_form():
 
 def test_observability_names():
     prod = names.ProjectNames("hr-assistant", "prod")
-    assert prod.harness_service_name == "harness_hr_assistant_prod.live"
-    assert prod.harness_metric_name == "harness_hr_assistant_prod::live"
-    assert names.harness_log_group("harness_hr_assistant_prod-AbC123", "live") == (
-        "/aws/bedrock-agentcore/runtimes/harness_hr_assistant_prod-AbC123-live"
+    assert prod.harness_service_name == "harness_hr_assistant_prod.DEFAULT"
+    assert prod.harness_metric_name == "harness_hr_assistant_prod::DEFAULT"
+    assert names.harness_log_group("harness_hr_assistant_prod-AbC123", "DEFAULT") == (
+        "/aws/bedrock-agentcore/runtimes/harness_hr_assistant_prod-AbC123-DEFAULT"
     )
 
 

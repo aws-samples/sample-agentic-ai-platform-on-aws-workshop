@@ -57,7 +57,7 @@ def create(request):
             "sessionId": session_id,
             "harnessArn": harness["arn"],
             "harnessName": harness["name"],
-            "qualifier": "live" if env == "prod" else None,
+            "qualifier": names.ProjectNames(project["projectId"], env).invoke_qualifier,
             "model": (harness.get("attributes") or {}).get("model"),
         },
         request.principal.username,

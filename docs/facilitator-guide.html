@@ -1496,7 +1496,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                     <code>workshop promote</code>; developer and admin get 403).
                     The worker creates the Prod key
                     <code>hr-assistant-prod-claude-sonnet-5</code>, the Prod
-                    harness, pins <code>live</code> and registers
+                    harness (its <code>DEFAULT</code> endpoint follows it) and registers
                     <code>hr_assistant_prod_online_eval</code>; the first Prod
                     deployment can take minutes. Playground · Prod: cold start
                     <span class="pill wait">about 35 s</span>.
@@ -1514,7 +1514,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                   </td>
                   <td>
                     <span class="pill ui">Releases</span>: Approve, Promote;
-                    afterwards release 2 PROMOTED, version history, live
+                    afterwards release 2 PROMOTED, version history, Prod
                     endpoint; <span class="pill ui">Playground</span> Prod.
                     Record: three decisions.
                   </td>
@@ -1557,7 +1557,7 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
             <b>Checkpoint at the end of the day, after build phase 7</b>
             <ol>
               <li>Dev harness <code>hr_assistant_dev</code> with versions v1 and v2; the on-behalf-of twin <code>hr_assistant_dev_obo</code></li>
-              <li>Prod harness <code>hr_assistant_prod</code> with <code>live</code> pinned to the approved v2</li>
+              <li>Prod harness <code>hr_assistant_prod</code> on the approved v2 (<code>DEFAULT</code> endpoint)</li>
               <li>Two releases: release 1 BLOCKED, release 2 PROMOTED</li>
               <li>Prod key <code>hr-assistant-prod-claude-sonnet-5</code> (created at promotion) and online evaluation <code>hr_assistant_prod_online_eval</code></li>
               <li>Overview (Prod): the three seeded plus ten conversations, one thumbs-up, online scores 8-11 min after the traffic</li>
@@ -1889,8 +1889,8 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                   <td>minutes for the first Prod deployment</td>
                   <td>build phase 6, release detail</td>
                   <td>
-                    The worker creates the Prod key, the Prod harness, pins
-                    <code>live</code> and registers the online evaluation; later
+                    The worker creates the Prod key and the Prod harness and
+                    registers the online evaluation; later
                     versions are faster.
                   </td>
                 </tr>

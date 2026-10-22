@@ -5,7 +5,8 @@ never from the state file alone, so the inventory is right after any interruptio
 "already gone", so a half-finished run can be run again. Prefixes are anchored on the environment segment (hr_assistant_dev_,
 hr-assistant-dev-, ...): a project whose id merely extends ours never matches.
 
-Order (the reverse of the build): online evaluation configs; the `live` endpoint and the harnesses (slow, awaited later); gateways
+Order (the reverse of the build): online evaluation configs; the harnesses and any named endpoint left by an older promotion
+(slow, awaited later); gateways
 and their targets; the Cedar policies, then the shared policy engine when nothing else uses it; memories; catalogue records, then
 the shared registry under the same rule; credential providers (API keys and the two OAuth2 providers of the on-behalf-of chain) and the demo
 workload identity, the projects (the platform removes keys, teams, roles and every
@@ -248,7 +249,7 @@ class Cleanup:
         started = time.monotonic()
         control, cfg = self.control, self.cfg
 
-        head("1  online evaluation configs, the live endpoint, the harnesses (slow: issued now, awaited in step 4)")
+        head("1  online evaluation configs, the harnesses (slow: issued now, awaited in step 4)")
         for config_ in self.online_evaluations():
             if config_.get("status") != "DELETING":
                 control.delete_online_evaluation_config(onlineEvaluationConfigId=config_["onlineEvaluationConfigId"])

@@ -70,7 +70,7 @@
               <path class="d-arrow" d="M624 68 L650 68" marker-end="url(#arr6a)"/>
               <rect class="d-box d-aws" x="652" y="40" width="130" height="56"/>
               <text class="d-text d-title" x="717" y="63" text-anchor="middle">Promote</text>
-              <text class="d-text d-small" x="717" y="81" text-anchor="middle">render for Prod · live</text>
+              <text class="d-text d-small" x="717" y="81" text-anchor="middle">render for Prod · new version</text>
               <path class="d-arrow" d="M782 68 L808 68" marker-end="url(#arr6a)"/>
               <rect class="d-box d-platform" x="810" y="40" width="130" height="56"/>
               <text class="d-text d-title" x="875" y="63" text-anchor="middle">Monitor</text>
@@ -104,7 +104,7 @@
     <tr><td>3 · Render</td><td>Resolve the environment's alias, vault key, gateway, filtered KB target, memory and agent role. Missing resources produce named errors</td><td>Apply output</td></tr>
     <tr><td>4 · Deploy</td><td>Worker creates an immutable Harness version on Runtime; Dev <code>DEFAULT</code> follows the latest</td><td>Releases · new version ~20 seconds; first VPC deployment ~4–5 minutes</td></tr>
     <tr><td>5 · Gate</td><td>Run the dataset, score results, compare thresholds → BLOCKED or PENDING_APPROVAL</td><td>Releases · ~5–6 minutes: one minute of invocations, a 180-second telemetry delay, then scoring</td></tr>
-    <tr><td>6 · Promote</td><td>Domain approver approves; worker creates the Prod key when missing, resolves Prod resources, creates its Harness, pins <code>live</code> and registers online evaluation</td><td>Release detail · first Prod deployment can take minutes; later versions are faster</td></tr>
+    <tr><td>6 · Promote</td><td>Domain approver approves; worker creates the Prod key when missing, resolves Prod resources, creates its Harness (its <code>DEFAULT</code> endpoint follows the new version) and registers online evaluation</td><td>Release detail · first Prod deployment can take minutes; later versions are faster</td></tr>
   </tbody>
 </table>
           <p class="note">The contract has <strong>two rules</strong>:</p>
@@ -128,7 +128,7 @@
     <tr><td>Tool gateway</td><td>hr-assistant-dev-gw, signed with the agent role</td><td>hr-assistant-dev-gw-obo, with a token exchanged through kc-hr-agent for the audience hr-obo-gateway</td></tr>
     <tr><td>What the tool learns</td><td>The arguments, under the gateway's role</td><td>The arguments and a token for hr-tools-api: sub, employee_id, aud, azp</td></tr>
     <tr><td>Memory</td><td>This project's Dev memory</td><td>Off</td></tr>
-    <tr><td>Release and promotion</td><td>Yes: the gate, the approver, <code>live</code></td><td>No: a demonstration of the identity chain</td></tr>
+    <tr><td>Release and promotion</td><td>Yes: the gate, the approver, promotion</td><td>No: a demonstration of the identity chain</td></tr>
   </tbody>
 </table>
 
@@ -175,7 +175,7 @@
               <path class="d-arrow" d="M772 74 L788 74" marker-end="url(#arr6c)"/>
               <rect class="d-box d-aws d-ours" x="790" y="46" width="140" height="56"/>
               <text class="d-text d-title" x="860" y="68" text-anchor="middle">Prod harness</text>
-              <text class="d-text d-small" x="860" y="86" text-anchor="middle">live · pinned version</text>
+              <text class="d-text d-small" x="860" y="86" text-anchor="middle">DEFAULT · promoted version</text>
 
               <text class="d-text d-title" x="250" y="136">B · Exported code, built by your pipeline</text>
               <rect x="566" y="120" width="52" height="20" rx="10" fill="#eef0f3"/>
@@ -274,11 +274,11 @@
                 <rect class="d-box d-aws d-ours" x="630" y="110" width="214" height="64"/>
                 <text class="d-text d-title" x="737" y="132" text-anchor="middle">Prod Harness</text>
                 <text class="d-text d-small" x="737" y="150" text-anchor="middle">hr_assistant_prod · from promotion</text>
-                <text class="d-text d-small" x="737" y="166" text-anchor="middle">live pinned to the approved version</text>
+                <text class="d-text d-small" x="737" y="166" text-anchor="middle">DEFAULT follows the approved version</text>
                 <path class="d-arrow" d="M844 68 L878 68" marker-end="url(#arr6b)"/>
                 <rect class="d-box" x="880" y="52" width="72" height="32"/><text class="d-text" x="916" y="73" text-anchor="middle">DEFAULT</text>
                 <path class="d-arrow" d="M844 142 L878 142" marker-end="url(#arr6b)"/>
-                <rect class="d-box" x="880" y="126" width="72" height="32"/><text class="d-text" x="916" y="147" text-anchor="middle">live</text>
+                <rect class="d-box" x="880" y="126" width="72" height="32"/><text class="d-text" x="916" y="147" text-anchor="middle">DEFAULT</text>
               </svg>
               <figcaption>Write references, not ARNs. Render resolves Dev or Prod resources within the project's allow-list, with one Harness per environment.</figcaption>
             </figure>
@@ -393,10 +393,10 @@
             <h4 class="q" id="d6-3"><span class="id">6.3</span>How does it reach Prod?</h4>
             <figure style="margin:0 0 10px">
               <svg viewBox="0 0 960 296" role="img" aria-labelledby="fig6-d3-title">
-                <title id="fig6-d3-title">Two ways to reach Prod: pin an immutable version to the live endpoint in one account, or re-render into a Prod account</title>
+                <title id="fig6-d3-title">Two ways to reach Prod: promote an immutable version in one account, or re-render into a Prod account</title>
                 <defs><marker id="fig6-d3-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
 
-                <text class="d-text d-title" x="22" y="24">A · Pin an immutable version to <tspan style="font-family:ui-monospace,Menlo,monospace;font-size:13px">live</tspan></text>
+                <text class="d-text d-title" x="22" y="24">A · Promote an immutable version in one account</text>
                 <rect x="366" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
                 <text class="d-text" x="419" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
                 <rect class="d-box d-account d-ours d-glow" x="12" y="34" width="460" height="226"/>
@@ -405,7 +405,7 @@
                 <text class="d-text" x="136" y="76" text-anchor="middle">Dev harness hr_assistant_dev</text>
                 <text class="d-text d-small" x="136" y="92" text-anchor="middle">DEFAULT → latest</text>
                 <path class="d-arrow" d="M136 102 L136 120" marker-end="url(#fig6-d3-arr)"/>
-                <text class="d-text d-small" x="146" y="116">promotion = render for Prod + pin live</text>
+                <text class="d-text d-small" x="146" y="116">promotion = render for Prod → new version</text>
                 <rect class="d-group" x="26" y="122" width="432" height="128"/>
                 <text class="d-text d-strong" x="36" y="140">Prod harness hr_assistant_prod</text>
                 <rect class="d-box d-aws" x="40" y="150" width="60" height="28"/>
@@ -415,13 +415,12 @@
                 <rect class="d-box d-aws" x="180" y="150" width="60" height="28"/>
                 <text class="d-text" x="210" y="169" text-anchor="middle">v3</text>
                 <text class="d-text d-tiny" x="252" y="169">immutable versions</text>
-                <path class="d-arrow" d="M140 198 L140 180" marker-end="url(#fig6-d3-arr)"/>
-                <rect class="d-box" x="110" y="198" width="60" height="28"/>
-                <text class="d-text" x="140" y="217" text-anchor="middle">live</text>
-                <text class="d-text d-tiny" x="178" y="217">endpoint</text>
-                <path class="d-arrow d-dash" d="M110 212 L70 212 L70 180" marker-end="url(#fig6-d3-arr)"/>
-                <text class="d-text d-small" x="40" y="242">rollback: point again</text>
-                <text class="d-text d-small" x="242" y="280" text-anchor="middle">version pinning · rollback by repointing</text>
+                <path class="d-arrow" d="M210 198 L210 180" marker-end="url(#fig6-d3-arr)"/>
+                <rect class="d-box" x="172" y="198" width="76" height="28"/>
+                <text class="d-text" x="210" y="217" text-anchor="middle">DEFAULT</text>
+                <text class="d-text d-tiny" x="256" y="217">endpoint · follows the latest version</text>
+                <text class="d-text d-small" x="40" y="242">rollback: promote the previous blueprint again (a new version)</text>
+                <text class="d-text d-small" x="242" y="280" text-anchor="middle">immutable versions · DEFAULT follows the latest promotion</text>
 
                 <text class="d-text d-title" x="498" y="24">B · Re-render into a Prod account</text>
                 <rect class="d-box d-account" x="488" y="34" width="460" height="226"/>
@@ -437,12 +436,12 @@
                 <text class="d-text" x="718" y="213" text-anchor="middle">Prod harness · rendered again</text>
                 <text class="d-text d-small" x="718" y="280" text-anchor="middle">an account wall · cross-account plumbing</text>
               </svg>
-              <figcaption>Option A is the one we use in this workshop: we promote by pointing the live endpoint at a version, and we roll back by pointing it at the previous version again. The promote job also registers the online evaluation that module 7 reads.</figcaption>
+              <figcaption>Option A is the one we use in this workshop: promotion creates a new immutable Prod version and the DEFAULT endpoint follows it; we roll back by promoting the previous blueprint version again. The promote job also registers the online evaluation that module 7 reads.</figcaption>
             </figure>
             <table class="options">
               <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
               <tbody>
-                <tr class="ours"><td>Pin an immutable version to the <code>live</code> endpoint</td><td class="good">version pinning; rollback by repointing</td><td class="bad">one account</td><td class="when">Dev and Prod in one account</td></tr>
+                <tr class="ours"><td>Promote an immutable version in one account</td><td class="good">immutable versions; rollback by promoting again</td><td class="bad">one account; no pinned endpoint</td><td class="when">Dev and Prod in one account</td></tr>
                 <tr><td>Re-render into a Prod account</td><td class="good">an account wall</td><td class="bad">cross-account plumbing</td><td class="when">account per environment</td></tr>
               </tbody>
             </table>
@@ -450,8 +449,8 @@
               <p><strong>This workshop.</strong> Promotion performs <strong>three actions</strong>:</p>
 <ol class="concept-list">
   <li><strong>Resolve:</strong> the approved blueprint against Prod's gateway and memory, and ensure the Prod key. No Prod key exists yet: module 5 created the Dev key only, so the first promotion creates <code>hr-assistant-prod-claude-sonnet-5</code> with the blueprint's cap (1 USD per 7 days) and stores it in the token vault; the project's Keys tab then shows two keys, each with its own spend.</li>
-  <li><strong>Deploy:</strong> create the Prod Harness and pin <code>live</code> to its version.</li>
-  <li><strong>Observe:</strong> register the online evaluation that module 7 reads. <code>hr_assistant_prod_online_eval</code> watches the <code>live</code> endpoint's spans and scores every Prod conversation (100 % sampling) with three judges, Helpfulness, Harmfulness and ToolSelectionAccuracy; scores arrive 8–11 minutes after a conversation goes quiet. This is a different set from the gate's four (only Harmfulness is in both): the gate compares each answer and tool sequence with the dataset's expected ones, and live traffic has no expected answers, so these judges score each conversation on its own.</li>
+  <li><strong>Deploy:</strong> create or update the Prod Harness; its <code>DEFAULT</code> endpoint follows the new version.</li>
+  <li><strong>Observe:</strong> register the online evaluation that module 7 reads. <code>hr_assistant_prod_online_eval</code> watches the Prod harness's spans and scores every Prod conversation (100 % sampling) with three judges, Helpfulness, Harmfulness and ToolSelectionAccuracy; scores arrive 8–11 minutes after a conversation goes quiet. This is a different set from the gate's four (only Harmfulness is in both): the gate compares each answer and tool sequence with the dataset's expected ones, and live traffic has no expected answers, so these judges score each conversation on its own.</li>
 </ol>
               <p class="also">A platform worker runs promotion from the UI or API. A Git pipeline is discussed as a take-home path; it is not built today.</p>
               <p class="prod"><strong>Production path.</strong> Drive promotion through a Git pipeline calling the platform API, with a second Prod approver.</p>
@@ -467,7 +466,7 @@
   <span class="k">decisions</span>:
     <span class="k">agent_form</span>:   {<span class="k">workshop</span>: <span class="s">harness-from-blueprint</span>,       <span class="k">my_call</span>: <span class="s">"..."</span>}
     <span class="k">release_gate</span>: {<span class="k">workshop</span>: <span class="s">dataset + thresholds + human</span>, <span class="k">my_call</span>: <span class="s">"..."</span>}
-    <span class="k">promotion</span>:    {<span class="k">workshop</span>: <span class="s">pin-live</span>,                     <span class="k">my_call</span>: <span class="s">"..."</span>}</code></pre>
+    <span class="k">promotion</span>:    {<span class="k">workshop</span>: <span class="s">default-endpoint</span>,             <span class="k">my_call</span>: <span class="s">"..."</span>}</code></pre>
         </section>
 
         <section id="hands-on">
@@ -505,15 +504,15 @@ OK   the on-behalf-of gateway accepts T1 (tools/list): ...
 OK   on behalf of alex.rivera: the HR API saw sub identical to T0, audience ['hr-tools-api'] (not the agent's), azp hr-obo-gateway (the gateway asked for it)</code></pre>
             <p class="caption">Three tokens, one person. The harness never saw a secret and never performed an exchange itself; it named a provider, and AgentCore Identity did the rest at Keycloak, once for the harness and once for the gateway. If step 1 fails with a sign-in error, the Keycloak task has restarted since <code>workshop apply 2</code> and the employee is gone with it; run <code>workshop apply 2</code> again. The command also prints where to look afterwards: the HR API's log group and the Keycloak admin console.</p>
           </div>
-          <div class="remember"><strong>Remember.</strong> The team writes the use case; the platform resolves its permitted resources. Evaluate before promotion. Keep Prod on an approved version; rollback repoints its endpoint. When the person matters, identity travels in a token exchanged at every door, not in an argument.</div>
+          <div class="remember"><strong>Remember.</strong> The team writes the use case; the platform resolves its permitted resources. Evaluate before promotion. Keep Prod on an approved version; roll back by promoting the previous one again. When the person matters, identity travels in a token exchanged at every door, not in an argument.</div>
           <p class="note">Read more: the <a href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/">AgentCore guide</a>, especially Harness and Evaluations.</p>
         </section>
         <section id="architecture">
           <h2>The platform after module 6</h2>
-          <p class="lead">One blueprint now runs in <strong>two environments</strong>: Dev <code>DEFAULT</code> follows its latest version; Prod <code>live</code> pins the approved version. Each has its own memory. Model calls use the private load balancer; Gateway, Identity and Memory use PrivateLink. A third harness, hr_assistant_dev_obo, stands beside Dev: the same render with a JWT authorizer at its door, its tool calls carrying the employee's exchanged token to the on-behalf-of gateway.</p>
+          <p class="lead">One blueprint now runs in <strong>two environments</strong>, each reached through its harness's <code>DEFAULT</code> endpoint: Dev follows the latest deploy; Prod follows the latest promotion. Each has its own memory. Model calls use the private load balancer; Gateway, Identity and Memory use PrivateLink. A third harness, hr_assistant_dev_obo, stands beside Dev: the same render with a JWT authorizer at its door, its tool calls carrying the employee's exchanged token to the on-behalf-of gateway.</p>
           <figure class="arch">
             <!-- arch-svg:start -->
-            <a href="arch/module-6.svg" target="_blank" rel="noopener"><img src="arch/module-6.svg" width="1600" height="1340" alt="AWS architecture after module 6: Module 6 · one agent in Dev and Prod, and its on-behalf-of twin" loading="lazy"/></a>
+            <a href="arch/module-6.svg" target="_blank" rel="noopener"><img src="arch/module-6.svg" width="1600" height="1380" alt="AWS architecture after module 6: Module 6 · one agent in Dev and Prod, and its on-behalf-of twin" loading="lazy"/></a>
             <!-- arch-svg:end -->
             <figcaption><strong>Changed:</strong> worker Lambda, DynamoDB, AgentCore Runtime (the Dev and Prod harnesses and, beside Dev, the on-behalf-of twin hr_assistant_dev_obo), Memory and Evaluations; also the Prod key, which promotion created in the model gateway and the token vault, and one inline policy on the Dev agent role. Runtime connects through interfaces in the private app subnets. The release passed its gate; promotion registered online evaluation. Two things the twin depends on are outside the figure: Keycloak, where AgentCore Identity exchanges the employee's token for the harness and again for the on-behalf-of gateway of module 4, and the HR API behind that gateway; both live in module 2's IdP stack outside the landing zone. Export remains optional. Click to open full size.</figcaption>
           </figure>
@@ -529,7 +528,7 @@ OK   on behalf of alex.rivera: the HR API saw sub identical to T0, audience ['hr
               <dt>Harness</dt><dd>AgentCore's configuration-driven agent, using a Strands Agents loop.</dd>
               <dt>Runtime</dt><dd>Managed compute for a Harness or custom agent code.</dd>
               <dt>Render</dt><dd>Resolve blueprint references to an environment's gateway, memory, key and role.</dd>
-              <dt>Version, endpoint</dt><dd>Immutable numbered configuration; a named pointer to a version. Dev uses <code>DEFAULT</code>; Prod uses <code>live</code>.</dd>
+              <dt>Version, endpoint</dt><dd>Immutable numbered configuration; a pointer to a version. Both environments use <code>DEFAULT</code>, which follows the latest version (named endpoints are denied in the event accounts).</dd>
               <dt>Evaluator</dt><dd>A judge that scores an aspect of agent behaviour.</dd>
               <dt>Release gate</dt><dd>Dataset evaluation against thresholds, followed by human approval.</dd>
               <dt>Export, pipeline</dt><dd>Generate Strands Agents or LangGraph code; use CI/CD to test, deploy and release it.</dd>

@@ -2991,9 +2991,9 @@
                         memory, limits, hooks; immutable
                       </tspan>
                       <tspan x="128" dy="18">
-                        versions; endpoints DEFAULT (Dev) and
+                        versions; endpoint DEFAULT in both
                       </tspan>
-                      <tspan x="128" dy="18">live (Prod)</tspan>
+                      <tspan x="128" dy="18">environments</tspan>
                     </text>
                   </g>
                   <g class="arch-node" data-node="gateway" data-kind="aws">
@@ -4024,7 +4024,7 @@
               <li>
                 The platform API also talks to the <strong>harness</strong>: the
                 playground invokes it, and a release promotion updates the Prod
-                harness and repoints its <code>live</code> endpoint to the
+                harness, whose <code>DEFAULT</code> endpoint follows the
                 approved version.
               </li>
               <li>
@@ -4735,7 +4735,7 @@
                   re-evaluate loop, or send it to the Domain approver. After
                   human approval, the worker renders the same blueprint with
                   Prod resources, creates the Prod key when missing, updates the
-                  Prod harness, repoints live to the new immutable version and
+                  Prod harness to a new immutable version and
                   ensures online evaluation.
                 </desc>
                 <defs>
@@ -5080,11 +5080,11 @@
                 <g class="flow-node success" data-node="prod">
                   <rect x="1000" y="356" width="232" height="140" rx="12" />
                   <text x="1016" y="384" class="flow-title">
-                    <tspan x="1016" dy="0">Prod harness · live</tspan>
+                    <tspan x="1016" dy="0">Prod harness · DEFAULT</tspan>
                   </text>
                   <text x="1016" y="409" class="flow-copy">
                     <tspan x="1016" dy="0">Update the harness</tspan>
-                    <tspan x="1016" dy="18">Pin the immutable version</tspan>
+                    <tspan x="1016" dy="18">DEFAULT follows the new version</tspan>
                     <tspan x="1016" dy="18">Ensure online evaluation</tspan>
                   </text>
                 </g>
@@ -5150,8 +5150,8 @@
             <li>
               The worker runs promotion from the UI or API: it renders the same
               blueprint for Prod (Prod gateway, memory and key, creating the
-              Prod key when missing), updates the Prod harness, repoints the
-              <code>live</code> endpoint to the new immutable version, and
+              Prod key when missing), updates the Prod harness to a new
+              immutable version, and
               ensures online evaluation is monitoring it.
             </li>
           </ol>
@@ -5442,7 +5442,7 @@
               The spending cap demo is build phase 5: <code>workshop cap --dev low</code> makes the Dev key fail with BUDGET_EXCEEDED (the Playground shows "Spending cap reached"); <code>workshop cap --dev restore</code> lifts it again before build phase 6.
             </p>
             <p>
-              At the end, Promotion records the approved version and repoints the Prod endpoint. A risk register anchors the responsible-AI and approval discussion.
+              At the end, Promotion records the approved version and moves Prod to it. A risk register anchors the responsible-AI and approval discussion.
             </p>
         </section>
 
@@ -5489,8 +5489,8 @@
                 <td>The agent: a managed, configuration-driven agent loop</td>
                 <td>
                   One harness per project and environment, rendered from the
-                  blueprint; immutable versions; endpoints DEFAULT (Dev) and
-                  live (Prod); lifecycle hooks for audit
+                  blueprint; immutable versions; the DEFAULT endpoint in both
+                  environments; lifecycle hooks for audit
                 </td>
               </tr>
               <tr>
@@ -6024,8 +6024,8 @@
             </li>
             <li>
               <strong>One account, two environments.</strong> Dev and Prod
-              resources are separate but live in one account; promotion pins an
-              approved immutable version to the Prod endpoint. Multi-account
+              resources are separate but live in one account; promotion creates a
+              new immutable Prod version, which the Prod harness's DEFAULT endpoint follows. Multi-account
               topologies are covered in the presentation as the production
               extension.
             </li>
@@ -6202,9 +6202,8 @@ exports/             optional Strands Agents or LangGraph exports</pre
               <tr>
                 <td>Endpoint and version</td>
                 <td>
-                  A harness version is immutable; an endpoint such as live is a
-                  named pointer that promotion moves from one version to the
-                  next
+                  A harness version is immutable; the DEFAULT endpoint follows
+                  the latest version, which promotion creates
                 </td>
               </tr>
               <tr>

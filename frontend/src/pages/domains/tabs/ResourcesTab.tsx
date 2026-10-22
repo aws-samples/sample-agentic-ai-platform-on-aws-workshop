@@ -32,7 +32,7 @@ const TYPE_ORDER = [
 
 const EMPTY_HINTS: Record<Env, string> = {
   dev: "Registered with PUT /projects/{id}/resources: the Dev gateway and its targets, the Cedar policies, the catalogue record, the model key's credential provider and the memory; the deploy job adds the Dev harness.",
-  prod: "Registered with PUT /projects/{id}/resources: the Prod gateway. The first promotion adds the Prod harness, its live endpoint and the online evaluation config.",
+  prod: "Registered with PUT /projects/{id}/resources: the Prod gateway. The first promotion adds the Prod harness, its endpoint and the online evaluation config.",
 };
 
 function sortResources(rows: Resource[]): Resource[] {

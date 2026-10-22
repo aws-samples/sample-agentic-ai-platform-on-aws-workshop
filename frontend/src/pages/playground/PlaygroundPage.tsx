@@ -37,7 +37,7 @@ import { SUGGESTED_PROMPTS, budgetDetails, harnessByEnv, newSessionId, usageSumm
 
 const EMPTY_HINTS: Record<Env, string> = {
   dev: "The deploy job (POST /projects/{id}/deploy, or a release run) puts a blueprint version on Dev; the harness appears here as soon as the job registers it.",
-  prod: "Promoting an approved release (POST /releases/{id}/promote) creates the Prod harness; it and its live endpoint appear here afterwards.",
+  prod: "Promoting an approved release (POST /releases/{id}/promote) creates the Prod harness; it appears here afterwards.",
 };
 
 export function PlaygroundPage() {

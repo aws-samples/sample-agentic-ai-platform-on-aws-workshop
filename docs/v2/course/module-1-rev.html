@@ -43,7 +43,7 @@
           <p>This module covers <strong>four decisions</strong>:</p>
           <ol class="concept-list">
             <li><a href="#d1-1"><strong>Accounts:</strong></a> how many do you need, where do resources run, and who may administer them?</li>
-            <li><a href="#d1-2"><strong>Network:</strong></a> public access, private access with NAT, or private endpoints only?</li>
+            <li><a href="#d1-2"><strong>Network:</strong></a> public, private with a NAT exit to the internet, or private with no exit at all?</li>
             <li><a href="#d1-3"><strong>Infrastructure:</strong></a> who creates it, and how?</li>
             <li><a href="#d1-4"><strong>Operating model:</strong></a> who builds, releases, supports and operates the shared services and agents?</li>
           </ol>
@@ -211,7 +211,7 @@
             <h4 class="q" id="d1-2"><span class="id">1.2</span>Public or private network?</h4>
             <figure style="margin:0 0 10px">
               <svg viewBox="0 0 960 300" role="img" aria-labelledby="fig1-d2-title">
-                <title id="fig1-d2-title">Public, private, or endpoints only: three network shapes for the model gateway and the agents</title>
+                <title id="fig1-d2-title">Public, private with a NAT exit, or private with no exit: three network shapes for the model gateway and the agents</title>
                 <defs><marker id="fig1-d2-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
                 <text class="d-text d-title" x="22" y="24">A · Public</text>
                 <rect class="d-box d-account" x="12" y="34" width="290" height="236"/>
@@ -232,10 +232,10 @@
                 <text class="d-text d-small" x="157" y="250" text-anchor="middle">not in this VPC</text>
                 <text class="d-text d-small" x="157" y="290" text-anchor="middle">no hourly network cost · outbound not inspected</text>
 
-                <text class="d-text d-title" x="347" y="24">B · Private</text>
+                <text class="d-text d-title" x="347" y="24">B · Private · NAT exit</text>
                 <rect class="d-box d-account" x="337" y="34" width="290" height="236"/>
                 <rect class="d-vpc" x="351" y="50" width="262" height="196"/>
-                <text class="d-text d-small" x="361" y="68">VPC</text>
+                <text class="d-text d-small" x="361" y="68">VPC · one way out</text>
                 <rect class="d-subnet-iso" x="361" y="74" width="242" height="58"/>
                 <text class="d-text d-strong" x="482" y="92" text-anchor="middle">Private subnets</text>
                 <text class="d-text d-small" x="482" y="108" text-anchor="middle">proxy · internal load balancer</text>
@@ -245,17 +245,19 @@
                 <text class="d-text d-small" x="482" y="174" text-anchor="middle">ENIs in your subnets</text>
                 <rect class="d-box d-aws" x="361" y="192" width="116" height="44"/>
                 <text class="d-text d-strong" x="419" y="210" text-anchor="middle">NAT gateway</text>
-                <text class="d-text d-small" x="419" y="226" text-anchor="middle">one shared exit</text>
+                <text class="d-text d-small" x="419" y="226" text-anchor="middle">the exit to the internet</text>
                 <rect class="d-box d-aws" x="487" y="192" width="116" height="44"/>
                 <text class="d-text d-strong" x="545" y="210" text-anchor="middle">VPC endpoints</text>
-                <text class="d-text d-small" x="545" y="226" text-anchor="middle">for AWS services</text>
-                <text class="d-text d-small" x="482" y="290" text-anchor="middle">hourly cost · some AZs only · more to debug</text>
+                <text class="d-text d-small" x="545" y="226" text-anchor="middle">optional · save NAT cost</text>
+                <path class="d-arrow" d="M419 236 L419 250" marker-end="url(#fig1-d2-arr)"/>
+                <text class="d-text d-tiny" x="419" y="264" text-anchor="middle" style="fill:#16191f;font-weight:700">internet</text>
+                <text class="d-text d-small" x="482" y="290" text-anchor="middle">the internet stays reachable · data can leave</text>
 
-                <text class="d-text d-title" x="672" y="24">C · Endpoints only</text>
+                <text class="d-text d-title" x="672" y="24">C · Private · no exit</text>
                 <rect class="d-box d-account d-ours d-glow" x="662" y="34" width="290" height="236"/>
                 <rect x="846" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
                 <text class="d-text" x="899" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
-                <rect class="d-vpc" x="676" y="50" width="262" height="212"/>
+                <rect class="d-vpc" x="676" y="50" width="262" height="198"/>
                 <text class="d-text d-small" x="686" y="68">VPC · 3 AZs</text>
                 <text class="d-text d-small" x="928" y="68" text-anchor="end">no internet gateway · no NAT</text>
                 <rect class="d-subnet-iso" x="686" y="74" width="242" height="58"/>
@@ -264,31 +266,32 @@
                 <text class="d-text d-small" x="807" y="122" text-anchor="middle">agents in VPC mode · relay Lambda</text>
                 <rect class="d-subnet-iso" x="686" y="138" width="242" height="28"/>
                 <text class="d-text" x="807" y="156" text-anchor="middle"><tspan class="d-strong">Data subnets</tspan> <tspan class="d-small">RDS · no route out</tspan></text>
-                <rect class="d-group" x="686" y="172" width="242" height="84"/>
-                <text class="d-text d-small" x="807" y="188" text-anchor="middle">one interface endpoint per service</text>
-                <rect class="d-box d-aws" x="692" y="196" width="112" height="22"/>
-                <text class="d-text d-tiny" x="748" y="211" text-anchor="middle" style="fill:#16191f">Bedrock</text>
-                <rect class="d-box d-aws" x="810" y="196" width="112" height="22"/>
-                <text class="d-text d-tiny" x="866" y="211" text-anchor="middle" style="fill:#16191f">AgentCore</text>
-                <rect class="d-box d-aws" x="692" y="224" width="112" height="22"/>
-                <text class="d-text d-tiny" x="748" y="239" text-anchor="middle" style="fill:#16191f">Secrets Manager</text>
-                <rect class="d-box d-aws" x="810" y="224" width="112" height="22"/>
-                <text class="d-text d-tiny" x="866" y="239" text-anchor="middle" style="fill:#16191f">CloudWatch · ECR</text>
-                <text class="d-text d-small" x="807" y="290" text-anchor="middle">tightest outbound · an endpoint for every service</text>
+                <rect class="d-group" x="686" y="172" width="242" height="72"/>
+                <text class="d-text d-small" x="807" y="186" text-anchor="middle">only AWS services, one endpoint each</text>
+                <rect class="d-box d-aws" x="692" y="192" width="112" height="22"/>
+                <text class="d-text d-tiny" x="748" y="207" text-anchor="middle" style="fill:#16191f">Bedrock</text>
+                <rect class="d-box d-aws" x="810" y="192" width="112" height="22"/>
+                <text class="d-text d-tiny" x="866" y="207" text-anchor="middle" style="fill:#16191f">AgentCore</text>
+                <rect class="d-box d-aws" x="692" y="218" width="112" height="22"/>
+                <text class="d-text d-tiny" x="748" y="233" text-anchor="middle" style="fill:#16191f">Secrets Manager</text>
+                <rect class="d-box d-aws" x="810" y="218" width="112" height="22"/>
+                <text class="d-text d-tiny" x="866" y="233" text-anchor="middle" style="fill:#16191f">CloudWatch · ECR</text>
+                <text class="d-text d-tiny" x="807" y="263" text-anchor="middle" style="fill:#b3261e;font-weight:700">✕ no path to the internet</text>
+                <text class="d-text d-small" x="807" y="290" text-anchor="middle">nothing reaches the internet · AWS services only</text>
               </svg>
-              <figcaption>Compare <strong>three network patterns</strong> for the model gateway and agents. This workshop uses C: private endpoints only, with no internet path. The app subnets hold the proxy and agent network interfaces; separate data subnets hold RDS.</figcaption>
+              <figcaption>Compare <strong>three network patterns</strong> for the model gateway and agents. B and C are both private; they differ in one thing: B keeps an exit to the internet through NAT, C has none. This workshop uses C. The app subnets hold the proxy and agent network interfaces; separate data subnets hold RDS.</figcaption>
             </figure>
             <table class="options">
               <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
               <tbody>
                 <tr><td>Public: managed network for agents; proxy on public subnets, no NAT</td><td class="good">no hourly network cost; fewest failure modes</td><td class="bad">you cannot inspect outbound traffic; the proxy has a public address</td><td class="when">no private data sources yet</td></tr>
-                <tr><td>Private: your VPC with NAT and endpoints</td><td class="good">private path; outbound controlled by security groups</td><td class="bad">hourly cost; only some Availability Zones work; more to debug</td><td class="when">private data sources, or a network policy</td></tr>
-                <tr class="ours"><td>Private: interface endpoints only, no internet path</td><td class="good">tightest outbound: nothing in the VPC can reach the internet; the proxy has no public address</td><td class="bad">an endpoint for every service the agent calls, each billed by the hour (about 0.18 USD per hour here); only some Availability Zones work; a relay for every caller outside the VPC; slower cold starts</td><td class="when">regulated, mature operations; or when the platform must be safe from its first day</td></tr>
+                <tr><td>Private with a NAT exit: your VPC, no public addresses, one shared way out; endpoints optional</td><td class="good">anything on the internet stays reachable (public model APIs, package registries, SaaS tools); fewer endpoints to run</td><td class="bad">an exit exists, so data can leave unless outbound is filtered; NAT hourly and per-GB cost; only some Availability Zones work</td><td class="when">private data sources, and agents that still need the internet</td></tr>
+                <tr class="ours"><td>Private with no exit: interface endpoints only, no NAT, no internet path</td><td class="good">nothing in the VPC can reach the internet, so a leaked key or an injected prompt cannot call out; the proxy has no public address</td><td class="bad">only AWS services with an endpoint are reachable, so non-AWS dependencies need a copy inside (the LiteLLM image goes to ECR first); an endpoint for every service the agent calls, each billed by the hour (about 0.18 USD per hour here); only some Availability Zones work; a relay for every caller outside the VPC; slower cold starts</td><td class="when">regulated, mature operations; or when the platform must be safe from its first day</td></tr>
               </tbody>
             </table>
             <div class="ours-box">
               <div class="copy-group">
-                <p><strong>This workshop.</strong> We choose C to prevent internet access from the VPC. <strong>One private VPC</strong> spans the <strong>three Availability Zones</strong> supported by AgentCore Runtime and has <strong>two subnet types</strong>:</p>
+                <p><strong>This workshop.</strong> B and C differ in one exit. B keeps a NAT gateway, so anything in the VPC can still reach the internet and endpoints only save cost; C removes the exit, so only the AWS services with an endpoint are reachable and nothing else. We choose C to prevent internet access from the VPC. <strong>One private VPC</strong> spans the <strong>three Availability Zones</strong> supported by AgentCore Runtime and has <strong>two subnet types</strong>:</p>
                 <ul class="concept-list">
                   <li><strong>App subnets:</strong> the LiteLLM proxy and its internal load balancer, the relay Lambda, the interface endpoints and, from module 6, the network interfaces of the agent harnesses. A harness is AgentCore's configuration-driven agent, the form our agents take in module 6; <code>workshop apply 1</code> already creates the security group <code>agent-platform-harness</code> for them.</li>
                   <li><strong>Data subnets:</strong> the database, and nothing else.</li>
@@ -610,7 +613,7 @@
           <p class="caption">The figure uses AWS service icons. Faded boxes show later modules; the control plane reaches the model gateway only through the relay.</p>
           <figure class="arch">
             <!-- arch-svg:start -->
-            <a href="arch/module-1.svg" target="_blank" rel="noopener"><img src="arch/module-1.svg" width="1600" height="1340" alt="AWS architecture after module 1: Module 1 · the landing zone" loading="lazy"/></a>
+            <a href="arch/module-1.svg" target="_blank" rel="noopener"><img src="arch/module-1.svg" width="1600" height="1380" alt="AWS architecture after module 1: Module 1 · the landing zone" loading="lazy"/></a>
             <!-- arch-svg:end -->
             <figcaption><strong>Private network:</strong> no internet gateway, NAT or public IPs. Tasks pull images from ECR and reach AWS services through endpoints; the database has no outbound route. The SharedServices stack has no box of its own: its pieces appear as labels on the ECS node (3 aliases, each guardrailed), under CloudWatch (Transaction Search) and under IAM (evaluation role); the resources themselves are account-level, outside the VPC. Click the figure to open it full size.</figcaption>
           </figure>

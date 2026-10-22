@@ -482,7 +482,7 @@ workshop apply 3 done in 0.4 min</code></pre>
           <p class="lead">The control plane now holds <strong>two domains and two projects</strong>. Each project has a role pair per environment and a model-gateway team with caps. Later resources attach to these projects.</p>
           <figure class="arch">
             <!-- arch-svg:start -->
-            <a href="arch/module-3.svg" target="_blank" rel="noopener"><img src="arch/module-3.svg" width="1600" height="1340" alt="AWS architecture after module 3: Module 3 · domains and projects" loading="lazy"/></a>
+            <a href="arch/module-3.svg" target="_blank" rel="noopener"><img src="arch/module-3.svg" width="1600" height="1380" alt="AWS architecture after module 3: Module 3 · domains and projects" loading="lazy"/></a>
             <!-- arch-svg:end -->
             <figcaption><strong>Changed:</strong> DynamoDB, ECS Express Mode and IAM. Projects provide a common scope for permissions, policy, audit and cost. SCPs stay faded: they are taught, not built. Two things the figure does not show: the corporate IdP from module 2 (stack AgentPlatform-Idp: Keycloak behind its own API Gateway, in a small public VPC outside the landing zone) is unchanged here, and AgentCore Identity, drawn as a module 5 object, already holds the two OAuth2 credential providers <code>kc-hr-agent</code> and <code>kc-hr-obo-gateway</code> from module 2; module 5 adds the model key. Click to open full size.</figcaption>
           </figure>

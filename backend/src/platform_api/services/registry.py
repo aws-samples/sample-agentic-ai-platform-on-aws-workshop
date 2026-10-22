@@ -200,7 +200,7 @@ def set_status(record_id: str, status: str, reason: str | None = None) -> dict:
 
 
 # ---- the AGENT record of a promoted release --------------------------------------------------------------------------------
-# The promote job registers the Prod agent as an AGENT record (an A2A agent card pointing at the live endpoint) so the Catalogue
+# The promote job registers the Prod agent as an AGENT record (an A2A agent card pointing at the Prod endpoint) so the Catalogue
 # screen lists it under its Agents tab. One record per project, updated on every promotion (an update of an APPROVED record is a
 # new DRAFT revision: submit and approve again); the domain approver approved the release, so the record is approved straight
 # away (the registry has no auto-approval rules). AWS docs read 2026-10-21: the descriptor's dataSchemaVersion must be "0.3"
@@ -223,9 +223,13 @@ def agent_record_name(project_id: str) -> str:
     return names.ProjectNames(project_id, "prod").registry_record_agent
 
 
-def harness_invoke_url(harness_arn: str, region: str, qualifier: str = "live") -> str:
-    """The InvokeHarness endpoint of one harness endpoint (SigV4-signed POST; the A2A card's `url`)."""
-    return f"https://bedrock-agentcore.{region}.amazonaws.com/harnesses/invoke?harnessArn={quote(harness_arn, safe='')}&qualifier={qualifier}"
+def harness_invoke_url(harness_arn: str, region: str, qualifier: str | None = None) -> str:
+    """The InvokeHarness URL of one harness endpoint (SigV4-signed POST; the A2A card's `url`). No `qualifier` (or DEFAULT)
+    reaches the DEFAULT endpoint; a named endpoint is added as `&qualifier=<name>`."""
+    url = f"https://bedrock-agentcore.{region}.amazonaws.com/harnesses/invoke?harnessArn={quote(harness_arn, safe='')}"
+    if qualifier and qualifier != names.DEFAULT_ENDPOINT:
+        url += f"&qualifier={qualifier}"
+    return url
 
 
 def agent_card(project: dict, item: dict, promotion: dict, region: str, ui_url: str | None = None) -> dict:
@@ -242,7 +246,7 @@ def agent_card(project: dict, item: dict, promotion: dict, region: str, ui_url: 
         "protocolVersion": A2A_PROTOCOL_VERSION,
         "name": name,
         "description": description,
-        "url": harness_invoke_url(promotion["harnessArn"], region, promotion.get("endpoint") or "live"),
+        "url": harness_invoke_url(promotion["harnessArn"], region, promotion.get("endpoint")),
         "preferredTransport": "JSONRPC",
         "version": str(item.get("version") or promotion.get("harnessVersion") or "1"),
         "capabilities": {"streaming": True, "pushNotifications": False, "stateTransitionHistory": False},

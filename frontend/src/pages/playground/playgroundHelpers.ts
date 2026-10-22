@@ -33,7 +33,7 @@ export interface HarnessInfo {
   blueprintVersion: string | null;
   model: string | null;
   endpoint: string | null;
-  /** The endpoint the playground reaches: DEFAULT (latest version) for Dev, `live` for Prod. */
+  /** The endpoint the playground reaches: the registered harness's `endpoint` attribute (DEFAULT, which follows the latest version). */
   qualifier: string;
 }
 
@@ -54,7 +54,7 @@ export function harnessByEnv(resources: ReadonlyArray<Resource> | undefined | nu
       blueprintVersion: str("blueprintVersion"),
       model: str("model"),
       endpoint: str("endpoint"),
-      qualifier: env === "prod" ? "live" : "DEFAULT",
+      qualifier: str("endpoint") ?? "DEFAULT",
     };
   }
   return result;

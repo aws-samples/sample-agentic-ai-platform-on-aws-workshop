@@ -3,7 +3,7 @@
     ensure_key       the KEY item for (env, blueprint model) exists: created through LiteLLM + AgentCore Identity when missing
     render           platform_sdk.blueprint.render with the registered resources and the key's credential provider
     deploy           Dev: create_or_update_harness (waits READY) + resources `harness` and `harness_endpoint` DEFAULT
-    promote          Prod: the same, then endpoint `live` repointed to the new version and the online evaluation config
+    promote          Prod: the same (the DEFAULT endpoint follows the new version) plus the online evaluation config
 
 Everything AgentCore-related goes through `platform_sdk.agentcore` (verified live in the dry run); nothing is re-implemented here.
 """
@@ -26,8 +26,7 @@ logger = logging.getLogger(__name__)
 ONLINE_EVALUATORS = ("Builtin.Helpfulness", "Builtin.Harmfulness", "Builtin.ToolSelectionAccuracy")
 ONLINE_SAMPLING_PERCENTAGE = 100.0
 ONLINE_SESSION_TIMEOUT_MINUTES = 1
-LIVE_ENDPOINT = "live"
-DEFAULT_ENDPOINT = "DEFAULT"
+DEFAULT_ENDPOINT = names.DEFAULT_ENDPOINT
 
 
 def blueprint_from_item(project: dict, item: dict) -> blueprint.Blueprint:
@@ -95,7 +94,7 @@ def render_version(project: dict, item: dict, env: str) -> dict:
 
 
 def endpoint_details(harness: dict, endpoint_name: str) -> dict | None:
-    """GetHarnessEndpoint for `endpoint_name` (DEFAULT or live), or None when the service does not expose it."""
+    """GetHarnessEndpoint for `endpoint_name` (DEFAULT), or None when the service does not expose it."""
     try:
         response = clients.agentcore_control().get_harness_endpoint(
             harnessId=harness["harnessId"], endpointName=endpoint_name
@@ -104,6 +103,36 @@ def endpoint_details(harness: dict, endpoint_name: str) -> dict | None:
         logger.warning("GetHarnessEndpoint %s/%s failed: %s", harness.get("harnessId"), endpoint_name, exc)
         return None
     return response.get("endpoint") or response
+
+
+def wait_endpoint(harness: dict, endpoint_name: str) -> dict:
+    """GetHarnessEndpoint until `endpoint_name` is READY on the harness's new version; {} when the service does not expose it.
+
+    DEFAULT follows CreateHarness/UpdateHarness asynchronously: right after the new version is READY the endpoint can still
+    answer UPDATING with the previous `liveVersion`, and a `harness_endpoint` row registered from that answer would stay stale
+    until the next deployment."""
+    version = str(harness.get("harnessVersion"))
+    control = clients.agentcore_control()
+
+    def current() -> dict:
+        endpoint = control.get_harness_endpoint(harnessId=harness["harnessId"], endpointName=endpoint_name)["endpoint"]
+        live = endpoint.get("liveVersion")
+        if live is not None and str(live) != version and endpoint.get("status") in agentcore.ENDPOINT_OK:
+            return {**endpoint, "status": "UPDATING"}
+        return endpoint
+
+    try:
+        return agentcore.wait_for(
+            current,
+            agentcore.ENDPOINT_OK,
+            agentcore.ENDPOINT_BAD,
+            every=3,
+            timeout=300,
+            label=f"endpoint {endpoint_name}",
+        )
+    except ClientError as exc:
+        logger.warning("GetHarnessEndpoint %s/%s failed: %s", harness.get("harnessId"), endpoint_name, exc)
+        return {}
 
 
 def register_harness(
@@ -201,29 +230,28 @@ def deploy(project: dict, item: dict, env: str, by: str, job_id: str | None = No
     started = time.monotonic()
     pieces = deploy_harness(project, item, env, by)
     harness = pieces["harness"]
+    endpoint = wait_endpoint(harness, DEFAULT_ENDPOINT)
     registered = register_harness(
-        project["projectId"], env, harness, DEFAULT_ENDPOINT, pieces["blueprint"], item["version"], job_id, by
+        project["projectId"], env, harness, DEFAULT_ENDPOINT, pieces["blueprint"], item["version"], job_id, by, endpoint
     )
     return _output(harness, pieces, item, env, DEFAULT_ENDPOINT, registered["logGroup"], started)
 
 
 def promote(project: dict, item: dict, by: str, job_id: str | None = None) -> dict:
-    """The promote job: Prod harness, endpoint `live` on the new version, online evaluation config, resources registered."""
+    """The promote job: Prod harness version (its DEFAULT endpoint follows it), online evaluation config, resources registered.
+
+    No named endpoint: CreateHarnessEndpoint is denied by SCP in the Workshop Studio event accounts (2026-10-22), and the Prod
+    harness only ever changes through this job, so DEFAULT is always the last promoted version."""
     started = time.monotonic()
     env = "prod"
     cfg = clients.cfg()
     n = names.ProjectNames(project["projectId"], env)
     pieces = deploy_harness(project, item, env, by)
     harness = pieces["harness"]
-    endpoint = agentcore.ensure_endpoint(
-        harness["harnessId"],
-        LIVE_ENDPOINT,
-        harness["harnessVersion"],
-        description=f"{project['projectId']} production endpoint (promoted releases)",
-        region=cfg.region,
-    )
+    endpoint_name = n.harness_endpoint
+    endpoint = wait_endpoint(harness, endpoint_name)
     registered = register_harness(
-        project["projectId"], env, harness, LIVE_ENDPOINT, pieces["blueprint"], item["version"], job_id, by, endpoint
+        project["projectId"], env, harness, endpoint_name, pieces["blueprint"], item["version"], job_id, by, endpoint
     )
     config = agentcore.ensure_online_evaluation(
         n.online_evaluation,
@@ -253,7 +281,7 @@ def promote(project: dict, item: dict, by: str, job_id: str | None = None) -> di
         },
         by=by,
     )
-    output = _output(harness, pieces, item, env, LIVE_ENDPOINT, registered["logGroup"], started)
+    output = _output(harness, pieces, item, env, endpoint_name, registered["logGroup"], started)
     output.update(
         endpointArn=endpoint.get("arn"),
         endpointStatus=endpoint.get("status"),

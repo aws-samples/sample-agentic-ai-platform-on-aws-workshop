@@ -2191,10 +2191,10 @@ OK   the employee's token can be exchanged on alex.rivera's behalf; nothing down
                     <figure class="arch">
                         <!-- arch-svg:start -->
                         <a href="arch/module-2.svg" target="_blank" rel="noopener">
-                            <img src="arch/module-2.svg" width="1600" height="1340" alt="AWS architecture after module 2: Module 2 · identity" loading="lazy">
+                            <img src="arch/module-2.svg" width="1600" height="1380" alt="AWS architecture after module 2: Module 2 · identity" loading="lazy">
                         </a>
                         <!-- arch-svg:end -->
-                        <figcaption><strong>Changed:</strong> Amazon Cognito (three groups and three users); AgentCore Identity (the two OAuth2 credential providers <code>kc-hr-agent</code> and <code>kc-hr-obo-gateway</code>; the model keys follow in module 5); outside the figure, the IdP stack with Keycloak and the HR API. The API maps token groups to platform roles; employees sign in at Keycloak. Dev and Prod agents use IAM and vault credentials; module 6's on-behalf-of agent presents the employee's token instead. Click to open full size.</figcaption>
+                        <figcaption><strong>Changed:</strong> Amazon Cognito (three groups and three users); AgentCore Identity (the two OAuth2 credential providers <code>kc-hr-agent</code> and <code>kc-hr-obo-gateway</code>; the model keys follow in module 5); at the bottom of the figure, the IdP stack: Keycloak and its load balancer in a small VPC of their own behind an API Gateway door, and the HR API with its Lambda in the resource layer (neither sits in a VPC). The API maps token groups to platform roles; employees sign in at Keycloak. Dev and Prod agents use IAM and vault credentials; module 6's on-behalf-of agent presents the employee's token instead. Click to open full size.</figcaption>
                     </figure>
                 </section>
             

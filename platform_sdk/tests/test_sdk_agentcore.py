@@ -507,3 +507,78 @@ def test_ensure_policy_deletes_a_failed_policy_and_explains(control, monkeypatch
     with pytest.raises(agentcore.AgentCoreError) as excinfo:
         agentcore.ensure_policy(engine_id, policy["name"], cedar)
     assert "Overly Restrictive" in str(excinfo.value) and "permit" in str(excinfo.value)
+
+
+ONLINE_EVAL_SUMMARY = {
+    "onlineEvaluationConfigArn": "arn:aws:bedrock-agentcore:us-east-1:123456789012:online-evaluation-config/cfg-1",
+    "onlineEvaluationConfigId": "cfg-1",
+    "onlineEvaluationConfigName": "hr_assistant_prod_online_eval",
+    "status": "ACTIVE",
+    "executionStatus": "ENABLED",
+    "createdAt": 1,
+    "updatedAt": 1,
+}
+ONLINE_EVAL_RULE = {"samplingConfig": {"samplingPercentage": 100.0}, "sessionConfig": {"sessionTimeoutMinutes": 1}}
+
+
+def _source(endpoint: str) -> dict:
+    return {
+        "cloudWatchLogs": {
+            "logGroupNames": [f"/aws/bedrock-agentcore/runtimes/harness_hr_assistant_prod-RT123-{endpoint}"],
+            "serviceNames": [f"harness_hr_assistant_prod.{endpoint}"],
+        }
+    }
+
+
+def test_ensure_online_evaluation_repoints_a_config_that_watches_another_endpoint(control, monkeypatch):
+    """An account promoted before 2026-10-22 watched the `live` endpoint; Prod now answers through DEFAULT."""
+    client, stub = control
+    monkeypatch.setattr(agentcore.time, "sleep", lambda s: None)
+    old, new = _source("live"), _source("DEFAULT")
+    config = {**ONLINE_EVAL_SUMMARY, "rule": ONLINE_EVAL_RULE, "dataSourceConfig": old}
+    stub.add_response("list_online_evaluation_configs", {"onlineEvaluationConfigs": [ONLINE_EVAL_SUMMARY]}, {})
+    stub.add_response("get_online_evaluation_config", config, {"onlineEvaluationConfigId": "cfg-1"})
+    stub.add_response(
+        "update_online_evaluation_config",
+        {
+            "onlineEvaluationConfigArn": ONLINE_EVAL_SUMMARY["onlineEvaluationConfigArn"],
+            "onlineEvaluationConfigId": "cfg-1",
+            "status": "UPDATING",
+            "executionStatus": "ENABLED",
+            "updatedAt": 2,
+        },
+        {"onlineEvaluationConfigId": "cfg-1", "dataSourceConfig": new},
+    )
+    stub.add_response(
+        "get_online_evaluation_config", {**config, "status": "UPDATING"}, {"onlineEvaluationConfigId": "cfg-1"}
+    )
+    stub.add_response(
+        "get_online_evaluation_config", {**config, "dataSourceConfig": new}, {"onlineEvaluationConfigId": "cfg-1"}
+    )
+    result = agentcore.ensure_online_evaluation(
+        "hr_assistant_prod_online_eval",
+        new["cloudWatchLogs"]["logGroupNames"][0],
+        "harness_hr_assistant_prod.DEFAULT",
+        ["Builtin.Helpfulness"],
+        "arn:aws:iam::123456789012:role/eval",
+    )
+    assert result["status"] == "ACTIVE" and result["dataSourceConfig"] == new
+
+
+def test_ensure_online_evaluation_keeps_a_config_that_already_matches(control):
+    client, stub = control
+    source = _source("DEFAULT")
+    config = {**ONLINE_EVAL_SUMMARY, "rule": ONLINE_EVAL_RULE, "dataSourceConfig": source}
+    stub.add_response("list_online_evaluation_configs", {"onlineEvaluationConfigs": [ONLINE_EVAL_SUMMARY]}, {})
+    stub.add_response("get_online_evaluation_config", config, {"onlineEvaluationConfigId": "cfg-1"})
+    stub.add_response("get_online_evaluation_config", config, {"onlineEvaluationConfigId": "cfg-1"})  # the ACTIVE wait
+    result = agentcore.ensure_online_evaluation(
+        "hr_assistant_prod_online_eval",
+        source["cloudWatchLogs"]["logGroupNames"][0],
+        "harness_hr_assistant_prod.DEFAULT",
+        ["Builtin.Helpfulness"],
+        "arn:aws:iam::123456789012:role/eval",
+    )
+    assert (
+        result["onlineEvaluationConfigId"] == "cfg-1"
+    )  # no UpdateOnlineEvaluationConfig was stubbed, so none was called
