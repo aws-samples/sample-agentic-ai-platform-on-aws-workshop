@@ -686,7 +686,10 @@ def find_endpoint(harness_id: str, name: str, region: str | None = None) -> dict
 def ensure_endpoint(
     harness_id: str, name: str, version: str | int, description: str | None = None, region: str | None = None
 ) -> dict:
-    """Create the named endpoint pinned to `version`, or repoint it when it targets another version; waits for READY."""
+    """Create the named endpoint pinned to `version`, or repoint it when it targets another version; waits for READY.
+
+    Unused by the platform since 2026-10-22: the Workshop Studio event accounts deny CreateHarnessEndpoint by SCP, so both
+    environments are reached through DEFAULT. Kept for scripts and for accounts that still carry a `live` endpoint."""
     client = control_client(region)
     version = str(version)
     existing = find_endpoint(harness_id, name, region)
@@ -739,11 +742,20 @@ def ensure_online_evaluation(
     tags: dict | None = None,
     region: str | None = None,
 ) -> dict:
-    """Create (or find) an online evaluation config over one harness endpoint's log group and service name; waits for ACTIVE."""
+    """Create (or find) an online evaluation config over one harness endpoint's log group and service name; waits for ACTIVE.
+
+    An existing config that watches another log group or service name is repointed (UpdateOnlineEvaluationConfig): accounts
+    promoted before 2026-10-22 watched the `live` endpoint, and Prod now answers through DEFAULT."""
     client = control_client(region)
+    source = {"cloudWatchLogs": {"logGroupNames": [log_group], "serviceNames": [service_name]}}
     existing = find_online_evaluation(name, region)
     if existing:
         config_id = existing["onlineEvaluationConfigId"]
+        current = (existing.get("dataSourceConfig") or {}).get("cloudWatchLogs") or {}
+        if sorted(current.get("logGroupNames") or []) != [log_group] or sorted(current.get("serviceNames") or []) != [
+            service_name
+        ]:
+            client.update_online_evaluation_config(onlineEvaluationConfigId=config_id, dataSourceConfig=source)
     else:
         config_id = client.create_online_evaluation_config(
             onlineEvaluationConfigName=name,
@@ -752,7 +764,7 @@ def ensure_online_evaluation(
                 "samplingConfig": {"samplingPercentage": sampling_percentage},
                 "sessionConfig": {"sessionTimeoutMinutes": session_timeout_minutes},
             },
-            dataSourceConfig={"cloudWatchLogs": {"logGroupNames": [log_group], "serviceNames": [service_name]}},
+            dataSourceConfig=source,
             evaluators=[{"evaluatorId": e} for e in evaluator_ids],
             evaluationExecutionRoleArn=role_arn,
             enableOnCreate=True,
@@ -909,7 +921,8 @@ def invoke(
     region: str | None = None,
     bearer_token: str | None = None,
 ) -> InvokeResult:
-    """InvokeHarness with one user message and parse the stream. `qualifier="live"` reaches the Prod endpoint.
+    """InvokeHarness with one user message and parse the stream. `qualifier` names an endpoint other than DEFAULT (the platform's
+    Dev and Prod harnesses are both reached through DEFAULT, so it stays None).
 
     `bearer_token` invokes a JWT-protected harness as the token's user (module 6) instead of signing with the caller's IAM
     credentials. Raises HarnessInvokeError (with `budget_exceeded=True` when LiteLLM refused the call because the key or team cap
@@ -953,7 +966,8 @@ def delete_harness(name: str, region: str | None = None) -> bool:
         endpoint_name = endpoint.get("endpointName") or endpoint.get("name")
         if endpoint_name and endpoint_name != "DEFAULT":
             client.delete_harness_endpoint(harnessId=harness["harnessId"], endpointName=endpoint_name)
-    # DeleteHarness is refused while a non-DEFAULT endpoint exists; deleting the `live` endpoint usually takes seconds but was
+    # DeleteHarness is refused while a non-DEFAULT endpoint exists (accounts promoted before 2026-10-22 still have a `live`
+    # endpoint); deleting a named endpoint usually takes seconds but was
     # seen taking more than five minutes (9 Oct 2026), so the wait is generous.
     _wait_gone(
         lambda: [

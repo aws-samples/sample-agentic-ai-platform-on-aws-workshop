@@ -37,10 +37,10 @@ describe("session ids", () => {
 
 describe("harnessByEnv", () => {
   it("finds the registered harness per environment and names the endpoint the playground reaches", () => {
-    const rows = [resource({}), resource({ env: "prod", name: "lt_hr_assistant_prod", attributes: { version: "1", blueprintVersion: 2, endpoint: "live" } }), resource({ type: "gateway", name: "gw" })];
+    const rows = [resource({}), resource({ env: "prod", name: "lt_hr_assistant_prod", attributes: { version: "1", blueprintVersion: 2, endpoint: "DEFAULT" } }), resource({ type: "gateway", name: "gw" })];
     const by = harnessByEnv(rows);
     expect(by.dev).toMatchObject({ name: "lt_hr_assistant_dev", version: "2", blueprintVersion: "2", model: "claude-sonnet-5", qualifier: "DEFAULT" });
-    expect(by.prod).toMatchObject({ name: "lt_hr_assistant_prod", version: "1", qualifier: "live", model: null });
+    expect(by.prod).toMatchObject({ name: "lt_hr_assistant_prod", version: "1", qualifier: "DEFAULT", model: null });
   });
 
   it("ignores harness rows without an ARN and copes with no resources", () => {

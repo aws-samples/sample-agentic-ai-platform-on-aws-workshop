@@ -14,6 +14,7 @@ ROLE_PREFIX = "agent-platform-proj"
 POLICY_ENGINE_NAME = "agent_platform_policy_engine"
 REGISTRY_NAME = "agent_platform_catalogue"
 GATEWAY_TOOL_NAME = "gateway"  # the single harness tool entry that points at the environment's gateway
+DEFAULT_ENDPOINT = "DEFAULT"  # the harness endpoint every environment is reached through (follows the latest version)
 # Module 2 (on-behalf-of with Keycloak): the OBO objects sit next to the Dev ones and carry this suffix; the Keycloak realm and
 # clients are fixed names (one corporate IdP per account), as are the two AgentCore Identity OAuth2 providers and the scratch
 # workload identity the demo uses for the exchange by hand.
@@ -86,8 +87,15 @@ class ProjectNames:
 
     @property
     def harness_endpoint(self) -> str:
-        """Dev is reached through the DEFAULT endpoint (latest version); Prod through `live` pinned to the approved version."""
-        return "DEFAULT" if self.env == "dev" else "live"
+        """Both environments are reached through the DEFAULT endpoint, which follows the harness's latest version; Prod gets a
+        new version only when a release is promoted. A named endpoint would need CreateHarnessEndpoint, which the Workshop
+        Studio event accounts deny by SCP (seen 2026-10-22)."""
+        return DEFAULT_ENDPOINT
+
+    @property
+    def invoke_qualifier(self) -> str | None:
+        """InvokeHarness `qualifier` for this environment: None reaches the DEFAULT endpoint."""
+        return None if self.harness_endpoint == DEFAULT_ENDPOINT else self.harness_endpoint
 
     @property
     def harness_service_name(self) -> str:

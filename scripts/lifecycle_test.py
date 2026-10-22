@@ -9,7 +9,7 @@ Project `lt-hr-assistant` in domain `lt-ops` (never `hr-assistant`: the learning
   3. memories for dev and prod                                            module 6
   4. blueprint v1 (prompt v1) -> render dry run (unresolved: no key yet) -> deploy to Dev (job) -> render -> invoke x2 (one session)   module 6
   5. release 1 + synthetic BLOCKED evaluation body; blueprint v2 -> deploy; release 2 + passing body -> PENDING_APPROVAL
-     -> approve (approver) -> promote (job) -> PROMOTED, endpoint live, online evaluation registered -> invoke Prod      module 6
+     -> approve (approver) -> promote (job) -> PROMOTED, endpoint DEFAULT, online evaluation registered -> invoke Prod   module 6
   6. metrics, spend, feedback                                                                                           module 7
   7. cleanup: harnesses, online evaluation config, gateways, memories, then DELETE /projects (keys, providers, roles, team)
      and the domain; verifies nothing with the lt- prefix remains                                                       `workshop cleanup`
@@ -610,15 +610,15 @@ def release_flow(ctx: Context) -> dict:
     final = approver.get_release(release2["releaseId"])
     log(f"  release 2 -> {final['status']} promotion {json.dumps(final.get('promotion'), default=str)[:300]}")
     ctx.check(final["status"] == "PROMOTED", "release 2 is PROMOTED")
-    ctx.check((final.get("promotion") or {}).get("endpoint") == "live", "promotion endpoint is live")
+    ctx.check((final.get("promotion") or {}).get("endpoint") == "DEFAULT", "promotion endpoint is DEFAULT")
     rows = {(r["type"], r["name"]): r for r in dev.list_resources(PROJECT, "prod")}
     n = ctx.n("prod")
     ctx.check(("harness", n.harness) in rows, "prod harness registered")
-    ctx.check(("harness_endpoint", "live") in rows, "prod harness_endpoint live registered")
+    ctx.check(("harness_endpoint", "DEFAULT") in rows, "prod harness_endpoint DEFAULT registered")
     ctx.check(("online_evaluation", n.online_evaluation) in rows, "online evaluation config registered")
     ctx.check(("credential_provider", n.credential_provider(ctx.model)) in rows, "prod credential provider registered")
-    live = rows.get(("harness_endpoint", "live")) or {}
-    log(f"  live endpoint resource: arn {live.get('arn')} attributes {live.get('attributes')}")
+    endpoint = rows.get(("harness_endpoint", "DEFAULT")) or {}
+    log(f"  prod endpoint resource: arn {endpoint.get('arn')} attributes {endpoint.get('attributes')}")
     online = agentcore.find_online_evaluation(n.online_evaluation, ctx.region)
     ctx.check(bool(online) and online.get("status") == "ACTIVE", "online evaluation config is ACTIVE in AgentCore")
     keys = {k["env"]: k for k in dev.list_keys(PROJECT)}
@@ -719,9 +719,11 @@ def run(ctx: Context) -> None:
         ctx.state["devSession"] = first["sessionId"]
     with timer.step("5a. release 1 (BLOCKED) ... release 2 (PENDING_APPROVAL -> APPROVED -> PROMOTED) (module 6)"):
         release_flow(ctx)
-    with timer.step("6a. invoke Prod (qualifier live)"):
+    with timer.step("6a. invoke Prod (DEFAULT endpoint)"):
         prod = invoke(ctx, "prod", PROD_PROMPT, None, "invoke prod (new session)")
-        ctx.check((prod.get("output") or {}).get("qualifier") == "live", "prod invoke used the live qualifier")
+        ctx.check(
+            (prod.get("output") or {}).get("qualifier") is None, "prod invoke used the DEFAULT endpoint (no qualifier)"
+        )
         ctx.record["invokeProd"] = (prod.get("output") or {}).get("seconds")
     with timer.step("6b. metrics, spend, feedback, governance (module 7)"):
         observe(ctx, ctx.state["devSession"])

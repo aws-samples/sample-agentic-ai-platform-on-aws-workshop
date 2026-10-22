@@ -319,7 +319,7 @@ export function nextStep(release: Pick<Release, "status" | "promotion" | "pipeli
     case "PENDING_APPROVAL":
       return "Every threshold is met. An approver reviews the evidence and approves or rejects (admins and developers get 403: separation of duties).";
     case "APPROVED":
-      return "Approved. An approver can promote it: the platform creates the Prod key, updates the Prod harness, repoints the live endpoint and enables online evaluation.";
+      return "Approved. An approver can promote it: the platform creates the Prod key, updates the Prod harness and enables online evaluation.";
     case "REJECTED":
       return "Rejected. Create a new release for another attempt.";
     case "PROMOTING":

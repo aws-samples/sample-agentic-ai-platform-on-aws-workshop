@@ -159,7 +159,7 @@ export function ReleasesPage() {
               minWidth: 220,
               cell: (r) =>
                 r.status === "PROMOTED" && r.promotion
-                  ? `harness v${r.promotion.harnessVersion ?? "?"} on ${r.promotion.endpoint ?? "live"} (${formatDateTime(r.promotion.at)})`
+                  ? `harness v${r.promotion.harnessVersion ?? "?"} on ${r.promotion.endpoint ?? "DEFAULT"} (${formatDateTime(r.promotion.at)})`
                   : r.status === "PROMOTING"
                     ? "in progress"
                     : r.status === "FAILED"

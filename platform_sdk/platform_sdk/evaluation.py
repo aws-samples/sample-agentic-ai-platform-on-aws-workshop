@@ -370,8 +370,9 @@ def run_dataset(
 ) -> RunSummary:
     """Invoke the harness for every scenario of the dataset file, wait for telemetry, score with the evaluators.
 
-    `log_group_name` is the endpoint's log group (`agentcore.harness_log_group(harness, "DEFAULT" | "live")`), `qualifier`
-    `"live"` for the Prod endpoint. Expect about 4-6 minutes for 10 scenarios (the 180 s delay included). `on_turn(session_id,
+    `log_group_name` is the endpoint's log group (`agentcore.harness_log_group(harness, "DEFAULT")`), `qualifier` names an
+    endpoint other than DEFAULT (None for the platform's harnesses). Expect about 4-6 minutes for 10 scenarios (the 180 s delay
+    included). `on_turn(session_id,
     prompt, result)` is called after each invocation (for printing progress).
     """
     from bedrock_agentcore.evaluation import (  # heavy dependency: only the worker's evaluate job and the CLI reach this line

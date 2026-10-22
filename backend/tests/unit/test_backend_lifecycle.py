@@ -584,7 +584,7 @@ def test_evaluation_needs_thresholds_on_the_blueprint(ready):
 
 
 # ---- promote job --------------------------------------------------------------------------------------------------------------
-def test_promote_job_deploys_prod_pins_live_and_enables_online_evaluation(ready):
+def test_promote_job_deploys_prod_on_default_and_enables_online_evaluation(ready):
     create_blueprint(ready)
     deploy(ready, 1)
     call("PUT", "/settings", body={"registryId": "reg-1", "registryArn": "arn:reg-1"})  # module 4's catalogue registry
@@ -624,22 +624,22 @@ def test_promote_job_deploys_prod_pins_live_and_enables_online_evaluation(ready)
     out = result["output"]
     assert (
         out["env"] == "prod"
-        and out["endpoint"] == "live"
+        and out["endpoint"] == "DEFAULT"
         and out["harnessVersion"] == "1"
         and out["keyCreated"] is True
     )
     assert out["harnessArn"].endswith("harness/hr_assistant_prod-ABC123") and out["endpointArn"].endswith(
-        "/endpoint/live"
+        "/endpoint/DEFAULT"
     )
     assert out["onlineEvaluationConfigId"] == "hr_assistant_prod_online_eval-id"
-    assert out["logGroup"] == "/aws/bedrock-agentcore/runtimes/harness_hr_assistant_prod-RT123-live"
+    assert out["logGroup"] == "/aws/bedrock-agentcore/runtimes/harness_hr_assistant_prod-RT123-DEFAULT"
     done = call("GET", f"/releases/{release['releaseId']}")[1]
     assert done["status"] == "PROMOTED" and done["error"] is None
-    assert done["promotion"]["harnessVersion"] == "1" and done["promotion"]["endpoint"] == "live"
+    assert done["promotion"]["harnessVersion"] == "1" and done["promotion"]["endpoint"] == "DEFAULT"
     assert done["promotion"]["jobId"] == accepted["jobId"] and done["promotion"]["at"].endswith("Z")
     assert done["promotion"]["onlineEvaluationConfigId"] == "hr_assistant_prod_online_eval-id"
 
-    # the Catalogue's Agents tab: the Prod agent is an approved AGENT record (A2A agent card on the live endpoint)
+    # the Catalogue's Agents tab: the Prod agent is an approved AGENT record (A2A agent card on the Prod harness, DEFAULT endpoint)
     entry = done["promotion"]["registryRecord"]
     assert entry == out["registryRecord"]
     assert entry["name"] == "hr-assistant-agent" and entry["status"] == "APPROVED" and entry["action"] == "created"
@@ -654,26 +654,24 @@ def test_promote_job_deploys_prod_pins_live_and_enables_online_evaluation(ready)
     card = json.loads(descriptor["data"])
     assert card["protocolVersion"] == "0.3.0" and card["name"] == "HR Assistant" and card["version"] == "1"
     assert card["url"].startswith("https://bedrock-agentcore.us-east-1.amazonaws.com/harnesses/invoke?harnessArn=")
-    assert card["url"].endswith("&qualifier=live") and "hr_assistant_prod-ABC123" in card["url"]
+    assert "qualifier=" not in card["url"] and card["url"].endswith("hr_assistant_prod-ABC123")  # DEFAULT: no qualifier
     assert card["skills"][0]["id"] == "hr-assistant" and "people-ops" in card["skills"][0]["tags"]
     assert set(card) >= {"capabilities", "defaultInputModes", "defaultOutputModes", "description", "skills"}
     assert card["provider"] == {"organization": "people-ops", "url": CONFIG["ui/url"]}
     # DRAFT -> submitted -> approved, in that order (no auto-approval rules on the registry)
     assert [kind for kind, _ in ready.registry.calls] == ["list", "create", "get", "submit", "get", "status"]
 
-    # AgentCore calls: prod harness, live endpoint on the new version, online evaluation on the live log group
+    # AgentCore calls: prod harness (no CreateHarnessEndpoint: DEFAULT follows the new version), online evaluation on its log group
     kinds = [c[0] for c in ready.agentcore.calls]
-    assert kinds[-3:] == ["harness", "endpoint", "online"]
-    _, harness_id, endpoint_name, version = ready.agentcore.calls[-2]
-    assert (harness_id, endpoint_name, version) == ("hr_assistant_prod-ABC123", "live", "1")
+    assert kinds[-2:] == ["harness", "online"] and "endpoint" not in kinds
     _, name, log_group, service_name, evaluators, role_arn, kwargs = ready.agentcore.calls[-1]
-    assert name == "hr_assistant_prod_online_eval" and service_name == "harness_hr_assistant_prod.live"
-    assert log_group == "/aws/bedrock-agentcore/runtimes/harness_hr_assistant_prod-RT123-live"
+    assert name == "hr_assistant_prod_online_eval" and service_name == "harness_hr_assistant_prod.DEFAULT"
+    assert log_group == "/aws/bedrock-agentcore/runtimes/harness_hr_assistant_prod-RT123-DEFAULT"
     assert evaluators == ["Builtin.Helpfulness", "Builtin.Harmfulness", "Builtin.ToolSelectionAccuracy"]
     assert role_arn == CONFIG["roles/evaluation-role-arn"]
     assert kwargs["sampling_percentage"] == 100.0 and kwargs["session_timeout_minutes"] == 1
     assert kwargs["tags"]["ProjectId"] == "hr-assistant"
-    harness_spec = ready.agentcore.calls[-3][2]
+    harness_spec = ready.agentcore.calls[-2][2]
     assert harness_spec["executionRoleArn"].endswith("hr-assistant-prod-agent")
     assert harness_spec["tools"][0]["config"]["agentCoreGateway"]["gatewayArn"].endswith(
         "hr-assistant-prod-gw-abcdefghij"
@@ -686,14 +684,14 @@ def test_promote_job_deploys_prod_pins_live_and_enables_online_evaluation(ready)
     rows = {
         (r["type"], r["name"]): r for r in call("GET", "/projects/hr-assistant/resources", query={"env": "prod"})[1]
     }
-    assert rows[("harness", "hr_assistant_prod")]["attributes"]["endpoint"] == "live"
-    live = rows[("harness_endpoint", "live")]
+    assert rows[("harness", "hr_assistant_prod")]["attributes"]["endpoint"] == "DEFAULT"
+    endpoint = rows[("harness_endpoint", "DEFAULT")]
     assert (
-        live["arn"].endswith("/endpoint/live")
-        and live["attributes"]["qualifier"] == "live"
-        and live["attributes"]["version"] == "1"
+        endpoint["arn"].endswith("/endpoint/DEFAULT")
+        and endpoint["attributes"]["qualifier"] is None
+        and endpoint["attributes"]["version"] == "1"
     )
-    assert live["attributes"]["serviceName"] == "harness_hr_assistant_prod.live"
+    assert endpoint["attributes"]["serviceName"] == "harness_hr_assistant_prod.DEFAULT"
     online = rows[("online_evaluation", "hr_assistant_prod_online_eval")]
     assert online["id"] == "hr_assistant_prod_online_eval-id" and online["attributes"]["logGroup"] == out["logGroup"]
     assert online["attributes"]["evaluators"] == evaluators
@@ -722,7 +720,7 @@ def test_promoted_agent_record_is_updated_next_time_and_never_fails_the_promotio
     }
     promotion = {
         "harnessArn": f"arn:aws:bedrock-agentcore:{REGION}:{ACCOUNT}:harness/hr_assistant_prod-ABC123",
-        "endpoint": "live",
+        "endpoint": "DEFAULT",
     }
     release = {"releaseId": "R1", "blueprintVersion": 1, "approval": {"by": "approver"}}
     skipped = registry_service.register_agent(project, {"version": 1}, release, promotion, "approver")
@@ -919,10 +917,10 @@ def test_invoke_flow_sessions_and_budget_exceeded(ready):
     status, accepted = call("POST", "/invoke", body={**body, "env": "prod"}, persona="developer")
     assert status == 202
     result = run_job(accepted["jobId"])
-    assert result["status"] == "SUCCEEDED" and result["output"]["qualifier"] == "live"
+    assert result["status"] == "SUCCEEDED" and result["output"]["qualifier"] is None  # DEFAULT endpoint: no qualifier
     assert (
         ready.agentcore.calls[-1][1].endswith("harness/hr_assistant_prod-ABC123")
-        and ready.agentcore.calls[-1][3] == "live"
+        and ready.agentcore.calls[-1][3] is None
     )
 
     # budget exceeded: LiteLLM refused the model call -> FAILED with the cap details from /key/info
@@ -1042,7 +1040,10 @@ def test_metrics_series_follow_the_registered_resources(ready, monkeypatch):
     promoted_release(ready, 1)
     status, body = call("GET", "/metrics", query={"projectId": "hr-assistant", "env": "prod", "hours": "168"})
     assert status == 200 and body["period"] == 3600
-    assert body["harness"]["endpoint"] == "live" and body["harness"]["metricName"] == "harness_hr_assistant_prod::live"
+    assert (
+        body["harness"]["endpoint"] == "DEFAULT"
+        and body["harness"]["metricName"] == "harness_hr_assistant_prod::DEFAULT"
+    )
     assert body["series"]["evaluationHelpfulness"] == [["2026-10-08T22:00:00+00:00", 0.83]]
     assert body["evaluation"]["configId"] == "hr_assistant_prod_online_eval-id"
     assert body["evaluation"]["evaluators"]["Helpfulness"] == {

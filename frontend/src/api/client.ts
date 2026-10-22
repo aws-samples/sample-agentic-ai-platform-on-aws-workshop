@@ -370,7 +370,7 @@ export class PlatformClient {
     return this.post(`/releases/${encodeURIComponent(releaseId)}/reject`, { comment });
   }
 
-  /** POST /releases/{id}/promote -> 202 {jobId}; the worker renders for prod and repoints `live`. */
+  /** POST /releases/{id}/promote -> 202 {jobId}; the worker renders for prod and updates the Prod harness (DEFAULT follows the new version). */
   promoteRelease(releaseId: string): Promise<JobAccepted> {
     return this.post(`/releases/${encodeURIComponent(releaseId)}/promote`);
   }
@@ -440,7 +440,7 @@ export class PlatformClient {
   }
 
   // ---- playground (asynchronous jobs) --------------------------------------------------------------------------
-  /** POST /invoke -> 202 {jobId, sessionId}; the worker runs InvokeHarness (qualifier `live` for prod). */
+  /** POST /invoke -> 202 {jobId, sessionId}; the worker runs InvokeHarness on the environment's harness (DEFAULT endpoint). */
   invoke(request: InvokeRequest): Promise<JobAccepted & { sessionId: string }> {
     return this.post("/invoke", request);
   }

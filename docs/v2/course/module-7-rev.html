@@ -203,7 +203,7 @@
                 <text class="d-text d-small" x="807" y="250" text-anchor="middle">free · never alone</text>
 
                 <rect class="d-box" x="12" y="266" width="936" height="28" style="stroke-dasharray:5 4"/>
-                <text class="d-text" x="480" y="284" text-anchor="middle">rollback today: point <tspan style="font-family:ui-monospace,Menlo,monospace;font-size:12px">live</tspan> back with the AgentCore API · production: automatic rollback on a quality regression</text>
+                <text class="d-text" x="480" y="284" text-anchor="middle">rollback today: promote the previous blueprint version again · production: automatic rollback on a quality regression</text>
               </svg>
               <figcaption>Online evaluation scores real Prod conversations after they end. Batch evaluation costs less but lags; user feedback alone is sparse and biased.</figcaption>
             </figure>
@@ -222,7 +222,7 @@
   <li><strong>Judges:</strong> Helpfulness, Harmfulness and ToolSelectionAccuracy. AgentCore names its built-in judges with a <code>Builtin.</code> prefix, so <code>workshop apply 7</code> echoes the registered configuration as <code>Builtin.ToolSelectionAccuracy</code> and CloudWatch uses that as the metric name; <code>workshop scores</code> and the Overview drop the prefix.</li>
   <li><strong>Quiet timeout:</strong> one minute; scores arrive about 8–11 minutes after traffic.</li>
 </ul>
-              <p class="also">Feedback is tied to sessions. Rollback means pointing <code>live</code> back at the previous harness version. Today that is one call to the AgentCore API (<code>UpdateHarnessEndpoint</code>), made outside the platform: the platform API only promotes approved releases, and the UI has no rollback button yet.</p>
+              <p class="also">Feedback is tied to sessions. Rollback means putting the previous configuration back in Prod. Today that is a new release of the previous blueprint version through the same gate, approval and promotion; the UI has no rollback button yet.</p>
               <p class="prod"><strong>Production path.</strong> Roll back on quality regression and turn user feedback into new dataset tests.</p>
             </div>
           </div>
@@ -416,7 +416,7 @@
     <tr><td>Harness configuration</td><td>Containers where needed; MCP servers on Runtime</td><td>6</td></tr>
     <tr><td>Self-reported scores from the command, platform-run evaluation from the Releases screen; team thresholds</td><td>Platform-run evaluation only; minimum floors; evidence-bound approval</td><td>6</td></tr>
     <tr><td>UI-triggered worker</td><td>Git pipeline calling platform API</td><td>6</td></tr>
-    <tr><td>No alarms; rollback by the AgentCore API</td><td>Alarms and automatic rollback</td><td>7</td></tr>
+    <tr><td>No alarms; rollback by re-releasing the previous version</td><td>Alarms and automatic rollback</td><td>7</td></tr>
     <tr><td>Full traces; CloudWatch IAM readers</td><td>Metadata by default; approved redaction; readers/retention per source</td><td>7</td></tr>
     <tr><td>Per-key spend; shared costs unallocated</td><td>Successful-outcome unit cost; shared-cost rule</td><td>7</td></tr>
     <tr><td>Destroyable resources; no backups</td><td>RETAIN and point-in-time recovery</td><td>all</td></tr>
@@ -463,9 +463,9 @@
           <p class="lead">No new workload is built. <strong>Four sources</strong> now show its behaviour, policy decisions, quality and spend. Release records and CloudTrail support change investigations.</p>
           <figure class="arch">
             <!-- arch-svg:start -->
-            <a href="arch/module-7.svg" target="_blank" rel="noopener"><img src="arch/module-7.svg" width="1600" height="1340" alt="AWS architecture after module 7: Module 7 · the platform in operation" loading="lazy"/></a>
+            <a href="arch/module-7.svg" target="_blank" rel="noopener"><img src="arch/module-7.svg" width="1600" height="1380" alt="AWS architecture after module 7: Module 7 · the platform in operation" loading="lazy"/></a>
             <!-- arch-svg:end -->
-            <figcaption><strong>Changed:</strong> AgentCore Evaluations, CloudWatch and CloudTrail. Spans use the VPC's X-Ray/logs endpoints; Transaction Search makes them searchable. Online scores arrive after conversations end. Transaction Search and the evaluation role come from module 1's SharedServices stack, which is account-level and has no box of its own. <strong>Unchanged:</strong> the on-behalf-of parts of modules 2, 4 and 6, the two OAuth2 providers, the <code>hr dev obo</code> gateway with its OpenAPI target and the Dev on-behalf-of twin. The corporate IdP they rely on, Keycloak on Fargate behind an internal load balancer and an API Gateway HTTP API, with the HR API and its JWT authorizer in front of the Lambda <code>agent-platform-hr-api</code>, lives in its own small public VPC (10.1.0.0/16) and is not drawn here. Click to open full size.</figcaption>
+            <figcaption><strong>Changed:</strong> AgentCore Evaluations, CloudWatch and CloudTrail. Spans use the VPC's X-Ray/logs endpoints; Transaction Search makes them searchable. Online scores arrive after conversations end. Transaction Search and the evaluation role come from module 1's SharedServices stack, which is account-level and has no box of its own. <strong>Unchanged:</strong> the on-behalf-of parts of modules 2, 4 and 6, the two OAuth2 providers, the <code>hr dev obo</code> gateway with its OpenAPI target and the Dev on-behalf-of twin. The corporate IdP they rely on, Keycloak on Fargate behind an internal load balancer and an API Gateway HTTP API, with the HR API and its JWT authorizer in front of the Lambda <code>agent-platform-hr-api</code>, sits at the bottom of the figure: Keycloak and its load balancer in a small public VPC of their own (10.1.0.0/16) behind the API Gateway door; the HR API and its Lambda, which belong to no VPC, in the resource layer. Click to open full size.</figcaption>
           </figure>
         </section>
       
@@ -480,7 +480,7 @@
               <dt>Sampling</dt><dd>The fraction of conversations recorded or evaluated.</dd>
               <dt>Quiet timeout</dt><dd>Idle interval used to decide that a conversation has ended.</dd>
               <dt>Feedback</dt><dd>A rating and comment tied to a session.</dd>
-              <dt>Rollback</dt><dd>Point <code>live</code> back to the previous version.</dd>
+              <dt>Rollback</dt><dd>Promote the previous blueprint version again; Prod's <code>DEFAULT</code> endpoint follows the new harness version.</dd>
               <dt>Audit trail</dt><dd>Release records identify platform changes; CloudTrail records AWS API activity. Event history keeps 90 days of management events; data events require configuration. These are not prompt records.</dd>
               <dt>Redaction</dt><dd>Remove sensitive fields before telemetry is stored or exported.</dd>
               <dt>Retention</dt><dd>How long telemetry is kept.</dd>

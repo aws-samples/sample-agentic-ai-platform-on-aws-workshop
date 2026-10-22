@@ -242,7 +242,8 @@ class PlatformClient:
         return self._post(f"/releases/{release_id}/reject", {"comment": comment})
 
     def promote_release(self, release_id: str) -> dict:
-        """POST /releases/{id}/promote -> 202 {"jobId"}; the worker renders for prod, updates the Prod harness and repoints `live`."""
+        """POST /releases/{id}/promote -> 202 {"jobId"}; the worker renders for prod and updates the Prod harness (a new version,
+        which its DEFAULT endpoint follows)."""
         return self._post(f"/releases/{release_id}/promote")
 
     # ---- keys -----------------------------------------------------------------------------------------------------
@@ -316,7 +317,7 @@ class PlatformClient:
 
     # ---- playground (asynchronous jobs) ---------------------------------------------------------------------------
     def invoke(self, project_id: str, env: str, prompt: str, session_id: str | None = None) -> dict:
-        """POST /invoke -> 202 {"jobId", "sessionId"}; the worker runs InvokeHarness (qualifier `live` for prod)."""
+        """POST /invoke -> 202 {"jobId", "sessionId"}; the worker runs InvokeHarness on the environment's harness (DEFAULT endpoint)."""
         body: dict[str, Any] = {"projectId": project_id, "env": env, "prompt": prompt}
         if session_id:
             body["sessionId"] = session_id

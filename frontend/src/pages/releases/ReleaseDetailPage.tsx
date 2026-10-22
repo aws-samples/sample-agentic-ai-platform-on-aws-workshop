@@ -151,7 +151,7 @@ function ReleaseDetail({ releaseId }: { releaseId: string }) {
   useEffect(() => {
     if (job.isTerminal && job.job && jobId === trackedJobId) {
       if (job.job.status === "SUCCEEDED") {
-        notifications.success(`Release ${releaseId} promoted`, "The Prod harness runs the approved version; the live endpoint points at it.");
+        notifications.success(`Release ${releaseId} promoted`, "The Prod harness runs the approved version (its DEFAULT endpoint follows it).");
       } else {
         notifications.error(`Promotion of ${releaseId} failed`, new Error(`${jobError(job.job)?.code ?? "FAILED"}: ${jobError(job.job)?.message ?? ""}`));
       }
@@ -249,7 +249,7 @@ function ReleaseDetail({ releaseId }: { releaseId: string }) {
       onSuccess: (accepted) => {
         setTrackedJobId(accepted.jobId);
         setPromoteOpen(false);
-        notifications.info(`Promotion job ${accepted.jobId} started`, "Prod key, Prod harness version, live endpoint, online evaluation and the Catalogue's agent record: about 20 seconds.");
+        notifications.info(`Promotion job ${accepted.jobId} started`, "Prod key, Prod harness version, online evaluation and the Catalogue's agent record: about 20 seconds.");
       },
       onError: handleConflict,
     });
@@ -545,7 +545,7 @@ function ReleaseDetail({ releaseId }: { releaseId: string }) {
           ) : null}
           <Box>
             The platform ensures the Prod key for {blueprint?.model ?? "the blueprint model"}, renders blueprint v{r.blueprintVersion} for Prod (Prod gateway, memory, role, key), creates or updates the Prod
-            harness, repoints the <code>live</code> endpoint to the new version and enables online evaluation. About 20 seconds; the job progress shows below.
+            harness (a new version, which its <code>DEFAULT</code> endpoint follows) and enables online evaluation. About 20 seconds; the job progress shows below.
           </Box>
           <Box variant="small">POST /releases/{"{id}"}/promote → 202 with a job id; the release is PROMOTING until the worker finishes.</Box>
         </SpaceBetween>
@@ -851,7 +851,7 @@ function PromotionPanel({
       },
       {
         status: workStatus,
-        header: "Prod key, Prod harness version, live endpoint, online evaluation, catalogue record",
+        header: "Prod key, Prod harness version, online evaluation, catalogue record",
         details: jobStatus === "FAILED" && error ? `${error.code}: ${error.message}` : jobStatus ? `job ${jobStatus}${elapsed !== null ? ` · ${formatSeconds(elapsed)}` : ""}` : undefined,
       },
       {
@@ -859,7 +859,7 @@ function PromotionPanel({
         header: release.status === "PROMOTED" ? "Release PROMOTED" : release.status === "FAILED" ? "Release FAILED" : "Release PROMOTED",
         details:
           release.status === "PROMOTED" && release.promotion
-            ? `harness version ${release.promotion.harnessVersion ?? "?"} on endpoint ${release.promotion.endpoint ?? "live"} · ${formatDateTime(release.promotion.at)}`
+            ? `harness version ${release.promotion.harnessVersion ?? "?"} on endpoint ${release.promotion.endpoint ?? "DEFAULT"} · ${formatDateTime(release.promotion.at)}`
             : undefined,
       },
     ];
@@ -887,7 +887,7 @@ function PromotionPanel({
             columns={2}
             items={[
               { label: "Harness version", value: String(release.promotion.harnessVersion ?? "—") },
-              { label: "Endpoint", value: <Badge color="blue">{release.promotion.endpoint ?? "live"}</Badge> },
+              { label: "Endpoint", value: <Badge color="blue">{release.promotion.endpoint ?? "DEFAULT"}</Badge> },
               { label: "Promoted at", value: formatDateTime(release.promotion.at) },
               { label: "By", value: release.promotion.by ?? "—" },
               { label: "Harness ARN", value: <CopyText value={release.promotion.harnessArn} max={60} /> },
@@ -927,13 +927,15 @@ function VersionHistory({
   const navigate = useNavigate();
   const rows = sortNewestFirst(releases ?? []);
   const harness = prodResources?.find((res) => res.type === "harness");
-  const live = prodResources?.find((res) => res.type === "harness_endpoint" && res.name === "live");
+  // the endpoint the registered harness answers on (DEFAULT; an account promoted before 2026-10-22 may also still list `live`)
+  const endpointName = String(harness?.attributes?.endpoint ?? "DEFAULT");
+  const endpoint = prodResources?.find((res) => res.type === "harness_endpoint" && res.name === endpointName);
   const onlineEval = prodResources?.find((res) => res.type === "online_evaluation");
   const attr = (res: typeof harness, key: string) => (res?.attributes?.[key] === undefined || res?.attributes?.[key] === null ? "—" : String(res.attributes[key]));
   return (
     <Container
       header={
-        <InfoHeader help={`Every release of ${release.projectId} and what Prod runs now (registered harness and live endpoint resources).`}>
+        <InfoHeader help={`Every release of ${release.projectId} and what Prod runs now (registered harness and endpoint resources).`}>
           Version history
         </InfoHeader>
       }
@@ -944,7 +946,7 @@ function VersionHistory({
           items={[
             { label: "Prod harness", value: harness ? <CopyText value={harness.name} max={40} /> : "none yet (first promotion creates it)" },
             { label: "Prod harness version", value: harness ? `${attr(harness, "version")} (blueprint v${attr(harness, "blueprintVersion")})` : "—" },
-            { label: "Live endpoint", value: live ? `version ${attr(live, "version")} · ${attr(live, "status")}` : "—" },
+            { label: "Prod endpoint", value: endpoint ? `${endpoint.name} · version ${attr(endpoint, "version")} · ${attr(endpoint, "status")}` : "—" },
             { label: "Online evaluation", value: onlineEval ? <CopyText value={onlineEval.name} max={40} /> : "—" },
           ]}
         />
@@ -992,7 +994,7 @@ function VersionHistory({
             {
               id: "promotion",
               header: "Promoted harness version",
-              cell: (row) => (row.status === "PROMOTED" && row.promotion ? `v${row.promotion.harnessVersion ?? "?"} on ${row.promotion.endpoint ?? "live"} · ${formatDateTime(row.promotion.at)}` : "—"),
+              cell: (row) => (row.status === "PROMOTED" && row.promotion ? `v${row.promotion.harnessVersion ?? "?"} on ${row.promotion.endpoint ?? "DEFAULT"} · ${formatDateTime(row.promotion.at)}` : "—"),
             },
             { id: "created", header: "Created", cell: (row) => `${formatDateTime(row.createdAt)} by ${row.createdBy}` },
           ]}

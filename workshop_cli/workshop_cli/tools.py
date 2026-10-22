@@ -322,14 +322,16 @@ def promote(ctx: Context, release_id: str | None = None) -> int:
                 "version": harness_row["attributes"].get("version"),
                 "blueprintVersion": harness_row["attributes"].get("blueprintVersion"),
                 "logGroup": harness_row["attributes"].get("logGroup"),
-                "endpoint": "live",
+                "endpoint": out.get("endpoint") or hr_prod.harness_endpoint,
             },
         )
     if online_row:
         ctx.state.set(
             "onlineEvaluation", {"id": online_row["id"], "arn": online_row.get("arn"), "name": online_row["name"]}
         )
-    ok("Prod answers through the live endpoint; the first answer takes about 35 s (cold start)")
+    ok(
+        "Prod answers through its DEFAULT endpoint, now on the promoted version; the first answer takes about 35 s (cold start)"
+    )
     say('  try: `workshop ask --env prod "Which US public holidays are there in November 2026?"`')
     return 0
 

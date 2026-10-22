@@ -375,7 +375,8 @@ def reject(request) -> dict:
 
 
 def promote(request):
-    """POST /releases/{id}/promote -> 202 {jobId}; the worker deploys Prod, repoints `live` and ensures the online evaluation."""
+    """POST /releases/{id}/promote -> 202 {jobId}; the worker deploys the Prod harness version (DEFAULT follows it) and ensures
+    the online evaluation."""
     release = load_release(request.params["releaseId"])
     previous_status = release.get("status")
     if previous_status not in PROMOTE_STATUSES and not promotion_stuck(release):

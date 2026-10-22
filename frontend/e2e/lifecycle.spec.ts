@@ -470,7 +470,7 @@ test("approver: approves and promotes the new release, watches the job to PROMOT
   await shot(page, "approver-release-approved");
 
   await page.getByTestId("promote-release").click();
-  await expect(page.getByRole("dialog")).toContainText("live");
+  await expect(page.getByRole("dialog")).toContainText("DEFAULT");
   await page.getByTestId("confirm").click();
   await expect(page.getByText(/Promotion job .* started/).first()).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText("Promotion requested").first()).toBeVisible();
@@ -484,10 +484,10 @@ test("approver: approves and promotes the new release, watches the job to PROMOT
 
   const final = await api.get<Release>(`/releases/${state.releaseId}`);
   expect(final.body.status).toBe("PROMOTED");
-  expect(final.body.promotion?.endpoint).toBe("live");
+  expect(final.body.promotion?.endpoint).toBe("DEFAULT");
   expect(final.body.approval?.by).toBe("approver");
   console.log(`[e2e] release ${state.releaseId} PROMOTED: harness version ${final.body.promotion?.harnessVersion} on ${final.body.promotion?.endpoint}`);
-  await expect(page.getByText(new RegExp(`v${final.body.promotion?.harnessVersion} on live`)).first()).toBeVisible();
+  await expect(page.getByText(new RegExp(`v${final.body.promotion?.harnessVersion} on DEFAULT`)).first()).toBeVisible();
 
   // the role rule is visible on a release that cannot be decided any more
   await expect(page.getByTestId("approve-release")).toBeDisabled();

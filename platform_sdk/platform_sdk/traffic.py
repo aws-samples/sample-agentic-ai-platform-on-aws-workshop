@@ -3,7 +3,7 @@
 Two transports produce the same report:
 
 - through the platform (the default of `workshop traffic`): `client.invoke(project_id, env, prompt, session_id)` queues an invoke job and
-  `client.wait_for_job` polls `GET /jobs/{id}` (the playground path; the backend picks qualifier `live` for prod);
+  `client.wait_for_job` polls `GET /jobs/{id}` (the playground path; the backend reaches the environment's harness on DEFAULT);
 - direct: `agentcore.invoke(harness_arn, prompt, qualifier, session_id)` for scripts that have no platform token.
 
 Prompts are a fixed set from the scenario: `scenario_prompts(path)` reads the first user turn of every scenario in the
@@ -231,7 +231,8 @@ def generate(
     """Run `count` single-turn conversations, each in a fresh runtime session, and return a TrafficReport.
 
     Transport: `client` (a PlatformClient or anything with `invoke` and `wait_for_job`) plus `project_id` and `env` go through
-    the platform; `harness_arn` (plus `qualifier`, `"live"` for prod) calls InvokeHarness directly. Exactly one of the two.
+    the platform; `harness_arn` (plus `qualifier` for an endpoint other than DEFAULT) calls InvokeHarness directly. Exactly one
+    of the two.
     `prompts` default to `DEFAULT_PROMPTS`; `on_done(conversation)` is called as each conversation finishes (progress printing).
     """
     if count < 1:

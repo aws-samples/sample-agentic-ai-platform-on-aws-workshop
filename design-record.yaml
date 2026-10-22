@@ -65,7 +65,7 @@ module_6:
   decisions:
     agent_form:   {workshop: harness-from-blueprint,       my_call: "..."}
     release_gate: {workshop: dataset + thresholds + human, my_call: "..."}
-    promotion:    {workshop: pin-live,                     my_call: "..."}
+    promotion:    {workshop: default-endpoint,             my_call: "..."}
 
 module_7:
   inputs:                                       # read by: workshop apply 7
