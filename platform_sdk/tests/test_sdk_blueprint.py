@@ -223,6 +223,7 @@ def test_tags_for(hr_blueprint):
         "Environment": "dev",
         "Domain": "people-ops",
         "BlueprintVersion": "1",
+        "auto-delete": "no",
     }
     assert blueprint.tags_for(hr_blueprint, "prod", managed_by="workshop")["ManagedBy"] == "workshop"
 

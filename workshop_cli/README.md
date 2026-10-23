@@ -28,9 +28,9 @@ workshop apply 5                   # the Dev key, the token vault, the first cal
 workshop cap --dev low && workshop ask "What is my leave balance? My employee id is E1001." && workshop cap --dev restore
 workshop approve catalogue         # or the Catalogue screen
 workshop inventory                 # platform complete
-workshop apply 6                   # memory, blueprint v1, Dev agent, release 1 + evaluation (BLOCKED)
+workshop apply 6                   # memory, blueprint v1, CodePipeline Dev deployment + evaluation (BLOCKED)
 #   set prompt_version: v2 in design-record.yaml
-workshop apply 6                   # blueprint v2, release 2 + evaluation (PENDING_APPROVAL)
+workshop apply 6                   # blueprint v2, CodePipeline release (PENDING_APPROVAL)
 workshop approve release && workshop promote        # or the Releases screen as Domain approver
 workshop register-agents           # catch-up: promoted agents into the Catalogue's Agents tab (the promote job does it from now on)
 workshop traffic --prod 3
@@ -48,3 +48,6 @@ the state file and the exports (stack-level details: `foundation/README.md`, Tim
 
 Facilitators: `workshop deploy pre-day | landing-zone | all` runs the same `cdk deploy` for a stack set (the bootstrap and, for the
 Web stack, the frontend build happen when missing); `scripts/deploy.sh` does the same from a shell.
+
+Module 6 starts and follows AWS CodePipeline. The CLI never submits local evaluation scores.
+Approve and promote release the pipeline's separate manual gates; queued executions wait until earlier releases finish or are rejected.

@@ -13,10 +13,11 @@ from functools import lru_cache
 import boto3
 from botocore.exceptions import ClientError
 
+from . import tags as tag_rules
 from .config import default_region
 
 PROJECT_TAG = "workshop-agent-platform"
-DEFAULT_TAGS = {"Project": PROJECT_TAG, "ManagedBy": "platform"}
+DEFAULT_TAGS = tag_rules.with_required({"Project": PROJECT_TAG, "ManagedBy": "platform"})
 
 
 @lru_cache(maxsize=8)
@@ -40,7 +41,7 @@ def store_api_key(name: str, api_key: str, tags: dict | None = None, region: str
     client = client or control_client(region)
     try:
         response = client.create_api_key_credential_provider(
-            name=name, apiKey=api_key, tags={**DEFAULT_TAGS, **(tags or {})}
+            name=name, apiKey=api_key, tags=tag_rules.with_required({**DEFAULT_TAGS, **(tags or {})})
         )
     except ClientError as exc:
         if not _is_conflict(exc):
@@ -161,7 +162,7 @@ def ensure_oauth2_provider(
             name=name,
             credentialProviderVendor="CustomOauth2",
             oauth2ProviderConfigInput=config,
-            tags={**DEFAULT_TAGS, **(tags or {})},
+            tags=tag_rules.with_required({**DEFAULT_TAGS, **(tags or {})}),
         )
     except ClientError as exc:
         if not _is_conflict(exc):
@@ -208,7 +209,9 @@ def ensure_workload_identity(name: str, region: str | None = None, client=None) 
     cannot be used from outside, so the demo brings its own."""
     client = client or control_client(region)
     try:
-        return client.create_workload_identity(name=name)["workloadIdentityArn"]
+        return client.create_workload_identity(name=name, tags=tag_rules.with_required(DEFAULT_TAGS))[
+            "workloadIdentityArn"
+        ]
     except ClientError as exc:
         if not _is_conflict(exc):
             raise

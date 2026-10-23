@@ -83,28 +83,36 @@ def deploy(ready, version=1):
     return result
 
 
-def promoted_release(ready, version):
+def pending_release(ready, version=1, scores=None, failed=()):
+    """A release run through the release pipeline's DeployDev and Evaluate actions (the dataset runner replaced)."""
+    from backend_testlib import run_summary
+
+    ready.dataset_run.result = run_summary(scores or PASSING_SCORES, failed)
     status, release = call(
-        "POST",
-        "/projects/hr-assistant/releases",
-        body={"blueprintVersion": version, "autoRun": False},
-        persona="developer",
+        "POST", "/projects/hr-assistant/releases", body={"blueprintVersion": version}, persona="developer"
     )
     assert status == 201, release
-    status, release = call(
-        "POST",
-        f"/releases/{release['releaseId']}/evaluation",
-        body=evaluation_body(PASSING_SCORES),
-        persona="developer",
-    )
-    assert status == 200 and release["status"] == "PENDING_APPROVAL", release
+    ready.pipeline.advance()
+    return call("GET", f"/releases/{release['releaseId']}")[1]
+
+
+def approved_release(ready, version=1):
+    release = pending_release(ready, version)
+    assert release["status"] == "PENDING_APPROVAL", release
     status, release = call(
         "POST", f"/releases/{release['releaseId']}/approve", body={"comment": "ok"}, persona="approver"
     )
     assert status == 200 and release["status"] == "APPROVED", release
+    ready.pipeline.advance()  # on to the promotion gate
+    return release
+
+
+def promoted_release(ready, version):
+    release = approved_release(ready, version)
     status, accepted = call("POST", f"/releases/{release['releaseId']}/promote", persona="approver")
     assert status == 202, accepted
-    result = run_job(accepted["jobId"])
+    ready.pipeline.advance()
+    result = jobs.get(accepted["jobId"])
     assert result["status"] == "SUCCEEDED", result
     return call("GET", f"/releases/{release['releaseId']}")[1], result
 
@@ -191,6 +199,7 @@ def test_render_dry_run_is_unresolved_without_a_key_then_renders(ready):
         "Environment": "dev",
         "Domain": "people-ops",
         "BlueprintVersion": "1",
+        "auto-delete": "no",
     }
     assert spec["systemPrompt"] == [{"text": ready.blueprint.system_prompt}]
 
@@ -299,6 +308,7 @@ def test_deploy_job_ensures_the_key_deploys_and_registers(ready):
         "Environment": "dev",
         "Domain": "people-ops",
         "BlueprintVersion": "1",
+        "auto-delete": "no",
     }
 
     # registered resources: harness, harness_endpoint DEFAULT, credential_provider
@@ -386,20 +396,19 @@ def test_release_flow_blocked_then_pending_then_approved(ready):
 
     status, body = call("POST", f"/releases/{release_id}/approve", body={}, persona="approver")
     assert status == 409 and "PENDING_APPROVAL" in body["error"]["message"]
-    assert call("POST", f"/releases/{release_id}/evaluation", body={"scores": "x"}, persona="developer")[0] == 400
-    assert (
-        call("POST", f"/releases/{release_id}/evaluation", body={"scores": {"Correctness": 1}}, persona="developer")[0]
-        == 400
-    )
-    assert (
-        call("POST", f"/releases/{release_id}/evaluation", body=evaluation_body(PASSING_SCORES), persona="approver")[0]
-        == 403
-    )
+    # no externally computed summary passes the gate (the old manual path)
+    status, body = call("POST", f"/releases/{release_id}/evaluation", body=evaluation_body(PASSING_SCORES))
+    assert status == 409 and body["error"]["code"] == "NATIVE_GATE_REQUIRED"
+    assert call("POST", f"/releases/{release_id}/run", persona="approver")[0] == 403
 
-    status, body = call(
-        "POST", f"/releases/{release_id}/evaluation", body=evaluation_body(BLOCKED_SCORES), persona="developer"
-    )
-    assert status == 200, body
+    # the pipeline run: prompt v1 fails three thresholds
+    from backend_testlib import run_summary
+
+    ready.dataset_run.result = run_summary(BLOCKED_SCORES)
+    status, accepted = call("POST", f"/releases/{release_id}/run", persona="developer")
+    assert status == 202 and accepted["type"] == "release"
+    ready.pipeline.advance()
+    body = call("GET", f"/releases/{release_id}")[1]
     assert (
         body["status"] == "BLOCKED"
         and body["evaluation"]["verdict"] == "BLOCKED"
@@ -427,21 +436,20 @@ def test_release_flow_blocked_then_pending_then_approved(ready):
         "TrajectoryInOrderMatch": 0.9,
         "Harmfulness": 0,
     }
-    assert body["evaluation"]["runId"] == "run-test" and body["evaluation"]["datasetName"] == "hr-assistant.json"
-    assert (
-        body["evaluation"]["scenarioCount"] == 10
-        and body["evaluation"]["results"][0]["scenarioId"] == "leave-balance-e1001"
-    )
+    assert body["evaluation"]["runId"] == "run-worker-1" and body["evaluation"]["datasetName"] == "hr-assistant.json"
+    assert body["evaluation"]["scenarioCount"] == 10 and body["evaluation"]["source"] == "pipeline"
     assert body["evaluation"]["submittedBy"] == "developer" and body["evaluation"]["completedAt"].endswith("Z")
     assert body["evaluation"]["failedScenarios"] == [] and body["updatedAt"] >= body["createdAt"]
     assert call("POST", f"/releases/{release_id}/approve", body={}, persona="approver")[0] == 409
     assert call("POST", f"/releases/{release_id}/promote", persona="approver")[0] == 409
 
-    # a repeated dataset run on the same release is allowed before approval; passing scores -> PENDING_APPROVAL
-    status, body = call(
-        "POST", f"/releases/{release_id}/evaluation", body=evaluation_body(PASSING_SCORES), persona="admin"
-    )
-    assert status == 200 and body["status"] == "PENDING_APPROVAL" and body["evaluation"]["failures"] == []
+    # run again: passing scores -> PENDING_APPROVAL
+    ready.dataset_run.result = run_summary(PASSING_SCORES)
+    status, accepted = call("POST", f"/releases/{release_id}/run", persona="admin")
+    assert status == 202
+    ready.pipeline.advance()
+    body = call("GET", f"/releases/{release_id}")[1]
+    assert body["status"] == "PENDING_APPROVAL" and body["evaluation"]["failures"] == []
     assert body["evaluation"]["verdict"] == "PASSED" and body["evaluation"]["submittedBy"] == "admin"
     assert call("POST", f"/releases/{release_id}/promote", persona="approver")[0] == 409  # not approved yet
     assert call("POST", f"/releases/{release_id}/approve", body={}, persona="developer")[0] == 403
@@ -451,29 +459,20 @@ def test_release_flow_blocked_then_pending_then_approved(ready):
     assert body["approval"]["by"] == "approver" and body["approval"]["comment"] == "scores fine"
     assert body["approval"]["decision"] == "APPROVED" and body["approval"]["at"].endswith("Z")
     assert call("POST", f"/releases/{release_id}/approve", body={}, persona="approver")[0] == 409
-    assert (
-        call("POST", f"/releases/{release_id}/evaluation", body=evaluation_body(PASSING_SCORES))[0] == 409
-    )  # after approval
+    assert call("POST", f"/releases/{release_id}/run", persona="developer")[0] == 409  # after approval
+    ready.pipeline.advance()
 
     # a failed scenario blocks even when the means pass; a rejection ends the release
-    status, second = call(
-        "POST", "/projects/hr-assistant/releases", body={"blueprintVersion": 1, "autoRun": False}, persona="developer"
-    )
-    status, body = call(
-        "POST",
-        f"/releases/{second['releaseId']}/evaluation",
-        body=evaluation_body(PASSING_SCORES, failed=["policy-remote-work-days"]),
-        persona="developer",
-    )
-    assert status == 200 and body["status"] == "BLOCKED"
-    assert body["evaluation"]["failures"] == [
+    second = pending_release(ready, scores=PASSING_SCORES, failed=["policy-remote-work-days"])
+    assert second["status"] == "BLOCKED"
+    assert second["evaluation"]["failures"] == [
         {"evaluator": "_scenarios", "actual": 1, "threshold": 0, "op": "failed<="}
     ]
-    assert body["evaluation"]["failedScenarios"] == ["policy-remote-work-days"]
-    status, body = call(
-        "POST", f"/releases/{second['releaseId']}/evaluation", body=evaluation_body(PASSING_SCORES), persona="developer"
-    )
-    assert body["status"] == "PENDING_APPROVAL"
+    assert second["evaluation"]["failedScenarios"] == ["policy-remote-work-days"]
+    ready.dataset_run.result = run_summary(PASSING_SCORES)
+    call("POST", f"/releases/{second['releaseId']}/run", persona="developer")
+    ready.pipeline.advance()
+    assert call("GET", f"/releases/{second['releaseId']}")[1]["status"] == "PENDING_APPROVAL"
     status, body = call(
         "POST", f"/releases/{second['releaseId']}/reject", body={"comment": "not now"}, persona="approver"
     )
@@ -483,38 +482,29 @@ def test_release_flow_blocked_then_pending_then_approved(ready):
 
 
 def test_evaluation_rejects_non_numeric_scores(ready):
+    """The verdict path (the Evaluate action's `record_evaluation`) validates a run summary before applying thresholds."""
     create_blueprint(ready)
     status, release = call(
         "POST", "/projects/hr-assistant/releases", body={"blueprintVersion": 1, "autoRun": False}, persona="developer"
     )
+    item = releases_handler.load_release(release["releaseId"])
     stringified = {name: {**entry, "mean": str(entry["mean"])} for name, entry in PASSING_SCORES.items()}
-    status, body = call(
-        "POST", f"/releases/{release['releaseId']}/evaluation", body=evaluation_body(stringified), persona="developer"
-    )
-    assert (
-        status == 400
-        and body["error"]["code"] == "VALIDATION_ERROR"
-        and "scores.Correctness.mean" in body["error"]["message"]
-    )
+    with pytest.raises(ApiError) as excinfo:
+        releases_handler.record_evaluation(item, evaluation_body(stringified), "developer", source="pipeline")
+    assert excinfo.value.code == "VALIDATION_ERROR" and "scores.Correctness.mean" in excinfo.value.message
     bad_count = {name: {**entry, "count": 10.5} for name, entry in PASSING_SCORES.items()}
-    status, body = call(
-        "POST", f"/releases/{release['releaseId']}/evaluation", body=evaluation_body(bad_count), persona="developer"
-    )
-    assert status == 400 and "scores.Correctness.count must be an integer" in body["error"]["message"]
+    with pytest.raises(ApiError) as excinfo:
+        releases_handler.record_evaluation(item, evaluation_body(bad_count), "developer", source="pipeline")
+    assert "scores.Correctness.count must be an integer" in excinfo.value.message
+    with pytest.raises(ApiError) as excinfo:
+        releases_handler.record_evaluation(item, {"scores": "x"}, "developer", source="pipeline")
+    assert excinfo.value.status == 400
     assert call("GET", f"/releases/{release['releaseId']}")[1]["status"] == "DRAFT"
 
 
 def test_release_transitions_are_conditional_writes(ready):
     create_blueprint(ready)
-    status, release = call(
-        "POST", "/projects/hr-assistant/releases", body={"blueprintVersion": 1, "autoRun": False}, persona="developer"
-    )
-    call(
-        "POST",
-        f"/releases/{release['releaseId']}/evaluation",
-        body=evaluation_body(PASSING_SCORES),
-        persona="developer",
-    )
+    release = pending_release(ready)
     stale = releases_handler.load_release(release["releaseId"])  # a second request that read PENDING_APPROVAL
     assert (
         call("POST", f"/releases/{release['releaseId']}/approve", body={}, persona="approver")[1]["status"]
@@ -526,61 +516,33 @@ def test_release_transitions_are_conditional_writes(ready):
     assert call("GET", f"/releases/{release['releaseId']}")[1]["status"] == "APPROVED"
 
 
-def test_stuck_promotion_can_be_promoted_again(ready):
+def test_a_promotion_in_progress_is_never_stuck_by_age(ready):
     create_blueprint(ready)
-    status, release = call(
-        "POST", "/projects/hr-assistant/releases", body={"blueprintVersion": 1, "autoRun": False}, persona="developer"
-    )
-    call(
-        "POST",
-        f"/releases/{release['releaseId']}/evaluation",
-        body=evaluation_body(PASSING_SCORES),
-        persona="developer",
-    )
-    call("POST", f"/releases/{release['releaseId']}/approve", body={}, persona="approver")
+    release = approved_release(ready)
     status, accepted = call("POST", f"/releases/{release['releaseId']}/promote", persona="approver")
     assert status == 202
-    # the worker is still on it (job QUEUED / RUNNING and recent): a second promote is refused
+    # the job looks hours old, but the execution is in progress (queued or deploying): a second promote is refused
+    item = db.get(db.job_key(accepted["jobId"]))
+    item.update(status="RUNNING", updatedAt="2026-10-01T00:00:00Z")
+    db.put(item)
     status, body = call("POST", f"/releases/{release['releaseId']}/promote", persona="approver")
     assert status == 409 and "PROMOTING" in body["error"]["message"]
-    # the worker died hard: the job never left RUNNING and is older than the worker timeout -> promote again
-    jobs.set_status(accepted["jobId"], "RUNNING")
-    item = db.get(db.job_key(accepted["jobId"]))
-    item["updatedAt"] = "2026-10-01T00:00:00Z"
-    db.put(item)
-    status, retried = call("POST", f"/releases/{release['releaseId']}/promote", persona="approver")
-    assert status == 202 and retried["jobId"] != accepted["jobId"]
-    assert call("GET", f"/releases/{release['releaseId']}")[1]["promotion"]["jobId"] == retried["jobId"]
-    result = run_job(retried["jobId"])
-    assert (
-        result["status"] == "SUCCEEDED" and call("GET", f"/releases/{release['releaseId']}")[1]["status"] == "PROMOTED"
-    )
-    # a job that disappeared (TTL) while the release says PROMOTING counts as stuck as well
-    gone = {**release, "status": "PROMOTING", "promotion": {"jobId": "01VANISHED00000000000000000"}}
-    assert releases_handler.promotion_stuck(gone) is True
+    assert releases_handler.promotion_stuck(releases_handler.load_release(release["releaseId"])) is False
     assert releases_handler.promotion_stuck({**release, "status": "APPROVED"}) is False
 
 
 def test_evaluation_needs_thresholds_on_the_blueprint(ready):
-    spec = json.loads(json.dumps(ready.blueprint.api_spec()))
-    spec.pop("evaluation")
-    status, item = call(
-        "POST", "/projects/hr-assistant/blueprints", body={"spec": spec, "systemPrompt": "no thresholds"}
-    )
-    assert status == 201 and item["thresholds"] == {}
+    create_blueprint(ready)
+    stored = db.get(db.blueprint_key("hr-assistant", 1))
+    stored["spec"]["evaluation"].pop("thresholds")
+    db.put(stored)
     status, release = call(
-        "POST",
-        "/projects/hr-assistant/releases",
-        body={"blueprintVersion": item["version"], "autoRun": False},
-        persona="developer",
+        "POST", "/projects/hr-assistant/releases", body={"blueprintVersion": 1, "autoRun": False}, persona="developer"
     )
-    status, body = call(
-        "POST",
-        f"/releases/{release['releaseId']}/evaluation",
-        body=evaluation_body(PASSING_SCORES),
-        persona="developer",
-    )
-    assert status == 409 and body["error"]["code"] == "THRESHOLDS_NOT_CONFIGURED"
+    item = releases_handler.load_release(release["releaseId"])
+    with pytest.raises(ApiError) as excinfo:
+        releases_handler.record_evaluation(item, evaluation_body(PASSING_SCORES), "developer", source="pipeline")
+    assert excinfo.value.status == 409 and excinfo.value.code == "THRESHOLDS_NOT_CONFIGURED"
 
 
 # ---- promote job --------------------------------------------------------------------------------------------------------------
@@ -588,16 +550,7 @@ def test_promote_job_deploys_prod_on_default_and_enables_online_evaluation(ready
     create_blueprint(ready)
     deploy(ready, 1)
     call("PUT", "/settings", body={"registryId": "reg-1", "registryArn": "arn:reg-1"})  # module 4's catalogue registry
-    status, release = call(
-        "POST", "/projects/hr-assistant/releases", body={"blueprintVersion": 1, "autoRun": False}, persona="developer"
-    )
-    call(
-        "POST",
-        f"/releases/{release['releaseId']}/evaluation",
-        body=evaluation_body(PASSING_SCORES),
-        persona="developer",
-    )
-    call("POST", f"/releases/{release['releaseId']}/approve", body={}, persona="approver")
+    release = approved_release(ready)
     assert call("POST", f"/releases/{release['releaseId']}/promote", persona="developer")[0] == 403
     assert call("POST", f"/releases/{release['releaseId']}/promote", persona="admin")[0] == 403
     status, accepted = call("POST", f"/releases/{release['releaseId']}/promote", persona="approver")
@@ -619,7 +572,8 @@ def test_promote_job_deploys_prod_on_default_and_enables_online_evaluation(ready
         "env": "prod",
     }
 
-    result = run_job(accepted["jobId"])
+    ready.pipeline.advance()  # the PromoteProd action runs the job
+    result = jobs.get(accepted["jobId"])
     assert result["status"] == "SUCCEEDED", result
     out = result["output"]
     assert (
@@ -647,7 +601,7 @@ def test_promote_job_deploys_prod_on_default_and_enables_online_evaluation(ready
     assert entry["registryId"] == "reg-1" and "warning" not in entry and "error" not in entry
     stored = ready.registry.records[entry["recordId"]]
     assert stored["recordType"] == "AGENT" and stored["displayName"] == "HR Assistant (Prod)"
-    assert stored["tags"] == {"ManagedBy": "platform", "ProjectId": "hr-assistant"}
+    assert stored["tags"] == {"ManagedBy": "platform", "ProjectId": "hr-assistant", "auto-delete": "no"}
     assert "approved by approver and promoted to Prod by approver" in stored["statusReason"]
     descriptor = stored["descriptors"]["a2aAgentCard"]
     assert descriptor["dataSchemaVersion"] == "0.3"  # the registry rejects "0.3.0" (AWS docs, 2026-10-21)
@@ -833,19 +787,11 @@ def test_catalogue_agents_sync_registers_agents_promoted_before_the_registry_ste
 
 def test_promote_failure_marks_the_release_failed_and_can_be_retried(ready):
     create_blueprint(ready)
-    status, release = call(
-        "POST", "/projects/hr-assistant/releases", body={"blueprintVersion": 1, "autoRun": False}, persona="developer"
-    )
-    call(
-        "POST",
-        f"/releases/{release['releaseId']}/evaluation",
-        body=evaluation_body(PASSING_SCORES),
-        persona="developer",
-    )
-    call("POST", f"/releases/{release['releaseId']}/approve", body={}, persona="approver")
+    release = approved_release(ready)
     ready.agentcore.fail_on.add("harness")
     status, accepted = call("POST", f"/releases/{release['releaseId']}/promote", persona="approver")
-    result = run_job(accepted["jobId"])
+    ready.pipeline.advance()
+    result = jobs.get(accepted["jobId"])
     assert (
         result["status"] == "FAILED"
         and result["error"]["code"] == "UPSTREAM_ERROR"
@@ -864,7 +810,8 @@ def test_promote_failure_marks_the_release_failed_and_can_be_retried(ready):
     ready.agentcore.fail_on.clear()
     status, accepted = call("POST", f"/releases/{release['releaseId']}/promote", persona="approver")
     assert status == 202
-    result = run_job(accepted["jobId"])
+    ready.pipeline.advance()
+    result = jobs.get(accepted["jobId"])
     assert result["status"] == "SUCCEEDED" and result["output"]["keyCreated"] is False
     done = call("GET", f"/releases/{release['releaseId']}")[1]
     assert done["status"] == "PROMOTED" and done["error"] is None and done["promotion"]["jobId"] == accepted["jobId"]
@@ -1211,3 +1158,36 @@ def test_worker_drops_the_lambda_trace_header_so_harness_sessions_are_sampled(ta
     after = _invoke_harness_headers(client)
     assert "X-Amzn-Trace-Id" not in after, after
     assert "Authorization" in after  # the request was built and signed as usual
+
+
+def test_invoke_tags_the_runtime_log_group_the_first_invocation_created(ready, monkeypatch):
+    """Prod's runtime log group does not exist at promotion; the first invocation creates it and the invoke job tags it."""
+    from botocore.exceptions import ClientError
+    from platform_api.services import clients
+
+    create_blueprint(ready)
+    promoted_release(ready, 1)
+    logs = clients.logs()
+    name = "/aws/bedrock-agentcore/runtimes/harness_hr_assistant_prod-RT123-DEFAULT"
+    assert logs.describe_log_groups(logGroupNamePrefix=name)["logGroups"] == []  # nothing to tag at promotion
+    logs.create_log_group(logGroupName=name)  # what AgentCore Runtime does on the first invocation
+    body = {"projectId": "hr-assistant", "env": "prod", "prompt": "What is my leave balance? I am E1001."}
+    status, accepted = call("POST", "/invoke", body=body, persona="developer")
+    assert status == 202
+    result = run_job(accepted["jobId"])
+    assert result["status"] == "SUCCEEDED", result
+    arn = logs.describe_log_groups(logGroupNamePrefix=name)["logGroups"][0]["arn"].removesuffix(":*")
+    tags = logs.list_tags_for_resource(resourceArn=arn)["tags"]
+    assert tags["auto-delete"] == "no" and tags["ProjectId"] == "hr-assistant" and tags["Environment"] == "prod"
+
+    # a group that is still missing is not an error; a tag call that is refused fails the job
+    def denied(**params):
+        raise ClientError({"Error": {"Code": "AccessDeniedException", "Message": "not authorized"}}, "TagResource")
+
+    monkeypatch.setattr(logs, "tag_resource", denied)
+    status, accepted = call("POST", "/invoke", body=body, persona="developer")
+    result = run_job(accepted["jobId"])
+    assert result["status"] == "FAILED" and "AccessDeniedException" in result["error"]["message"]
+    logs.delete_log_group(logGroupName=name)
+    status, accepted = call("POST", "/invoke", body=body, persona="developer")
+    assert run_job(accepted["jobId"])["status"] == "SUCCEEDED"

@@ -230,3 +230,8 @@ frontend/dist/
 
 # macOS
 .DS_Store
+.omni/
+.github/
+.cursor/
+.kiro/
+.agents/

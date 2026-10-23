@@ -28,7 +28,12 @@ def test_store_api_key_creates_with_tags(control):
         {
             "name": NAME,
             "apiKey": "sk-virtual",
-            "tags": {"Project": "workshop-agent-platform", "ManagedBy": "platform", "ProjectId": "hr-assistant"},
+            "tags": {
+                "Project": "workshop-agent-platform",
+                "ManagedBy": "platform",
+                "ProjectId": "hr-assistant",
+                "auto-delete": "no",
+            },
         },
     )
     assert identity.store_api_key(NAME, "sk-virtual", tags={"ProjectId": "hr-assistant"}, client=client) == ARN

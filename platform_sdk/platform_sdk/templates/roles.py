@@ -20,6 +20,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 from .. import names
+from .. import tags as tag_rules
 
 TEMPLATE_DIR = Path(__file__).parent
 POLICY_NAME = "agent-platform-project"
@@ -86,12 +87,9 @@ def render_gateway_role(
 
 
 def role_tags(project_id: str, env: str) -> list[dict]:
-    return [
-        {"Key": "Project", "Value": PROJECT_TAG},
-        {"Key": "ProjectId", "Value": project_id},
-        {"Key": "Environment", "Value": env},
-        {"Key": "ManagedBy", "Value": "platform"},
-    ]
+    return tag_rules.as_list(
+        {"Project": PROJECT_TAG, "ProjectId": project_id, "Environment": env, "ManagedBy": "platform"}
+    )
 
 
 def ensure_role(iam, role_name: str, rendered: dict, project_id: str, env: str, description: str) -> str:

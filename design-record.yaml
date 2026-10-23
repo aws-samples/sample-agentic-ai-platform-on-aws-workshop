@@ -64,7 +64,7 @@ module_6:
     export: strands                             # strands | langgraph
   decisions:
     agent_form:   {workshop: harness-from-blueprint,       my_call: "..."}
-    release_gate: {workshop: dataset + thresholds + human, my_call: "..."}
+    release_gate: {workshop: codepipeline + dataset + thresholds + human, my_call: "..."}
     promotion:    {workshop: default-endpoint,             my_call: "..."}
 
 module_7:

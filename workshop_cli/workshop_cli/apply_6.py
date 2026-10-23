@@ -1,32 +1,25 @@
-"""Module 6: AgentOps (memories, blueprint to Dev, release and evaluation).
+"""Module 6: memory, blueprint and a CodePipeline release.
 
-`workshop apply 6` with prompt_version v1 creates the memories, stores blueprint v1, deploys it to Dev, creates release 1 and runs
-the dataset evaluation (BLOCKED is the expected verdict). With prompt_version v2 it stores blueprint v2, redeploys, creates release 2
-and evaluates it (PENDING_APPROVAL). Approval and promotion are the Domain approver's clicks in the UI (`workshop approve release`
-and `workshop promote` are the fallbacks).
-
-The dataset expects the module 4 deny of leave requests over `max_leave_days`, which only a gateway in ENFORCE applies: before a
-v2 evaluation the command reads the Dev gateway's policy mode and stops with the flip instructions while it is LOG_ONLY (a v1 run
-only warns). A BLOCKED v2 release is evaluated again by running the command again; an UNSCORED scenario (its telemetry was not
-complete when the evaluators read it) is the usual reason for one.
+The command prepares the blueprint and starts the same pipeline as the Releases screen.
+CodePipeline deploys Dev and evaluates the dataset. The v1 prompt should be BLOCKED;
+v2 should reach PENDING_APPROVAL. The approver approves and promotes through the UI
+or CLI, which releases the pipeline's manual gates. --skip-evaluation creates a draft.
 """
 
 from __future__ import annotations
 
-import json
 import time
 import uuid
 from datetime import UTC, datetime
 
 import yaml
 
-from platform_sdk import agentcore, api, blueprint, evaluation
+from platform_sdk import agentcore, blueprint, evaluation
 
 from .context import Context, WorkshopError, head, look, ok, say, warn
 
-EVALUATION_DELAY_SECONDS = 180
 RUN_POLL_SECONDS = 10
-RUN_WAIT_SECONDS = 15 * 60  # the worker's limit: a platform run still EVALUATING after this has stalled
+RUN_WAIT_SECONDS = 60 * 60  # includes time queued behind another release; never stops the execution
 
 
 def registered(client, project_id: str, env: str, type_: str, name: str | None = None) -> dict | None:
@@ -147,48 +140,6 @@ def store_blueprint(ctx: Context, bp: blueprint.Blueprint, prompt_version: str) 
     return version
 
 
-def deploy_to_dev(ctx: Context, version: int) -> dict | None:
-    developer = ctx.developer
-    hr_dev = ctx.names("dev")
-    current = registered(developer, ctx.project_id, "dev", "harness", hr_dev.harness)
-    attrs = (current or {}).get("attributes") or {}
-    if current and str(attrs.get("blueprintVersion")) == str(version):
-        say(
-            f"  Dev harness {hr_dev.harness} already runs blueprint version {version} (harness version {attrs.get('version')})"
-        )
-        return None
-    accepted = developer.deploy(ctx.project_id, version, "dev")
-    started = time.monotonic()
-    job = developer.wait_for_job(accepted["jobId"], timeout=600)
-    if job.get("status") != "SUCCEEDED":
-        message = f"deploy job {accepted['jobId']} {job.get('status')}: {json.dumps(job.get('error'), default=str)}"
-        if "service linked role" in message.lower():
-            message += (
-                "\n  The account lacks the AgentCore Runtime service-linked role and the backend may not create it: this foundation "
-                "version predates the fix (Platform stack, 15 Oct 2026). Create it once with admin credentials, then run apply 6 again:\n"
-                "  uv run python -c \"import boto3; boto3.client('iam').create_service_linked_role("
-                "AWSServiceName='runtime-identity.bedrock-agentcore.amazonaws.com')\""
-            )
-        raise WorkshopError(message)
-    out = job["output"]
-    say(
-        f"  deploy job SUCCEEDED in {time.monotonic() - started:.0f} s: harness {out.get('harnessName')} version {out.get('harnessVersion')}, endpoint {out.get('endpoint')}; key {out.get('keyAlias')} ({'created by the job' if out.get('keyCreated') else 'the module 5 key'})"
-    )
-    ctx.state.set(
-        "harness.dev",
-        {
-            **(ctx.state.get("harness.dev") or {}),
-            "id": out.get("harnessId"),
-            "arn": out.get("harnessArn"),
-            "version": str(out.get("harnessVersion")),
-            "blueprintVersion": int(version),
-            "logGroup": out.get("logGroup"),
-            "endpoint": out.get("endpoint") or "DEFAULT",
-        },
-    )
-    return out
-
-
 def converse(
     ctx: Context, env: str, prompt: str, label: str, session_id: str | None = None, timeout: float = 420
 ) -> dict:
@@ -228,8 +179,7 @@ def ensure_release(ctx: Context, version: int, notes: str) -> dict:
     if existing:
         say(f"  release {existing['releaseId']} for blueprint version {version} exists: {existing['status']}")
         return existing
-    # autoRun off: this command runs the dataset itself (progress on the terminal, the run saved locally) and posts the summary;
-    # a release created on the Releases screen is deployed and evaluated by the platform's worker instead.
+    # Create a draft first so the gateway-mode guard runs before CodePipeline starts.
     created = ctx.developer.create_release(ctx.project_id, version, notes, auto_run=False)
     say(
         f"  POST /projects/{ctx.project_id}/releases {{blueprintVersion: {version}, autoRun: false}} -> {created['status']} release {created['releaseId']}"
@@ -238,8 +188,7 @@ def ensure_release(ctx: Context, version: int, notes: str) -> dict:
 
 
 def wait_for_platform_run(ctx: Context, release: dict) -> dict:
-    """A release created on the Releases screen (or run again there) is deployed and evaluated by the platform's worker, not by
-    this command: follow it to its verdict instead of starting a second run."""
+    """Follow CodePipeline to its evaluation verdict without running a second evaluation locally."""
     developer = ctx.developer
     started, last_stage = time.monotonic(), None
     while release.get("status") == "EVALUATING":
@@ -248,18 +197,21 @@ def wait_for_platform_run(ctx: Context, release: dict) -> dict:
             last_stage = pipeline.get("stage")
             say(
                 f"  {time.monotonic() - started:5.0f} s  the platform is running release {release['releaseId']} (job "
-                f"{pipeline.get('jobId')}): {str(last_stage).lower()}"
+                f"{pipeline.get('jobId')}, execution {pipeline.get('executionId')}): {str(last_stage).lower()}"
             )
         if time.monotonic() - started > RUN_WAIT_SECONDS:
             raise WorkshopError(
                 f"release {release['releaseId']} is still EVALUATING after {RUN_WAIT_SECONDS // 60} minutes: open the Releases "
-                "screen; `Run again` appears there once the job has stalled, then run this command again"
+                "screen to inspect its CodePipeline execution. It may be queued behind an approval; the execution continues"
             )
         time.sleep(RUN_POLL_SECONDS)
         release = developer.get_release(release["releaseId"])
     error = release.get("error") or {}
     if release.get("status") == "DRAFT" and error:
-        say(f"  the platform's run failed in stage {error.get('stage')}: {error.get('code')}: {error.get('message')}")
+        raise WorkshopError(
+            f"release {release['releaseId']} failed in stage {error.get('stage')}: "
+            f"{error.get('code')}: {error.get('message')}"
+        )
     else:
         print_verdict(release)
     return release
@@ -328,58 +280,21 @@ def closing_line(release: dict, prompt_version: str, expect_pass: bool) -> tuple
     return "ok", f"release {release_id} is {status}"
 
 
-def run_evaluation(ctx: Context, release: dict, label: str, evaluators: list[str]) -> dict:
-    developer = ctx.developer
-    hr_dev = ctx.names("dev")
-    harness_row = registered(developer, ctx.project_id, "dev", "harness", hr_dev.harness)
-    attrs = harness_row["attributes"]
-    if str(attrs.get("blueprintVersion")) != str(release["blueprintVersion"]):
-        raise WorkshopError(
-            f"the Dev harness runs blueprint version {attrs.get('blueprintVersion')}, the release needs {release['blueprintVersion']}"
-        )
-    key_now = next(
-        k for k in developer.list_keys(ctx.project_id) if k["env"] == "dev" and k["model"] == ctx.model_alias
-    )
-    key_spend = next(
-        (k for k in developer.spend(ctx.project_id, "dev").get("keys", []) if k.get("alias") == key_now["alias"]), {}
-    )
-    if key_now.get("status") != "active" or float(key_now.get("maxBudget") or 0) <= float(key_spend.get("spend") or 0):
-        raise WorkshopError(
-            f"the Dev key {key_now['alias']} would refuse every scenario (cap {key_now.get('maxBudget')} USD, spend {key_spend.get('spend')} USD): run `workshop cap --dev restore`"
-        )
-    scenarios = json.loads(ctx.dataset_path.read_text())["scenarios"]
-    say(
-        f"  dataset {ctx.dataset_path.name}: {len(scenarios)} scenarios, 3 at a time; evaluators {evaluators}; telemetry delay {EVALUATION_DELAY_SECONDS} s, then each session's spans are read until complete -> 5 to 7 minutes"
-    )
-    started = time.monotonic()
-
-    def on_turn(session_id, prompt, result):
-        say(
-            f"    {time.monotonic() - started:5.0f} s  {result.seconds:5.1f} s  {str(result.tools):<44} {' '.join(result.text.split())[:60]!r}"
-        )
-
-    summary = evaluation.run_dataset(
-        ctx.dataset_path,
-        harness_row["arn"],
-        attrs["logGroup"],
-        evaluators,
-        delay_seconds=EVALUATION_DELAY_SECONDS,
-        region=ctx.region,
-        on_turn=on_turn,
-    )
-    runs_dir = ctx.state.path.parent / "evaluations"
-    saved = summary.save(runs_dir / f"{ctx.project_id}-{label}-{summary.run_id}.json")
-    say(f"  run {summary.run_id}: {summary.scenario_count} scenarios in {summary.seconds} s; saved {saved.name}")
-    try:
-        outcome = developer.submit_evaluation(release["releaseId"], summary)
-    except api.PlatformApiError as exc:
-        if exc.status != 409 or "EVALUATING" not in str(exc.message):
-            raise
-        # someone clicked Run evaluation on the Releases screen meanwhile: the platform's run owns the release now
-        say(f"  the platform started its own run of this release meanwhile ({exc.message}); following that run instead")
-        return wait_for_platform_run(ctx, developer.get_release(release["releaseId"]))
-    print_verdict(outcome)
-    return outcome
+def run_release_pipeline(ctx: Context, release: dict, expect_pass: bool) -> dict:
+    """Start or follow the native release pipeline; evaluation never runs on this machine."""
+    if release["status"] == "EVALUATING":
+        return wait_for_platform_run(ctx, release)
+    if release["status"] == "DRAFT" or (release["status"] == "BLOCKED" and expect_pass):
+        gateway_name, mode = dev_gateway_mode(ctx)
+        problem = gateway_mode_problem(mode, gateway_name, int(ctx.inputs(4).get("max_leave_days", 10)))
+        if problem and expect_pass:
+            raise WorkshopError(f"{problem}. Release {release['releaseId']} stays {release['status']}")
+        if problem:
+            warn(problem)
+        ctx.developer.run_release(release["releaseId"])
+        return wait_for_platform_run(ctx, ctx.developer.get_release(release["releaseId"]))
+    print_verdict(release)
+    return release
 
 
 def release_state(release: dict) -> dict:
@@ -421,61 +336,33 @@ def run(ctx: Context, skip_evaluation: bool = False) -> None:
         f"  render for dev: model {model_cfg['modelId']} via the model gateway, key {model_cfg['apiKeyArn'].rsplit('/', 1)[-1]}, tools {[t['type'] for t in rendered['tools']]}, memory {bool(rendered.get('memory'))}"
     )
 
-    head("deploy to Dev")
-    deploy_to_dev(ctx, version)
-    harness_row = registered(developer, ctx.project_id, "dev", "harness", ctx.names("dev").harness)
-    ctx.state.set(
-        "harness.dev",
-        {
-            **(ctx.state.get("harness.dev") or {}),
-            "id": harness_row["id"],
-            "arn": harness_row["arn"],
-            "blueprintVersion": harness_row["attributes"].get("blueprintVersion"),
-            "logGroup": harness_row["attributes"].get("logGroup"),
-            "endpoint": "DEFAULT",
-        },
-    )
-    converse(
-        ctx,
-        "dev",
-        "How many days per week can I work remotely, and which day do I have to be in the office?",
-        f"warm-up of {prompt_version}: the policy question",
-    )
-
-    # the on-behalf-of twin of the Dev harness (the gateway of module 4, the IdP of module 2)
-    from . import obo_build
-
-    obo_build.module_6(ctx)
-
-    head(f"release for blueprint version {version} and its evaluation")
+    head(f"CodePipeline release for blueprint version {version}")
     release = ensure_release(ctx, version, f"workshop: prompt {prompt_version}")
     release = developer.get_release(release["releaseId"])
-    status = release["status"]
-    if status == "EVALUATING" and not skip_evaluation:
-        say(
-            f"  release {release['releaseId']} is EVALUATING: it was created on the Releases screen, so the platform runs it"
-        )
-        release = wait_for_platform_run(ctx, release)
-        status = release["status"]
-    needs_run = status == "DRAFT" or (status == "BLOCKED" and expect_pass)
     if skip_evaluation:
-        say(f"  --skip-evaluation: release {release['releaseId']} left {status}")
-    elif needs_run:
-        gateway_name, mode = dev_gateway_mode(ctx)
-        say(f"  Dev gateway {gateway_name}: policy mode {mode or 'none (no policy engine attached)'}")
-        problem = gateway_mode_problem(mode, gateway_name, int(ctx.inputs(4).get("max_leave_days", 10)))
-        if problem and expect_pass:
-            raise WorkshopError(f"{problem}. Release {release['releaseId']} stays {status}; nothing was evaluated")
-        if problem:
-            warn(problem)
-        run_evaluation(ctx, release, prompt_version, bp.evaluator_ids())
-        release = developer.get_release(release["releaseId"])
+        say(f"  --skip-evaluation: release {release['releaseId']} left {release['status']}; no new pipeline started")
     else:
-        ev = release.get("evaluation") or {}
-        say(
-            f"  release {release['releaseId']} is {status}: evaluation {ev.get('runId')} -> {ev.get('verdict')} (no new run)"
-        )
-        print_verdict({"status": status, "evaluation": ev})
+        release = run_release_pipeline(ctx, release, expect_pass)
+
+    # The pipeline owns Dev deployment. Read its result only after the evaluation has finished.
+    if not skip_evaluation and release["status"] in ("BLOCKED", "PENDING_APPROVAL", "APPROVED", "PROMOTED"):
+        harness_row = registered(developer, ctx.project_id, "dev", "harness", ctx.names("dev").harness)
+        if harness_row:
+            ctx.state.set(
+                "harness.dev",
+                {
+                    **(ctx.state.get("harness.dev") or {}),
+                    "id": harness_row["id"],
+                    "arn": harness_row["arn"],
+                    "blueprintVersion": harness_row["attributes"].get("blueprintVersion"),
+                    "logGroup": harness_row["attributes"].get("logGroup"),
+                    "endpoint": "DEFAULT",
+                },
+            )
+        from . import obo_build
+
+        obo_build.module_6(ctx)
+
     ctx.state.set(f"releases.{prompt_version}", release_state(release))
 
     say("")

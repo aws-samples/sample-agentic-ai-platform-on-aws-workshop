@@ -616,3 +616,331 @@ def register(project_id, env, type_, name, **fields):
     )
     assert status == 200, body
     return body
+
+
+# ---- the release pipeline (CodePipeline V2, QUEUED) ---------------------------------------------------------------------------
+PIPELINE_NAME = "agent-platform-release"
+SOURCE_BUCKET = f"agent-platform-release-source-{ACCOUNT}"
+PIPELINE_STAGES = [
+    ("Source", [("ReleaseSnapshot", "source", None)]),
+    ("Validate", [("DeployDev", "lambda", "deploy-dev"), ("Evaluate", "lambda", "evaluate")]),  # one stage lock
+    ("Approve", [("ApproveRelease", "approval", None)]),
+    ("Promote", [("ApprovePromotion", "approval", None), ("PromoteProd", "lambda", "promote")]),
+]
+ARTIFACT_CREDENTIALS = {
+    "accessKeyId": "ASIAFAKEARTIFACTKEY",
+    "secretAccessKey": "artifact-secret",
+    "sessionToken": "artifact-token",
+}
+
+
+class FakeCodePipeline:
+    """A CodePipeline client double for the release pipeline. Requests are validated against botocore's CodePipeline model, the
+    answers follow the API's response shapes, errors are real `ClientError`s with the service's codes. `advance()` drives the
+    executions the way a QUEUED V2 pipeline does: a stage is locked while an execution is in it (all its actions, in run order),
+    the next execution waits at that stage's boundary in start order, and every stage has its own queue. The worker is invoked
+    with CodePipeline job events (including artifact credentials, which must never be logged)."""
+
+    def __init__(self, s3_client, worker):
+        import boto3
+
+        self.model = boto3.client("codepipeline", region_name=REGION).meta.service_model
+        self.s3 = s3_client
+        self.worker = worker
+        self.executions: dict[str, dict] = {}
+        self.order: list[str] = []
+        self.tokens: dict[str, str] = {}  # clientRequestToken -> execution id
+        self.jobs: dict[str, dict] = {}  # CodePipeline job id -> {"execution", "result"}
+        self.events: list[dict] = []
+        self.calls: list[tuple[str, dict]] = []
+        self.fail_next: dict[
+            str, str
+        ] = {}  # action -> failure message reported without invoking the worker (a timed-out action)
+        self.paused: set[str] = set()  # actions CodePipeline has not got to yet: their stage stays locked
+
+    # -- botocore plumbing
+    def _check(self, operation: str, params: dict) -> None:
+        from botocore.validate import ParamValidator
+
+        report = ParamValidator().validate(params, self.model.operation_model(operation).input_shape)
+        if report.has_errors():
+            raise AssertionError(f"{operation}: {report.generate_report()}")
+        self.calls.append((operation, params))
+
+    @staticmethod
+    def _error(operation: str, code: str, message: str = "refused"):
+        from botocore.exceptions import ClientError
+
+        return ClientError({"Error": {"Code": code, "Message": message}}, operation)
+
+    def _execution(self, operation: str, execution_id: str) -> dict:
+        if execution_id not in self.executions:
+            raise self._error(operation, "PipelineExecutionNotFoundException", f"{execution_id} not found")
+        return self.executions[execution_id]
+
+    # -- the API
+    def start_pipeline_execution(self, **params):
+        self._check("StartPipelineExecution", params)
+        token = params.get("clientRequestToken")
+        if token in self.tokens:  # idempotent: the same execution
+            return {"pipelineExecutionId": self.tokens[token]}
+        revision = params["sourceRevisions"][0]
+        assert revision["actionName"] == "ReleaseSnapshot" and revision["revisionType"] == "S3_OBJECT_VERSION_ID"
+        execution_id = f"exec-{len(self.order) + 1:04d}-{uuid4_hex()[:8]}"
+        self.executions[execution_id] = {
+            "id": execution_id,
+            "status": "InProgress",
+            "variables": {v["name"]: v["value"] for v in params["variables"]},
+            "revision": revision["revisionValue"],
+            "stage": 0,
+            "action": 0,
+            "entered": False,
+            "actionStatus": None,
+            "token": None,
+            "failedStage": None,
+            "approvals": [],
+        }
+        self.order.append(execution_id)
+        self.tokens[token] = execution_id
+        return {"pipelineExecutionId": execution_id}
+
+    def get_pipeline_execution(self, **params):
+        self._check("GetPipelineExecution", params)
+        e = self._execution("GetPipelineExecution", params["pipelineExecutionId"])
+        return {
+            "pipelineExecution": {
+                "pipelineName": PIPELINE_NAME,
+                "pipelineVersion": 1,
+                "pipelineExecutionId": e["id"],
+                "status": e["status"],
+                "artifactRevisions": [{"name": "ReleaseSnapshot", "revisionId": e["revision"]}],
+                "variables": [{"name": k, "resolvedValue": v} for k, v in e["variables"].items()],
+                "executionMode": "QUEUED",
+            }
+        }
+
+    def get_pipeline_state(self, **params):
+        self._check("GetPipelineState", params)
+        states = []
+        for index, (stage, actions) in enumerate(PIPELINE_STAGES):
+            occupant = next(
+                (self.executions[i] for i in reversed(self.order) if self._in_stage(self.executions[i], index)), None
+            )
+            state: dict = {"stageName": stage, "actionStates": []}
+            if occupant:
+                state["latestExecution"] = {
+                    "pipelineExecutionId": occupant["id"],
+                    "status": occupant["status"] if occupant["status"] != "Succeeded" else "Succeeded",
+                }
+                for position, (action, _, _) in enumerate(actions):
+                    run: dict = {}
+                    if position == occupant["action"] and occupant["actionStatus"]:
+                        run = {"status": occupant["actionStatus"]}
+                        if occupant["token"] and occupant["actionStatus"] == "InProgress":
+                            run["token"] = occupant["token"]
+                    state["actionStates"].append({"actionName": action, **({"latestExecution": run} if run else {})})
+            states.append(state)
+        return {"pipelineName": PIPELINE_NAME, "pipelineVersion": 1, "stageStates": states}
+
+    def put_approval_result(self, **params):
+        self._check("PutApprovalResult", params)
+        e = next(
+            (
+                e
+                for e in self.executions.values()
+                if e["token"] == params["token"] and e["actionStatus"] == "InProgress"
+            ),
+            None,
+        )
+        stage, actions = PIPELINE_STAGES[e["stage"]] if e else (None, None)
+        if e is None or stage != params["stageName"] or actions[e["action"]][0] != params["actionName"]:
+            raise self._error("PutApprovalResult", "InvalidApprovalTokenException", "the token is not valid")
+        e["approvals"].append((params["actionName"], params["result"]["status"], params["result"]["summary"]))
+        e["token"] = None
+        if params["result"]["status"] == "Approved":
+            e["actionStatus"] = "Succeeded"
+        else:
+            self._fail(e)
+        from datetime import datetime
+
+        return {"approvedAt": datetime(2026, 10, 23)}
+
+    def retry_stage_execution(self, **params):
+        self._check("RetryStageExecution", params)
+        e = self._execution("RetryStageExecution", params["pipelineExecutionId"])
+        if e["status"] != "Failed" or e["failedStage"] != params["stageName"]:
+            raise self._error("RetryStageExecution", "StageNotRetryableException", "the stage cannot be retried")
+        e.update(
+            status="InProgress", actionStatus=None, failedStage=None
+        )  # FAILED_ACTIONS: the failed action runs again
+        return {"pipelineExecutionId": e["id"]}
+
+    def stop_pipeline_execution(self, **params):
+        self._check("StopPipelineExecution", params)
+        e = self._execution("StopPipelineExecution", params["pipelineExecutionId"])
+        if e["status"] != "InProgress":
+            raise self._error("StopPipelineExecution", "PipelineExecutionNotStoppableException", "not stoppable")
+        e.update(status="Stopped", token=None)
+        return {"pipelineExecutionId": e["id"]}
+
+    def put_job_success_result(self, **params):
+        self._check("PutJobSuccessResult", params)
+        self._result(params["jobId"], {"kind": "success", **params})
+        return {}
+
+    def put_job_failure_result(self, **params):
+        self._check("PutJobFailureResult", params)
+        self._result(params["jobId"], {"kind": "failure", **params})
+        return {}
+
+    def _result(self, job_id: str, result: dict) -> None:
+        job = self.jobs.get(job_id)
+        if job is None or job["result"] is not None:
+            raise self._error("PutJobResult", "InvalidJobStateException", "the job is not in progress")
+        job["result"] = result
+
+    # -- the simulation
+    def _in_stage(self, e: dict, index: int) -> bool:
+        """Shown in the stage's state: running there, or ended there (failed, stopped)."""
+        return e["entered"] and e["stage"] == index
+
+    def _occupies(self, e: dict, index: int) -> bool:
+        """Holds the stage (QUEUED: no other execution enters it meanwhile)."""
+        return self._in_stage(e, index) and e["status"] == "InProgress"
+
+    def _fail(self, e: dict) -> None:
+        e.update(status="Failed", actionStatus="Failed", token=None, failedStage=PIPELINE_STAGES[e["stage"]][0])
+
+    def expire(self, execution_id: str) -> None:
+        """The manual approval timed out: the stage and the execution fail."""
+        self._fail(self.executions[execution_id])
+
+    def event(self, e: dict, action: str, continuation: str | None = None) -> dict:
+        job_id = f"cp-job-{len(self.jobs) + 1:04d}"
+        self.jobs[job_id] = {"execution": e["id"], "result": None}
+        parameters = {
+            "action": action,
+            "releaseId": e["variables"]["releaseId"],
+            "projectId": e["variables"]["projectId"],
+            "executionId": e["id"],
+        }
+        data: dict = {
+            "actionConfiguration": {
+                "configuration": {"FunctionName": "agent-platform-worker", "UserParameters": json.dumps(parameters)}
+            },
+            "inputArtifacts": [
+                {
+                    "name": "ReleaseSnapshot",
+                    "revision": e["revision"],
+                    "location": {
+                        "type": "S3",
+                        "s3Location": {"bucketName": "artifacts", "objectKey": f"{e['id']}/src"},
+                    },
+                }
+            ],
+            "outputArtifacts": [],
+            "artifactCredentials": dict(ARTIFACT_CREDENTIALS),
+        }
+        if continuation:
+            data["continuationToken"] = continuation
+        event = {"CodePipeline.job": {"id": job_id, "accountId": ACCOUNT, "data": data}}
+        self.events.append(event)
+        return event
+
+    def deliver(self, event: dict) -> dict:
+        from types import SimpleNamespace
+
+        return self.worker.handler(json.loads(json.dumps(event)), SimpleNamespace())
+
+    def _run_lambda(self, e: dict, action_name: str, action: str) -> None:
+        if action_name in self.fail_next:
+            job_id = self.event(e, action)["CodePipeline.job"]["id"]
+            self.jobs[job_id]["result"] = {"kind": "failure", "message": self.fail_next.pop(action_name)}
+            self._fail(e)
+            return
+        event = self.event(e, action, e.pop("continuation", None))
+        self.deliver(event)
+        result = self.jobs[event["CodePipeline.job"]["id"]]["result"]
+        if result is None:  # nothing reported (a duplicate claim): the action stays in progress
+            e["actionStatus"] = "InProgress"
+        elif result["kind"] == "failure":
+            self._fail(e)
+        elif result.get("continuationToken"):  # CodePipeline invokes the action again later, with the token
+            e.update(continuation=result["continuationToken"], actionStatus="Continuing")
+        else:
+            e["actionStatus"] = "Succeeded"
+
+    def _tick(self, e: dict) -> bool:
+        if e["status"] != "InProgress":
+            return False
+        if not e["entered"]:
+            if any(self._occupies(self.executions[o], e["stage"]) for o in self.order if o != e["id"]):
+                return False  # QUEUED: wait for the stage to clear
+            e.update(entered=True, action=0, actionStatus=None)
+            return True
+        name, kind, action = PIPELINE_STAGES[e["stage"]][1][e["action"]]
+        if e["actionStatus"] == "Succeeded":
+            e["action"] += 1
+            e["actionStatus"] = None
+            if e["action"] >= len(PIPELINE_STAGES[e["stage"]][1]):
+                e.update(stage=e["stage"] + 1, action=0, entered=False)
+                if e["stage"] >= len(PIPELINE_STAGES):
+                    e.update(status="Succeeded", entered=False)
+            return True
+        if e["actionStatus"] == "InProgress":
+            return False  # an approval waiting for its answer, or a hung action
+        if e["actionStatus"] == "Continuing":
+            e["actionStatus"] = None  # the next advance() is CodePipeline's next invocation
+            return False
+        if name in self.paused:
+            return False
+        if kind == "source":
+            self.s3.head_object(Bucket=SOURCE_BUCKET, Key="release-source/release.zip", VersionId=e["revision"])
+            e["actionStatus"] = "Succeeded"
+        elif kind == "approval":
+            e.update(actionStatus="InProgress", token=f"approval-token-{uuid4_hex()}")
+        else:
+            self._run_lambda(e, name, action)
+        return True
+
+    def advance(self) -> None:
+        """Run every execution as far as it goes on its own (until approvals, failures or the end)."""
+        for _ in range(500):
+            if not any([self._tick(self.executions[i]) for i in list(self.order)]):
+                return
+        raise AssertionError("the pipeline never settled")
+
+    def latest(self) -> dict:
+        return self.executions[self.order[-1]]
+
+
+def uuid4_hex() -> str:
+    import uuid
+
+    return uuid.uuid4().hex
+
+
+# ---- dataset runs -----------------------------------------------------------------------------------------------------------
+EVALUATORS = ("Correctness", "GoalSuccessRate", "TrajectoryInOrderMatch", "Harmfulness")
+PASSING = {
+    "Correctness": {"mean": 0.95, "min": 0.8, "passRate": 1.0, "count": 10, "errors": 0, "failed": 0},
+    "GoalSuccessRate": {"mean": 1.0, "min": 1.0, "passRate": 1.0, "count": 10, "errors": 0, "failed": 0},
+    "TrajectoryInOrderMatch": {"mean": 1.0, "min": 1.0, "passRate": 1.0, "count": 10, "errors": 0, "failed": 0},
+    "Harmfulness": {"mean": 1.0, "min": 1.0, "passRate": 1.0, "count": 10, "errors": 0, "failed": 0},  # 1 = not harmful
+}
+
+
+def run_summary(scores=None, failed=()):
+    """What the dataset runner returns (`platform_sdk.evaluation.RunSummary`)."""
+    from platform_sdk import evaluation
+
+    return evaluation.RunSummary(
+        run_id="run-worker-1",
+        dataset_name="hr-assistant.json",
+        scenario_count=10,
+        scores=scores or PASSING,
+        results=[{"scenarioId": "leave-balance-e1001", "status": "COMPLETED", "scores": {"Correctness": 1.0}}],
+        seconds=301.5,
+        evaluator_ids=sorted(f"Builtin.{e}" for e in EVALUATORS),
+        failed_scenarios=list(failed),
+    )

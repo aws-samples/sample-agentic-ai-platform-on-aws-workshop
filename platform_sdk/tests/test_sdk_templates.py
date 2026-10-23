@@ -160,6 +160,7 @@ def test_ensure_project_roles_creates_then_updates(cfg):
         "ProjectId": "hr-assistant",
         "Environment": "dev",
         "ManagedBy": "platform",
+        "auto-delete": "no",
     }
     policy = iam.get_role_policy(RoleName="agent-platform-proj-hr-assistant-dev-gateway", PolicyName=roles.POLICY_NAME)[
         "PolicyDocument"
@@ -180,3 +181,10 @@ def test_ensure_project_roles_creates_then_updates(cfg):
         "agent-platform-proj-hr-assistant-dev-gateway",
     ]
     assert roles.delete_project_roles(cfg, "hr-assistant", "dev", iam=iam) == []
+
+
+def test_required_tags_cannot_be_overridden():
+    from platform_sdk import tags
+
+    assert tags.with_required({"auto-delete": "yes", "Project": "p"}) == {"Project": "p", "auto-delete": "no"}
+    assert tags.as_list({"A": 1}) == [{"Key": "A", "Value": "1"}, {"Key": "auto-delete", "Value": "no"}]

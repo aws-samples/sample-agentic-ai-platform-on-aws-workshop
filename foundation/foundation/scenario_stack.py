@@ -158,6 +158,7 @@ class ScenarioStack(Stack):
         docs_bucket = s3.Bucket(
             self,
             "DocsBucket",
+            encryption=s3.BucketEncryption.S3_MANAGED,
             bucket_name=f"{config.DOCS_BUCKET_PREFIX}-{self.account}",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
@@ -295,6 +296,7 @@ class ScenarioStack(Stack):
         dataset_bucket = s3.Bucket(
             self,
             "DatasetBucket",
+            encryption=s3.BucketEncryption.S3_MANAGED,
             bucket_name=f"{config.DATASET_BUCKET_PREFIX}-{self.account}",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,

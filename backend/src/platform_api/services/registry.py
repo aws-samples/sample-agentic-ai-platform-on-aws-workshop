@@ -18,6 +18,7 @@ from datetime import datetime
 from urllib.parse import quote
 
 from platform_sdk import names
+from platform_sdk import tags as tag_rules
 
 from .. import errors, settings
 from . import clients
@@ -315,7 +316,7 @@ def register_agent(project: dict, item: dict, release: dict, promotion: dict, by
                 recordType="AGENT",
                 recordVersion=version,
                 descriptors={"a2aAgentCard": descriptor},
-                tags={**AGENT_RECORD_TAGS, "ProjectId": project_id},
+                tags=tag_rules.with_required({**AGENT_RECORD_TAGS, "ProjectId": project_id}),
             )
             record_id = created.get("recordId") or str(created.get("recordArn", "")).rsplit("/", 1)[-1]
             action = "created"

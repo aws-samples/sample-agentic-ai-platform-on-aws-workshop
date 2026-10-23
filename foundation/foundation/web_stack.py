@@ -28,6 +28,7 @@ class WebStack(Stack):
         self.bucket = s3.Bucket(
             self,
             "UiBucket",
+            encryption=s3.BucketEncryption.S3_MANAGED,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
             removal_policy=RemovalPolicy.DESTROY,

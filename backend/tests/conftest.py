@@ -22,8 +22,11 @@ for path in (ROOT / "backend" / "src", Path(__file__).resolve().parent):
 from backend_testlib import (  # noqa: E402
     ACCOUNT,
     CONFIG,
+    PIPELINE_NAME,
     REGION,
+    SOURCE_BUCKET,
     FakeAgentCore,
+    FakeCodePipeline,
     FakeControl,
     FakeIdentity,
     FakeLambda,
@@ -32,10 +35,12 @@ from backend_testlib import (  # noqa: E402
     FakeRoles,
     FakeSession,
     call,
+    entry_module,
     register,
+    run_summary,
 )
 from platform_api import worker_jobs  # noqa: E402
-from platform_api.services import clients  # noqa: E402
+from platform_api.services import clients, evaluation_run  # noqa: E402
 from platform_api.services import registry as registry_service  # noqa: E402
 from platform_sdk.litellm import LiteLLMAdmin  # noqa: E402
 
@@ -120,7 +125,7 @@ def fakes(monkeypatch, table):
 
 
 @pytest.fixture
-def ready(fakes, monkeypatch):
+def ready(fakes, monkeypatch, pipeline, dataset_run):
     """Domain, project (both environments registered with gateway, targets and memory) and the AgentCore fakes installed."""
     fake, fake_lambda, fake_registry = FakeAgentCore(), FakeLambda(), FakeRegistry()
     worker_jobs.register()  # another test module may have unregistered handlers through monkeypatch
@@ -178,5 +183,50 @@ def ready(fakes, monkeypatch):
         )
     bp = blueprint.load(BLUEPRINT_FILE)
     return SimpleNamespace(
-        agentcore=fake, lambda_client=fake_lambda, registry=fake_registry, fakes=fakes, project=project, blueprint=bp
+        agentcore=fake,
+        lambda_client=fake_lambda,
+        registry=fake_registry,
+        fakes=fakes,
+        project=project,
+        blueprint=bp,
+        pipeline=pipeline,
+        dataset_run=dataset_run,
     )
+
+
+@pytest.fixture
+def pipeline(monkeypatch, table):
+    """The release pipeline: a versioned moto bucket for the snapshots, the CodePipeline double wired to the worker entry."""
+    s3 = boto3.client("s3", region_name=REGION)
+    s3.create_bucket(Bucket=SOURCE_BUCKET)
+    s3.put_bucket_versioning(Bucket=SOURCE_BUCKET, VersioningConfiguration={"Status": "Enabled"})
+    monkeypatch.setenv("RELEASE_PIPELINE_NAME", PIPELINE_NAME)
+    monkeypatch.setenv("RELEASE_SOURCE_BUCKET", SOURCE_BUCKET)
+    fake = FakeCodePipeline(s3, entry_module("worker"))
+    monkeypatch.setattr(clients, "codepipeline", lambda: fake)
+    monkeypatch.setattr(clients, "s3", lambda: s3)
+    return fake
+
+
+@pytest.fixture
+def dataset_run(monkeypatch):
+    """The S3 download and the dataset runner replaced; `result` is what the evaluate job gets, `error` what it raises."""
+    state = SimpleNamespace(result=run_summary(), calls=[], error=None)
+
+    def fake_run(path, harness_arn, log_group, evaluator_ids, **kwargs):
+        state.calls.append(
+            {
+                "path": str(path),
+                "harnessArn": harness_arn,
+                "logGroup": log_group,
+                "evaluators": list(evaluator_ids),
+                **kwargs,
+            }
+        )
+        if state.error:
+            raise state.error
+        return state.result
+
+    monkeypatch.setattr(evaluation_run, "load_dataset", lambda key: Path("/tmp/platform-datasets") / Path(key).name)
+    monkeypatch.setattr(evaluation_run, "run_dataset", fake_run)
+    return state

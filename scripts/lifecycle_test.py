@@ -5,16 +5,16 @@ Project `lt-hr-assistant` in domain `lt-ops` (never `hr-assistant`: the learning
 
   1. domain + project through the API (LiteLLM team + four roles)        module 3
   2. gateways lt-hr-assistant-{dev,prod}-gw with hrtools + hrkb targets,
-     the shared policy engine from settings attached in LOG_ONLY (if any) module 4   (platform_sdk.agentcore, like `workshop apply 4`)
+     the shared policy engine with test-project policies attached in ENFORCE module 4   (platform_sdk.agentcore, like `workshop apply 4`)
   3. memories for dev and prod                                            module 6
   4. blueprint v1 (prompt v1) -> render dry run (unresolved: no key yet) -> deploy to Dev (job) -> render -> invoke x2 (one session)   module 6
-  5. release 1 + synthetic BLOCKED evaluation body; blueprint v2 -> deploy; release 2 + passing body -> PENDING_APPROVAL
+  5. release 1 + CodePipeline BLOCKED evaluation; blueprint v2 -> release 2 pipeline -> PENDING_APPROVAL
      -> approve (approver) -> promote (job) -> PROMOTED, endpoint DEFAULT, online evaluation registered -> invoke Prod   module 6
   6. metrics, spend, feedback                                                                                           module 7
   7. cleanup: harnesses, online evaluation config, gateways, memories, then DELETE /projects (keys, providers, roles, team)
      and the domain; verifies nothing with the lt- prefix remains                                                       `workshop cleanup`
 
-    AWS_PROFILE=workshop uv run python scripts/lifecycle_test.py                 # full run with cleanup (15-20 min)
+    AWS_PROFILE=workshop uv run python scripts/lifecycle_test.py                 # full run with cleanup (includes two real evaluation runs)
     AWS_PROFILE=workshop uv run python scripts/lifecycle_test.py --keep          # leave the resources for inspection
     AWS_PROFILE=workshop uv run python scripts/lifecycle_test.py --only-cleanup  # delete what an earlier run left
 
@@ -61,23 +61,6 @@ PROMPTS = [
     "Thanks. And how many sick days do I have left?",
 ]
 PROD_PROMPT = "Which public holidays are there in November 2026?"
-# Dry-run numbers of 8 Oct 2026 (dryrun-results/hr-assistant-v1-claude-haiku-4-5.json, Claude Haiku 4.5; the aliases changed on
-# 2026-10-20, re-measure with claude-sonnet-5): prompt v1 misses three thresholds
-BLOCKED_SCORES = {
-    "Correctness": {"mean": 0.7, "min": 0.0, "max": 1.0, "passRate": 0.7, "count": 10, "errors": 0, "failed": 0},
-    "GoalSuccessRate": {"mean": 0.7, "min": 0.0, "max": 1.0, "passRate": 0.7, "count": 10, "errors": 0, "failed": 0},
-    "TrajectoryInOrderMatch": {
-        "mean": 0.625,
-        "min": 0.0,
-        "max": 1.0,
-        "passRate": 0.625,
-        "count": 8,
-        "errors": 2,
-        "failed": 0,
-    },
-    "Harmfulness": {"mean": 1.0, "min": 1.0, "max": 1.0, "passRate": 1.0, "count": 10, "errors": 0, "failed": 0},
-}
-PASSING_SCORES = {k: {**v, "mean": 1.0, "min": 1.0, "passRate": 1.0} for k, v in BLOCKED_SCORES.items()}
 STARTED = time.monotonic()
 
 
@@ -103,36 +86,6 @@ class Timer:
         seconds = round(time.monotonic() - started, 1)
         self.steps.append({"step": label, "seconds": seconds, "ok": True})
         log(f"[ok] {label} ({seconds} s)")
-
-
-def synthetic_evaluation(scores: dict, run_id: str) -> dict:
-    """A RunSummary.to_api_body() look-alike (the real dataset run is module 6's job, 6 minutes each)."""
-    return {
-        "runId": run_id,
-        "datasetName": "hr-assistant.json",
-        "scenarioCount": 10,
-        "scores": scores,
-        "results": [
-            {
-                "scenarioId": "leave-balance-e1001",
-                "sessionId": "leave-balance-e1001-synthetic",
-                "status": "COMPLETED",
-                "scores": {k: 1.0 for k in scores},
-                "labels": {"Correctness": "Correct"},
-                "error": None,
-                "errors": {},
-            },
-            {
-                "scenarioId": "policy-remote-work-days",
-                "sessionId": "policy-remote-work-days-synthetic",
-                "status": "COMPLETED",
-                "scores": {k: (1.0 if scores[k]["mean"] == 1.0 else 0.0) for k in scores},
-                "error": None,
-                "errors": {},
-            },
-        ],
-        "failedScenarios": [],
-    }
 
 
 @dataclass
@@ -238,6 +191,41 @@ def sweep(ctx: Context, label: str = "cleanup") -> list[str]:
         except Exception as exc:  # noqa: BLE001 - keep deleting
             ctx.problems.append(f"{label} {what}: {exc}")
             log(f"  {what}: FAILED {str(exc)[:300]}")
+
+    # Release the shared queue before deleting resources needed by these executions.
+    try:
+        releases = api.list_releases(PROJECT)
+    except PlatformApiError as exc:
+        if exc.status != 404:
+            raise
+        releases = []
+    pipeline_client = boto3.client("codepipeline", region_name=region)
+    for release in releases:
+        pipeline = release.get("pipeline") or {}
+        if pipeline.get("executionId") and pipeline.get("pipelineName"):
+            execution = pipeline_client.get_pipeline_execution(
+                pipelineName=pipeline["pipelineName"], pipelineExecutionId=pipeline["executionId"]
+            )["pipelineExecution"]
+            if execution["status"] in ("InProgress", "Stopping"):
+                attempt(
+                    "stop test release execution",
+                    lambda pipeline=pipeline: pipeline_client.stop_pipeline_execution(
+                        pipelineName=pipeline["pipelineName"],
+                        pipelineExecutionId=pipeline["executionId"],
+                        abandon=True,
+                        reason="Lifecycle fixture cleanup",
+                    ),
+                )
+
+    settings = api.get_settings()
+    engine_id = settings.get("policyEngineId")
+    if engine_id:
+        for policy in agentcore._paginate(control, "list_policies", "policies", policyEngineId=engine_id):
+            if (policy.get("name") or policy.get("policyName") or "").startswith("lt_hr_assistant_"):
+                attempt(
+                    "test policy",
+                    lambda policy=policy: control.delete_policy(policyEngineId=engine_id, policyId=policy["policyId"]),
+                )
 
     def delete_online_eval():
         found = agentcore.find_online_evaluation(ctx.n("prod").online_evaluation, region)
@@ -405,11 +393,11 @@ def create_project(ctx: Context) -> dict:
 
 
 def create_gateways(ctx: Context, project: dict) -> None:
-    """Module 4 for both environments: gateway (engine from settings in LOG_ONLY), hrtools + hrkb targets, registered."""
+    """Module 4 for both environments: gateway (test policies in ENFORCE), hrtools + hrkb targets, registered."""
     region, dev = ctx.region, ctx.api["developer"]
-    settings = ctx.api["admin"].get_settings()
-    engine_arn = settings.get("policyEngineArn")
-    log(f"  shared policy engine: {engine_arn or 'none in settings (skipping the engine)'}")
+    engine = agentcore.ensure_policy_engine(region=region)
+    engine_id, engine_arn = engine["policyEngineId"], engine["policyEngineArn"]
+    ctx.api["admin"].put_settings(policyEngineId=engine_id, policyEngineArn=engine_arn)
     schema = json.loads(HR_SCHEMA.read_text())
     tool_names = [f"hrtools___{t['name']}" for t in schema]
     time.sleep(10)  # IAM propagation of the freshly stamped gateway roles (the dry run needed ~10 s)
@@ -473,7 +461,17 @@ def create_gateways(ctx: Context, project: dict) -> None:
                 "tools": ["hrkb___Retrieve"],
             },
         )
-        ctx.state[f"gateway.{env}"] = {"id": gateway["gatewayId"], "arn": gateway["gatewayArn"], "mode": mode}
+        # The real dataset includes a 12-day request; enforce the same rule as module 4.
+        for tool in tool_names + ["hrkb___Retrieve"]:
+            rule = "allow_" + tool.split("___", 1)[-1].lower()
+            cedar = f'permit(principal == {n.cedar_principal(ctx.cfg.account_id)}, action == AgentCore::Action::"{tool}", resource == AgentCore::Gateway::"{gateway["gatewayArn"]}");'
+            agentcore.ensure_policy(engine_id, n.policy(rule), cedar, region=region)
+        cedar = f'forbid(principal is AgentCore::IamEntity, action == AgentCore::Action::"hrtools___submit_leave_request", resource == AgentCore::Gateway::"{gateway["gatewayArn"]}") when {{ context.input.days > 10 }};'
+        agentcore.ensure_policy(engine_id, n.policy("forbid_long_leave"), cedar, region=region)
+        agentcore.set_gateway_policy_mode(
+            gateway["gatewayId"], policy_engine_arn=engine_arn, mode="ENFORCE", region=region
+        )
+        ctx.state[f"gateway.{env}"] = {"id": gateway["gatewayId"], "arn": gateway["gatewayArn"], "mode": "ENFORCE"}
 
 
 def create_memories(ctx: Context, bp: blueprint.Blueprint) -> None:
@@ -562,31 +560,61 @@ def invoke(ctx: Context, env: str, prompt: str, session_id: str | None, label: s
     return {**job, "sessionId": accepted["sessionId"]}
 
 
+def wait_release(ctx: Context, release: dict, expected: str, timeout: float = 1800) -> dict:
+    """Wait for the native verdict; an unexpected terminal state fails acceptance."""
+    deadline = time.monotonic() + timeout
+
+    def waiting() -> bool:
+        pipeline = release.get("pipeline") or {}
+        return release["status"] in ("DRAFT", "EVALUATING") or (
+            release["status"] == expected
+            and expected in ("PENDING_APPROVAL", "APPROVED")
+            and bool(pipeline.get("executionId"))
+            and pipeline.get("approvalReady") is not True
+        )
+
+    while waiting():
+        if release.get("error") or time.monotonic() >= deadline:
+            raise AssertionError(f"release {release['releaseId']} did not finish: {release['status']}")
+        release = ctx.api["developer"].get_release(release["releaseId"])
+        if waiting():
+            time.sleep(10)
+    if release["status"] != expected:
+        raise AssertionError(f"release {release['releaseId']} is {release['status']}; expected {expected}")
+    return release
+
+
 def release_flow(ctx: Context) -> dict:
     dev, approver, admin = ctx.api["developer"], ctx.api["approver"], ctx.api["admin"]
 
     release1 = dev.create_release(PROJECT, 1, notes="lifecycle release 1 (prompt v1)", auto_run=False)
-    ctx.check(release1["status"] == "DRAFT", "release 1 starts as DRAFT (autoRun off: the evaluation is posted below)")
     expect_error(lambda: approver.approve_release(release1["releaseId"], "too early"), 409)
-    blocked = dev.submit_evaluation(release1["releaseId"], synthetic_evaluation(BLOCKED_SCORES, "run-synthetic-v1"))
-    failed = sorted(f["evaluator"] for f in blocked["evaluation"]["failures"])
-    log(f"  release 1 -> {blocked['status']}, failures {failed}")
-    ctx.check(blocked["status"] == "BLOCKED", "release 1 is BLOCKED by the v1 scores")
-    ctx.check(
-        failed == ["Correctness", "GoalSuccessRate", "TrajectoryInOrderMatch"],
-        "release 1 failures name the three evaluators",
-    )
+    with ctx.timer.step("5b. blueprint v2 and two queued native release executions"):
+        create_blueprint(ctx, 2)
+    dev.run_release(release1["releaseId"])
+    release2 = dev.create_release(PROJECT, 2, notes="lifecycle release 2 (prompt v2)")
+    blocked = wait_release(ctx, dev.get_release(release1["releaseId"]), "BLOCKED")
+    ctx.check(bool(blocked.get("pipeline", {}).get("executionId")), "release 1 has a native execution")
     expect_error(lambda: approver.promote_release(release1["releaseId"]), 409)
 
-    with ctx.timer.step("5b. blueprint v2 (prompt v2) + deploy to Dev"):
-        create_blueprint(ctx, 2)
-        out = deploy(ctx, 2)
-        ctx.record["deployV2"] = out
+    pending = wait_release(ctx, release2, "PENDING_APPROVAL")
+    ctx.check(bool(pending.get("pipeline", {}).get("executionId")), "release 2 has a native execution")
+    pipeline_client = boto3.client("codepipeline", region_name=ctx.region)
 
-    release2 = dev.create_release(PROJECT, 2, notes="lifecycle release 2 (prompt v2)", auto_run=False)
-    pending = dev.submit_evaluation(release2["releaseId"], synthetic_evaluation(PASSING_SCORES, "run-synthetic-v2"))
-    log(f"  release 2 -> {pending['status']} (verdict {pending['evaluation']['verdict']})")
-    ctx.check(pending["status"] == "PENDING_APPROVAL", "release 2 is PENDING_APPROVAL with passing scores")
+    def action_history(release: dict, action: str) -> dict:
+        pipeline = release["pipeline"]
+        rows = pipeline_client.list_action_executions(
+            pipelineName=pipeline["pipelineName"],
+            filter={"pipelineExecutionId": pipeline["executionId"]},
+        )["actionExecutionDetails"]
+        return next(row for row in rows if row["actionName"] == action)
+
+    first_evaluation = action_history(blocked, names.RELEASE_EVALUATE_ACTION)
+    second_deploy = action_history(pending, names.RELEASE_DEPLOY_ACTION)
+    ctx.check(
+        second_deploy["startTime"] >= first_evaluation["lastUpdateTime"],
+        "native Validate stage prevents a later Dev deployment from overlapping evaluation",
+    )
     expect_error(lambda: dev.approve_release(release2["releaseId"], "dev cannot approve"), 403, "FORBIDDEN")
     expect_error(lambda: admin.approve_release(release2["releaseId"], "admin cannot approve"), 403, "FORBIDDEN")
     approved = approver.approve_release(release2["releaseId"], "scores above every threshold")
@@ -597,6 +625,7 @@ def release_flow(ctx: Context) -> dict:
     expect_error(lambda: dev.promote_release(release2["releaseId"]), 403, "FORBIDDEN")
     expect_error(lambda: dev.invoke(PROJECT, "prod", PROD_PROMPT), 409, "HARNESS_NOT_DEPLOYED")
 
+    wait_release(ctx, approved, "APPROVED")
     accepted = approver.promote_release(release2["releaseId"])
     log(f"  POST /promote -> 202 job {accepted['jobId']} ({accepted['status']})")
     ctx.check(
@@ -688,7 +717,7 @@ def run(ctx: Context) -> None:
         sweep(ctx, "sweep")
     with timer.step("1. domain + project through the API (module 3)"):
         project = create_project(ctx)
-    with timer.step("2. gateways + targets for dev and prod, engine LOG_ONLY (module 4)"):
+    with timer.step("2. gateways + targets for dev and prod, engine ENFORCE (module 4)"):
         create_gateways(ctx, project)
     bp1 = load_blueprint(ctx.model, 1)
     with timer.step("3. memories for dev and prod (module 6)"):

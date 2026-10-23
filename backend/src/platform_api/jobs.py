@@ -20,13 +20,18 @@ from .services import clients
 
 logger = logging.getLogger(__name__)
 JOB_TTL_SECONDS = 24 * 3600
+# A job the release pipeline runs may wait in its QUEUED execution behind any number of other releases' manual approvals: it
+# has no TTL while it waits (`ttl_seconds=None`) and expires 24 hours after it has finished (`set_status`). A job whose
+# execution ended before running it is finished as FAILED by the release reconciliation, which gives it its TTL.
+PIPELINE_JOB_TTL_SECONDS = None
+TERMINAL_JOB_STATUSES = ("SUCCEEDED", "FAILED")
 JOB_TYPES = ("invoke", "promote", "deploy", "release", "evaluate")
 TIMEOUT_MARGIN_SECONDS = 20  # the watchdog fires this long before the Lambda limit, time enough for two DynamoDB writes
 HANDLERS: dict[str, Callable[[dict], dict]] = {}
 TIMEOUT_HANDLERS: dict[str, Callable[[dict, dict], None]] = {}  # job type -> what else to mark when the watchdog fires
 
 
-def create(type_: str, input_: dict, created_by: str) -> dict:
+def create(type_: str, input_: dict, created_by: str, ttl_seconds: int | None = JOB_TTL_SECONDS) -> dict:
     if type_ not in JOB_TYPES:
         raise errors.validation(f"job type must be one of {list(JOB_TYPES)}")
     job_id, now = db.new_id(), db.now_iso()
@@ -42,8 +47,9 @@ def create(type_: str, input_: dict, created_by: str) -> dict:
         "createdBy": created_by,
         "createdAt": now,
         "updatedAt": now,
-        "ttl": int(time.time()) + JOB_TTL_SECONDS,
     }
+    if ttl_seconds is not None:
+        item["ttl"] = int(time.time()) + ttl_seconds
     db.put(item)
     return db.strip_keys(item)
 
@@ -64,6 +70,9 @@ def set_status(job_id: str, status: str, output: dict | None = None, error: dict
     if item is None:
         raise errors.not_found(f"job {job_id!r} does not exist")
     item["status"] = status
+    if status in TERMINAL_JOB_STATUSES:  # finished: kept for a day from now, however long it waited
+        expires = int(time.time()) + JOB_TTL_SECONDS
+        item["ttl"] = min(int(item["ttl"]), expires) if item.get("ttl") else expires
     if output is not None:
         item["output"] = output
     if error is not None:
@@ -96,16 +105,21 @@ def submit(type_: str, input_: dict, created_by: str) -> dict:
     return job
 
 
-def run(event: dict, deadline_seconds: float | None = None) -> dict:
+def run(
+    event: dict, deadline_seconds: float | None = None, on_timeout: Callable[[dict, dict], None] | None = None
+) -> dict:
     """Worker entry: {"jobId"} -> run the registered handler for the job's type with status transitions and error capture.
 
     The JOB item is read with a strongly consistent GetItem (the API wrote it milliseconds before the Event invocation; an
     eventually consistent replica may not have it yet). A missing job raises, so the Lambda invocation is reported as an error
     instead of leaving the job QUEUED forever; a job that is not QUEUED any more is returned unchanged (a replayed event, a manual
-    re-invoke or a duplicate delivery never runs a deploy, promote or invoke twice)."""
+    re-invoke or a duplicate delivery never runs a deploy, promote or invoke twice). `on_timeout(job, error)` runs as well when
+    the watchdog fires (the release pipeline's action reports the failure to CodePipeline)."""
     job_id = (event or {}).get("jobId")
     if not job_id:
-        logger.info("worker event without jobId: %s", json.dumps(event, default=str)[:2000])
+        logger.info(
+            "worker event without jobId (keys %s)", sorted(event or {})
+        )  # never the event: it may carry credentials
         return {"status": "IGNORED", "message": "no jobId in the event"}
     job = get(job_id, consistent=True)
     if job is None:
@@ -120,7 +134,7 @@ def run(event: dict, deadline_seconds: float | None = None) -> dict:
     set_status(job_id, "RUNNING")
     started = time.monotonic()
     timed_out = threading.Event()
-    watchdog = _watchdog(job, deadline_seconds, timed_out)
+    watchdog = _watchdog(job, deadline_seconds, timed_out, on_timeout)
     try:
         output = handler(job)
     except Exception as exc:  # noqa: BLE001 - the job record carries the error
@@ -138,7 +152,12 @@ def run(event: dict, deadline_seconds: float | None = None) -> dict:
     return set_status(job_id, "SUCCEEDED", output=output or {})
 
 
-def _watchdog(job: dict, deadline_seconds: float | None, timed_out: threading.Event) -> threading.Timer | None:
+def _watchdog(
+    job: dict,
+    deadline_seconds: float | None,
+    timed_out: threading.Event,
+    extra: Callable[[dict, dict], None] | None = None,
+) -> threading.Timer | None:
     """A timer that records a TIMEOUT on the job (and, through `TIMEOUT_HANDLERS`, on what it owns) shortly before the Lambda
     is killed; `deadline_seconds` is the invocation's remaining time (None: no watchdog, as in the unit tests)."""
     if deadline_seconds is None:
@@ -152,9 +171,9 @@ def _watchdog(job: dict, deadline_seconds: float | None, timed_out: threading.Ev
         logger.error("job %s: %s", job["jobId"], message)
         try:
             set_status(job["jobId"], "FAILED", error=error)
-            on_timeout = TIMEOUT_HANDLERS.get(job["type"])
-            if on_timeout is not None:
-                on_timeout(job, error)
+            for on_timeout in (TIMEOUT_HANDLERS.get(job["type"]), extra):
+                if on_timeout is not None:
+                    on_timeout(job, error)
         except Exception:  # noqa: BLE001 - best effort in the last seconds of the invocation
             logger.exception("job %s: the timeout could not be recorded", job["jobId"])
 

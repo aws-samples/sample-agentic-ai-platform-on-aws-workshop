@@ -5,8 +5,8 @@
  *
  *   admin      lists, project tabs (key cap +0.5 and back, render preview), governance (gateway mode toggled and restored,
  *              settings round trip), catalogue, Overview numbers equal GET /metrics and GET /spend, keyboard + axe checks
- *   developer  creates a release from the latest blueprint version in the UI (the platform starts its run: EVALUATING), posts a
- *              passing evaluation through the API instead of waiting for the run, chats twice in one Playground session and
+ *   developer  creates a release from the latest blueprint version in the UI, waits for CodePipeline's real evaluation,
+ *              verifies external scores are refused, chats twice in one Playground session and
  *              sends a thumbs up
  *   approver   approves and promotes that release, watches the job to PROMOTED, sees the version history
  */
@@ -26,6 +26,7 @@ interface Release {
   blueprintVersion: number;
   promotion?: { harnessVersion?: string; endpoint?: string } | null;
   approval?: { by: string; decision: string } | null;
+  error?: { code: string; message: string } | null;
 }
 interface Gateway {
   projectId: string;
@@ -34,7 +35,7 @@ interface Gateway {
   mode: string;
 }
 
-/** Shared between the three serial tests; E2E_RELEASE_ID lets the approver test run alone against an existing PENDING_APPROVAL release. */
+/** E2E_RELEASE_ID resumes the approver journey from an existing PENDING_APPROVAL or APPROVED release. */
 const state: { releaseId: string; sessionId: string; axe: Record<string, unknown> } = { releaseId: process.env.E2E_RELEASE_ID ?? "", sessionId: "", axe: {} };
 
 async function axeCheck(page: Page, name: string): Promise<void> {
@@ -328,7 +329,7 @@ test("admin: lists, project tabs, governance, catalogue, Overview equals the API
   await context.close();
 });
 
-test("developer: creates a release in the UI, passes the evaluation through the API, chats twice in one Playground session, rates the answer", async ({ browser }) => {
+test("developer: creates a release in the UI and waits for CodePipeline evaluation", async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   const monitor = new PageMonitor(page);
@@ -350,26 +351,22 @@ test("developer: creates a release in the UI, passes the evaluation through the 
   await dialog.getByTestId("create-release-submit").click();
   await expect(page).toHaveURL(/\/releases\/[0-9A-Z]+$/, { timeout: 60_000 });
   const uiReleaseId = page.url().split("/").pop() ?? "";
-  // Creating a release starts its run: the platform deploys the version to Dev when needed and evaluates it (6-7 minutes). The
-  // click-through does not wait for it: a manual evaluation is refused (409) while that run is live, so the approval and
-  // promotion steps below use a second release created through the API with autoRun off and a posted passing evaluation.
+  test.setTimeout(35 * 60_000);
   await expect(page.getByText("Status: EVALUATING").first()).toBeVisible();
-  await expect(page.getByText("Evaluation run").first()).toBeVisible();
+  await expect(page.getByText("Release pipeline").first()).toBeVisible();
   await shot(page, "developer-release-evaluating");
   const refused = await api.post<Release>(`/releases/${uiReleaseId}/evaluation`, passingEvaluation(`run-ui-e2e-refused-${Date.now()}`));
   expect(refused.status, JSON.stringify(refused.body)).toBe(409);
-
-  const created = await api.post<Release>(`/projects/${LT_PROJECT}/releases`, {
-    blueprintVersion: latest,
-    notes: "created by the UI e2e click-through (evaluation posted through the API)",
-    autoRun: false,
-  });
-  expect(created.status, JSON.stringify(created.body)).toBe(201);
-  expect(created.body.status).toBe("DRAFT");
-  state.releaseId = created.body.releaseId;
-  const evaluated = await api.post<Release>(`/releases/${state.releaseId}/evaluation`, passingEvaluation(`run-ui-e2e-${Date.now()}`));
-  expect(evaluated.status, JSON.stringify(evaluated.body)).toBe(200);
-  expect(evaluated.body.status).toBe("PENDING_APPROVAL");
+  state.releaseId = uiReleaseId;
+  // The native evaluation must pass. Never inject a passing summary to manufacture acceptance.
+  await expect.poll(async () => {
+    const result = await api.get<Release>(`/releases/${state.releaseId}`);
+    expect(result.status).toBe(200);
+    if (["BLOCKED", "REJECTED", "FAILED"].includes(result.body.status) || result.body.error) {
+      throw new Error(`Native pipeline did not pass: ${result.body.status}`);
+    }
+    return result.body.status;
+  }, { timeout: 25 * 60_000, intervals: [10_000] }).toBe("PENDING_APPROVAL");
   await goto(page, `/releases/${state.releaseId}`);
   await expect(page.getByText("Status: PENDING APPROVAL").first()).toBeVisible();
   await expect(page.getByText("PASSED: every threshold met").first()).toBeVisible();
@@ -380,10 +377,20 @@ test("developer: creates a release in the UI, passes the evaluation through the 
   await expect(page.getByText(/Approvers only/).filter({ visible: true }).first()).toBeVisible();
   await shot(page, "developer-release-pending-approval");
 
-  // --- Playground: two turns in one session, then a thumbs up
+  monitor.assertClean();
+  await context.close();
+});
+
+test("developer: playground conversation, feedback and environment isolation", async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const monitor = new PageMonitor(page);
+  await signIn(page, "developer", "/releases");
+  const cfg = await runtimeConfig();
+  const api = new Api(cfg.apiUrl, await idToken(page));
   await goto(page, `/playground?project=${LT_PROJECT}&env=dev`);
   await expect(page.getByText("Conversation").first()).toBeVisible();
-  await expect(page.getByText(/lt_hr_assistant_dev · version/).first()).toBeVisible();
+  await expect(page.getByText("lt_hr_assistant_dev", { exact: true })).toBeVisible();
   const sessionId = (await page.getByTestId("session-id").innerText()).trim();
   expect(sessionId.length).toBeGreaterThan(20);
   await shot(page, "developer-playground-empty");
@@ -421,7 +428,7 @@ test("developer: creates a release in the UI, passes the evaluation through the 
   // never carry over to the Prod harness
   await page.getByRole("button", { name: "Prod", exact: true }).click();
   await expect(page).toHaveURL(/env=prod/);
-  await expect(page.getByText(/lt_hr_assistant_prod · version/).first()).toBeVisible();
+  await expect(page.getByText("lt_hr_assistant_prod", { exact: true })).toBeVisible();
   await expect(page.getByTestId("answer-text")).toHaveCount(0);
   expect((await page.getByTestId("session-id").innerText()).trim()).not.toBe(sessionId);
   await page.getByTestId("new-session").click();
@@ -455,23 +462,30 @@ test("approver: approves and promotes the new release, watches the job to PROMOT
   const cfg = await runtimeConfig();
   const api = new Api(cfg.apiUrl, await idToken(page));
 
-  await expect(page.getByText("Status: PENDING APPROVAL").first()).toBeVisible();
-  await expect(page.getByTestId("approve-release")).toBeEnabled();
-  await expect(page.getByTestId("promote-release")).toBeDisabled();
   await expect(page.getByRole("button", { name: "Open project" })).toHaveCount(0); // approvers have no project screen
-  await shot(page, "approver-release-pending");
-  await page.getByTestId("approve-release").click();
-  await page.getByTestId("decision-comment").locator("textarea").fill("scores above every threshold (UI e2e)");
-  await shot(page, "approver-approve-modal");
-  await page.getByTestId("decision-submit").click();
-  await expect(page.getByText(/approved by approver/).first()).toBeVisible({ timeout: 60_000 });
+  const current = (await api.get<Release>(`/releases/${state.releaseId}`)).body;
+  if (process.env.E2E_RELEASE_ID && current.status === "APPROVED") {
+    expect(current.approval?.by).toBe("approver");
+    console.log(`[e2e] resuming promotion after the existing approval of ${state.releaseId}`);
+  } else {
+    await expect(page.getByText("Status: PENDING APPROVAL").first()).toBeVisible();
+    await expect(page.getByTestId("approve-release")).toBeEnabled({ timeout: 120_000 });
+    await expect(page.getByTestId("promote-release")).toBeDisabled();
+    await shot(page, "approver-release-pending");
+    await page.getByTestId("approve-release").click();
+    await page.getByTestId("decision-comment").locator("textarea").fill("scores above every threshold (UI e2e)");
+    await shot(page, "approver-approve-modal");
+    await page.getByTestId("decision-submit").click();
+  }
+  await expect(page.getByRole("row", { name: new RegExp(state.releaseId) }).getByRole("cell", { name: "APPROVED by approver", exact: true })).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText("Status: APPROVED").first()).toBeVisible();
-  await expect(page.getByTestId("promote-release")).toBeEnabled();
+  // CodePipeline may take tens of seconds to expose the next manual gate.
+  await expect(page.getByTestId("promote-release")).toBeEnabled({ timeout: 120_000 });
   await shot(page, "approver-release-approved");
 
   await page.getByTestId("promote-release").click();
   await expect(page.getByRole("dialog")).toContainText("DEFAULT");
-  await page.getByTestId("confirm").click();
+  await page.getByRole("dialog").getByTestId("confirm").click();
   await expect(page.getByText(/Promotion job .* started/).first()).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText("Promotion requested").first()).toBeVisible();
   await expect(page.getByText(/job (QUEUED|RUNNING)/).first()).toBeVisible({ timeout: 30_000 });

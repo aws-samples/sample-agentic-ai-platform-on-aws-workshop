@@ -1,5 +1,5 @@
 import Alert from "@cloudscape-design/components/alert";
-import Badge from "@cloudscape-design/components/badge";
+import Badge, { type BadgeProps } from "@cloudscape-design/components/badge";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import ColumnLayout from "@cloudscape-design/components/column-layout";
@@ -16,7 +16,7 @@ import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import Steps, { type StepsProps } from "@cloudscape-design/components/steps";
 import Table from "@cloudscape-design/components/table";
 import Textarea from "@cloudscape-design/components/textarea";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -62,6 +62,7 @@ import {
   runFailed,
   scoreRows,
   sortNewestFirst,
+  waitingForApprovalGate,
 } from "./releaseHelpers";
 
 const APPROVER_ONLY = "Approvers only: the API answers 403 to admins and developers (separation of duties).";
@@ -84,7 +85,7 @@ function ReleaseDetail({ releaseId }: { releaseId: string }) {
   const notifications = useNotifications();
   const queryClient = useQueryClient();
   // a run (deploy + dataset) or a promotion in progress: the page refreshes every 5 s on top of the 2 s job polling
-  const release = useRelease(releaseId, { refetchInterval: (query) => (LIVE_STATUSES.includes(query.state.data?.status ?? "") ? 5000 : false) });
+  const release = useRelease(releaseId, { refetchInterval: (query) => (LIVE_STATUSES.includes(query.state.data?.status ?? "") || waitingForApprovalGate(query.state.data) ? 5000 : false) });
   const r = release.data;
   useBreadcrumbs([
     { text: "Releases", href: "/releases" },
@@ -185,7 +186,8 @@ function ReleaseDetail({ releaseId }: { releaseId: string }) {
 
   const isApprover = me.can("releases:decide");
   const canOpenProject = me.canAccessScreen("domains"); // approvers have no project detail screen (RequireRole would refuse it)
-  const decideReason = !isApprover ? APPROVER_ONLY : !canDecide(r.status) ? `Only PENDING_APPROVAL releases can be approved or rejected (this one is ${r.status}).` : undefined;
+  const gateReason = waitingForApprovalGate(r) ? "Waiting for CodePipeline to open the approval gate." : undefined;
+  const decideReason = !isApprover ? APPROVER_ONLY : !canDecide(r.status) ? `Only PENDING_APPROVAL releases can be approved or rejected (this one is ${r.status}).` : gateReason;
   // A PROMOTING release whose job failed, vanished or stalled for 15 minutes may be promoted again (the API's rule; a 409 wins the race).
   const jobMissing = isApiError(job.error) && job.error.status === 404;
   const promoStuck = promotionStuck(r, job.job, jobMissing);
@@ -197,7 +199,7 @@ function ReleaseDetail({ releaseId }: { releaseId: string }) {
         : "A promotion is already running."
       : !canPromote(r.status)
         ? `Only APPROVED releases can be promoted (this one is ${r.status}); a FAILED promotion can be retried.`
-        : undefined;
+        : gateReason;
   const retry = r.status === "FAILED" || promoStuck;
   // Same rule for the run: an EVALUATING release whose job failed, vanished or stalled for 15 minutes may be run again.
   const runJobMissing = isApiError(runJob.error) && runJob.error.status === 404;
@@ -594,6 +596,21 @@ function datasetOf(spec: Record<string, unknown> | undefined): string | null {
   return typeof dataset === "string" && dataset ? dataset : null;
 }
 
+/** Outcome pill shown at the end of a step's details: green while running or succeeded, red when failed, grey when skipped or not run. */
+type StepPillTone = "success" | "error" | "neutral";
+const STEP_PILL_COLORS: Record<StepPillTone, BadgeProps.Color> = { success: "green", error: "red", neutral: "grey" };
+function StepPill({ tone, spinner = false, children }: { tone: StepPillTone; spinner?: boolean; children: ReactNode }) {
+  return (
+    <Badge color={STEP_PILL_COLORS[tone]}>
+      {/* The spinner inherits the badge's light text colour; the flex wrapper centres it against the small badge font. */}
+      <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3em" }}>
+        {spinner ? <Spinner /> : null}
+        {children}
+      </span>
+    </Badge>
+  );
+}
+
 /**
  * The run of a release as four steps (requested, Dev deployment, dataset evaluation, verdict), derived from `release.pipeline`
  * plus the live status of the job being polled; the elapsed timer ticks while the release is EVALUATING.
@@ -643,53 +660,73 @@ function EvaluationRunPanel({
   // The release left EVALUATING by another path while the pipeline still says DEPLOYING / EVALUATING (for example a manual
   // POST /releases/{id}/evaluation on a stalled run): the run was superseded, never show it as in progress.
   const superseded = !running && !failed && (pipeline.stage === "DEPLOYING" || pipeline.stage === "EVALUATING");
-  const supersededText =
-    release.evaluation?.source === "api" ? "superseded: the evaluation was submitted through the API" : "superseded: the release moved on before this run finished";
+  const supersededReason =
+    release.evaluation?.source === "api" ? "the evaluation was submitted through the API" : "the release moved on before this run finished";
   const errorText = runError ? `${runError.code}: ${runError.message}` : "the run failed";
-  const jobText = job ? ` · job ${job.status}` : "";
-  const elapsedText = elapsed !== null ? ` · ${formatSeconds(elapsed)}` : "";
-  const liveStatus: StepsProps.Status = stuck ? "warning" : job?.status === "RUNNING" ? "in-progress" : "loading";
+  const elapsedSuffix = elapsed !== null ? ` · ${formatSeconds(elapsed)}` : "";
+  // Job status and elapsed time of the live run. The spinner is dropped when the run is stalled so the pill does not claim progress.
+  const livePillText = [job ? job.status : null, elapsed !== null ? formatSeconds(elapsed) : null].filter(Boolean).join(" · ");
+  const livePill = livePillText ? (
+    <StepPill tone={stuck ? "neutral" : "success"} spinner={!stuck}>
+      {livePillText}
+    </StepPill>
+  ) : null;
+  const failedPill = <StepPill tone="error">FAILED{elapsedSuffix}</StepPill>;
+  // "loading" draws Cloudscape's animated spinner for both QUEUED and RUNNING; "in-progress" is a static icon.
+  const liveStatus: StepsProps.Status = stuck ? "warning" : "loading";
 
   let deployStatus: StepsProps.Status;
-  let deployDetails: string;
+  let deployDetails: ReactNode;
   if (pipeline.deploySkipped) {
     deployStatus = "success";
-    deployDetails = `skipped: the Dev harness already runs blueprint ${version}${pipeline.harnessVersion ? ` (harness version ${pipeline.harnessVersion})` : ""}`;
+    deployDetails = (
+      <>
+        the Dev harness already runs blueprint {version}{pipeline.harnessVersion ? ` (harness version ${pipeline.harnessVersion})` : ""} <StepPill tone="neutral">SKIPPED</StepPill>
+      </>
+    );
   } else if (deployFailed) {
     deployStatus = "error";
-    deployDetails = errorText;
+    deployDetails = <>{errorText} {failedPill}</>;
   } else if (pipeline.stage === "DEPLOYING" && running) {
     deployStatus = liveStatus;
-    deployDetails = `${stuck ? "stalled" : "creating or updating the Dev harness"}${jobText}${elapsedText}`;
+    deployDetails = <>{stuck ? "stalled" : "creating or updating the Dev harness"} {livePill}</>;
   } else if (pipeline.stage === "DEPLOYING") {
     deployStatus = "stopped";
-    deployDetails = supersededText;
+    deployDetails = <>{supersededReason} <StepPill tone="neutral">SUPERSEDED</StepPill></>;
   } else {
     deployStatus = "success";
-    deployDetails = pipeline.harnessVersion ? `Dev harness version ${pipeline.harnessVersion}` : "Dev harness updated";
+    deployDetails = <>{pipeline.harnessVersion ? `Dev harness version ${pipeline.harnessVersion}` : "Dev harness updated"} <StepPill tone="success">SUCCEEDED</StepPill></>;
   }
 
   let evalStatus: StepsProps.Status;
-  let evalDetails: string | undefined;
+  let evalDetails: ReactNode;
   if (evalFailed) {
     evalStatus = "error";
-    evalDetails = errorText;
+    evalDetails = <>{errorText} {failedPill}</>;
   } else if (deployFailed) {
     evalStatus = "stopped";
-    evalDetails = "not started: the deployment failed";
+    evalDetails = <>the deployment failed <StepPill tone="neutral">NOT STARTED</StepPill></>;
   } else if (pipeline.stage === "DEPLOYING") {
     evalStatus = running ? "pending" : "stopped";
-    evalDetails = running ? "starts after the deployment" : `not started: ${supersededText}`;
+    evalDetails = running ? (
+      <>starts after the deployment <StepPill tone="neutral">PENDING</StepPill></>
+    ) : (
+      <>{supersededReason} <StepPill tone="neutral">NOT STARTED</StepPill></>
+    );
   } else if (pipeline.stage === "EVALUATING" && running) {
     evalStatus = liveStatus;
-    evalDetails = `${stuck ? "stalled" : "running the dataset against the Dev harness, then scoring (about five to six minutes)"}${jobText}${elapsedText}`;
+    evalDetails = <>{stuck ? "stalled" : "running the dataset against the Dev harness, then scoring"} {livePill}</>;
   } else if (pipeline.stage === "EVALUATING") {
     evalStatus = "stopped";
-    evalDetails = supersededText;
+    evalDetails = <>{supersededReason} <StepPill tone="neutral">SUPERSEDED</StepPill></>;
   } else {
     evalStatus = "success";
     const runId = pipeline.runId ?? release.evaluation?.runId;
-    evalDetails = `${runId ? `run ${runId}` : "scored"}${pipeline.seconds ? ` · ${formatSeconds(pipeline.seconds)}` : ""}`;
+    evalDetails = (
+      <>
+        {runId ? `run ${runId}` : "scored"} <StepPill tone="success">SUCCEEDED{pipeline.seconds ? ` · ${formatSeconds(pipeline.seconds)}` : ""}</StepPill>
+      </>
+    );
   }
 
   let verdictStatus: StepsProps.Status = "pending";
@@ -722,14 +759,21 @@ function EvaluationRunPanel({
 
   return (
     <SpaceBetween size="m">
-      <Header variant="h3" description="POST /releases/{id}/run by a developer or admin; the worker jobs are polled every 2 s (GET /jobs/{id})">
-        Evaluation run
+      <Header variant="h3" description="CodePipeline deploys Dev, evaluates the dataset, and waits for approval before promotion.">
+        Release pipeline
       </Header>
+      {pipeline.executionId ? (
+        <KeyValuePairs columns={3} items={[
+          { label: "Pipeline", value: pipeline.consoleUrl ? <Link href={pipeline.consoleUrl} external>{pipeline.pipelineName ?? "Open in CodePipeline"}</Link> : pipeline.pipelineName ?? "—" },
+          { label: "Execution", value: <CopyText value={pipeline.executionId} /> },
+          { label: "Execution status", value: pipeline.executionStatus ?? "Refreshing" },
+        ]} />
+      ) : null}
       <Steps steps={steps} ariaLabel="Evaluation run progress" />
       {jobTimedOut && running ? (
         <Alert type="warning" header="Still running after 10 minutes" action={<Button onClick={keepWaiting}>Keep waiting</Button>}>
-          The run has not finished yet (a project&apos;s first Dev harness plus the dataset can take about ten minutes). The release page refreshes every 5 seconds while
-          EVALUATING.
+          The execution continues in CodePipeline. It may be queued behind a release awaiting approval, or still deploying and evaluating Dev.
+          The release page refreshes every 5 seconds while EVALUATING.
         </Alert>
       ) : null}
       {jobLoadError && running ? <ErrorAlert header="The run job could not be read" error={jobLoadError} /> : null}
@@ -841,7 +885,7 @@ function PromotionPanel({
   const steps: StepsProps.Step[] = useMemo(() => {
     const jobStatus = job?.status ?? (release.status === "PROMOTING" ? "QUEUED" : null);
     const workStatus: StepsProps.Status =
-      jobStatus === "SUCCEEDED" ? "success" : jobStatus === "FAILED" ? "error" : jobStatus === "RUNNING" ? "in-progress" : jobStatus === "QUEUED" ? "loading" : "pending";
+      jobStatus === "SUCCEEDED" ? "success" : jobStatus === "FAILED" ? "error" : jobStatus === "RUNNING" || jobStatus === "QUEUED" ? "loading" : "pending";
     const finalStatus: StepsProps.Status = release.status === "PROMOTED" ? "success" : release.status === "FAILED" || jobStatus === "FAILED" ? "error" : "pending";
     return [
       {

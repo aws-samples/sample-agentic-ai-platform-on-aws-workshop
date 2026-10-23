@@ -183,6 +183,12 @@ export function canDecide(status: ReleaseStatus | string | null | undefined): bo
   return status === "PENDING_APPROVAL";
 }
 
+export function waitingForApprovalGate(release: Release | undefined): boolean {
+  return !!release?.pipeline?.executionId
+    && (release.status === "PENDING_APPROVAL" || release.status === "APPROVED")
+    && release.pipeline.approvalReady !== true;
+}
+
 /** DRAFT (never run, or the last run failed) or BLOCKED (run again); a stalled EVALUATING release is retried through `pipelineStuck`. */
 export function canRun(status: ReleaseStatus | string | null | undefined): boolean {
   return (RUN_STATUSES as ReadonlyArray<string>).includes(status ?? "");
@@ -203,13 +209,19 @@ export const STUCK_PROMOTION_MS = 15 * 60_000;
  * The API stays the arbiter: an early retry answers 409.
  */
 export function promotionStuck(
-  release: Pick<Release, "status" | "promotion">,
+  release: Pick<Release, "status" | "promotion"> & Partial<Pick<Release, "pipeline">>,
   job: Pick<Job<unknown>, "status" | "createdAt" | "updatedAt"> | null | undefined,
   jobMissing = false,
   now: number = Date.now(),
 ): boolean {
   if (release.status !== "PROMOTING") {
     return false;
+  }
+  if (release.pipeline?.retryable !== undefined) {
+    return release.pipeline.retryable && release.pipeline.retryAction === "promote";
+  }
+  if (release.pipeline?.executionId) {
+    return ["Failed", "Stopped", "Superseded"].includes(release.pipeline.executionStatus ?? "");
   }
   if (jobMissing || (job && TERMINAL_JOB_STATES.includes(job.status))) {
     return true;
@@ -242,6 +254,12 @@ export function pipelineStuck(
 ): boolean {
   if (release.status !== "EVALUATING") {
     return false;
+  }
+  if (release.pipeline?.retryable !== undefined) {
+    return release.pipeline.retryable && release.pipeline.retryAction === "run";
+  }
+  if (release.pipeline?.executionId) {
+    return ["Failed", "Stopped", "Superseded"].includes(release.pipeline.executionStatus ?? "");
   }
   if (jobMissing || job?.status === "FAILED") {
     return true;
@@ -292,6 +310,12 @@ export function runProgressLabel(release: Pick<Release, "status" | "pipeline">):
  */
 export function nextStep(release: Pick<Release, "status" | "promotion" | "pipeline" | "blueprintVersion" | "error" | "evaluation">, stuck = false): string {
   const version = `v${release.blueprintVersion}`;
+  if (release.pipeline?.executionId && stuck) {
+    return `CodePipeline execution ${release.pipeline.executionId} ended ${release.pipeline.executionStatus ?? "unsuccessfully"}. Fix the cause, then ${release.status === "PROMOTING" ? "retry promotion as an approver" : "run the release again"}.`;
+  }
+  if (release.pipeline?.executionId && release.status === "EVALUATING") {
+    return `CodePipeline is deploying and evaluating blueprint ${version}. This execution may wait behind another release's approval; inspect its execution status below.`;
+  }
   if (release.status === "PROMOTING" && stuck) {
     return `Promotion job ${release.promotion?.jobId ?? ""} did not finish (failed, gone or silent for 15 minutes) while the release stayed PROMOTING: an approver can promote again, which starts a new job.`;
   }

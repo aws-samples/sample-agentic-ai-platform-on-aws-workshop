@@ -95,6 +95,18 @@ def secrets_manager():
     return boto3.client("secretsmanager", region_name=cfg().region)
 
 
+@lru_cache(maxsize=1)
+def logs():
+    """Tags on the harness log groups AgentCore Runtime creates."""
+    return boto3.client("logs", region_name=cfg().region)
+
+
+@lru_cache(maxsize=1)
+def codepipeline():
+    """The module 6 release pipeline (start, approvals, stage retry, job results)."""
+    return boto3.client("codepipeline", region_name=cfg().region)
+
+
 def reset() -> None:
     """Forget every cached client (tests)."""
     for factory in (
@@ -107,6 +119,9 @@ def reset() -> None:
         bedrock,
         bedrock_agent,
         lambda_client,
+        s3,
+        logs,
+        codepipeline,
         cloudwatch,
         cognito_idp,
         secrets_manager,
