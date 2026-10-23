@@ -598,7 +598,7 @@ function datasetOf(spec: Record<string, unknown> | undefined): string | null {
 
 /** Outcome pill shown at the end of a step's details: green while running or succeeded, red when failed, grey when skipped or not run. */
 type StepPillTone = "success" | "error" | "neutral";
-const STEP_PILL_COLORS: Record<StepPillTone, BadgeProps.Color> = { success: "green", error: "red", neutral: "grey" };
+const STEP_PILL_COLORS: Record<StepPillTone, BadgeProps["color"]> = { success: "green", error: "red", neutral: "grey" };
 function StepPill({ tone, spinner = false, children }: { tone: StepPillTone; spinner?: boolean; children: ReactNode }) {
   return (
     <Badge color={STEP_PILL_COLORS[tone]}>
