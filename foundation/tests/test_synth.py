@@ -32,6 +32,80 @@ from app import build_app  # noqa: E402
 from foundation import config  # noqa: E402
 
 
+def test_release_pipeline_owns_the_gated_sequence(templates):
+    from platform_sdk import names
+
+    template = templates[config.STACK_PLATFORM]
+    pipelines = template.find_resources("AWS::CodePipeline::Pipeline")
+    assert len(pipelines) == 1
+    pipeline = next(iter(pipelines.values()))["Properties"]
+    assert pipeline["Name"] == names.RELEASE_PIPELINE_NAME
+    assert pipeline["PipelineType"] == "V2"
+    assert pipeline["ExecutionMode"] == "QUEUED"
+    assert [stage["Name"] for stage in pipeline["Stages"]] == list(names.RELEASE_STAGES)
+    assert [v["Name"] for v in pipeline["Variables"]] == list(names.RELEASE_PIPELINE_VARIABLES)
+    source = pipeline["Stages"][0]["Actions"][0]
+    assert source["Configuration"]["S3ObjectKey"] == names.RELEASE_SOURCE_KEY
+    assert str(source["Configuration"]["PollForSourceChanges"]).lower() == "false"
+    validation = pipeline["Stages"][1]
+    assert validation["Name"] == "Validate"
+    assert [action["Name"] for action in validation["Actions"]] == ["DeployDev", "Evaluate"]
+    assert [action["RunOrder"] for action in validation["Actions"]] == [1, 2]
+    for action in validation["Actions"]:
+        assert action["ActionTypeId"]["Provider"] == "Lambda"
+        parameters = json.loads(action["Configuration"]["UserParameters"])
+        assert parameters["executionId"] == "#{codepipeline.PipelineExecutionId}"
+        assert parameters["releaseId"] == "#{variables.releaseId}"
+    assert pipeline["Stages"][2]["Actions"][0]["ActionTypeId"]["Category"] == "Approval"
+    promotion = pipeline["Stages"][3]["Actions"]
+    assert [a["ActionTypeId"]["Category"] for a in promotion] == ["Approval", "Invoke"]
+    assert promotion[1]["RunOrder"] > promotion[0]["RunOrder"]
+    buckets = template.find_resources("AWS::S3::Bucket")
+    assert len(buckets) == 2
+    assert any(
+        resource["Properties"].get("VersioningConfiguration", {}).get("Status") == "Enabled"
+        for resource in buckets.values()
+    )
+    for resource in buckets.values():
+        props = resource["Properties"]
+        assert all(props["PublicAccessBlockConfiguration"].values())
+        assert props["BucketEncryption"]
+
+
+def test_supported_foundation_resources_have_retention_tag(templates):
+    tagged_types = {
+        "AWS::S3::Bucket",
+        "AWS::Lambda::Function",
+        "AWS::IAM::Role",
+        "AWS::Logs::LogGroup",
+        "AWS::DynamoDB::Table",
+        "AWS::CodePipeline::Pipeline",
+        "AWS::ECR::Repository",
+        "AWS::SecretsManager::Secret",
+        "AWS::SSM::Parameter",
+        "AWS::EC2::VPC",
+        "AWS::EC2::Subnet",
+        "AWS::EC2::SecurityGroup",
+        "AWS::RDS::DBInstance",
+        "AWS::ECS::Cluster",
+        "AWS::ECS::ExpressGatewayService",
+        "AWS::ApiGatewayV2::Api",
+        "AWS::CloudFront::Distribution",
+    }
+    for stack_name, template in templates.items():
+        for logical_id, resource in template.to_json()["Resources"].items():
+            if resource["Type"] in tagged_types:
+                tags = resource["Properties"].get("Tags", [])
+                values = tags if isinstance(tags, dict) else {tag["Key"]: tag["Value"] for tag in tags}
+                assert values.get("auto-delete") == "no", f"{stack_name}/{logical_id}"
+
+
+def test_all_buckets_declare_encryption(templates):
+    for stack_name, template in templates.items():
+        for logical_id, resource in template.find_resources("AWS::S3::Bucket").items():
+            assert resource["Properties"].get("BucketEncryption"), f"{stack_name}/{logical_id}"
+
+
 @pytest.fixture(scope="module")
 def app() -> App:
     return build_app(context=CDK_CONTEXT)
@@ -307,8 +381,9 @@ def test_model_gateway(templates) -> None:
     subnets = json.dumps(service["NetworkConfiguration"]["Subnets"])
     assert len(service["NetworkConfiguration"]["Subnets"]) == 3
     assert subnets.count("appSubnet") == 3 and "dataSubnet" not in subnets and "AgentPlatform-Network" in subnets
-    # Tags are create-only on the Express service: exactly the two frozen tags, nothing inherited from the Tags aspect
+    # Tags are create-only on the Express service and supplied explicitly.
     assert service["Tags"] == [
+        {"Key": "auto-delete", "Value": "no"},
         {"Key": "ManagedBy", "Value": "cdk"},
         {"Key": "Project", "Value": "workshop-agent-platform"},
     ]
@@ -553,6 +628,8 @@ def test_platform(templates) -> None:
         "/agent-platform/table/name",
         "/agent-platform/backend/worker-function-name",
         "/agent-platform/roles/backend-role-arn",
+        "/agent-platform/release-pipeline/name",
+        "/agent-platform/release-pipeline/source-bucket",
     }
 
 

@@ -18,7 +18,9 @@ import os
 import sys
 from pathlib import Path
 
-from aws_cdk import App, Environment, Stack, Tags
+import jsii
+from aws_cdk import App, Aspects, CfnResource, Environment, IAspect, Stack, TagManager, Tags
+from constructs import IConstruct
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -34,6 +36,21 @@ from foundation.shared_services_stack import SharedServicesStack  # noqa: E402
 from foundation.web_stack import WebStack  # noqa: E402
 
 from foundation import config  # noqa: E402
+
+
+@jsii.implements(IAspect)
+class HelperResourceTags:
+    """CDK custom-resource providers use raw resources without a TagManager."""
+
+    def visit(self, node: IConstruct) -> None:
+        if (
+            isinstance(node, CfnResource)
+            and node.cfn_resource_type in {"AWS::IAM::Role", "AWS::Lambda::Function", "AWS::Logs::LogGroup"}
+            and TagManager.of(node) is None
+        ):
+            node.add_property_override(
+                "Tags", [{"Key": key, "Value": value} for key, value in config.REQUIRED_TAGS.items()]
+            )
 
 
 def build_app(context: dict | None = None) -> App:
@@ -67,6 +84,9 @@ def build_app(context: dict | None = None) -> App:
     express = ["AWS::ECS::ExpressGatewayService"]
     Tags.of(app).add("Project", config.PROJECT_TAG, exclude_resource_types=express)
     Tags.of(app).add("ManagedBy", "cdk", exclude_resource_types=express)
+    for key, value in config.REQUIRED_TAGS.items():  # auto-delete=no: owned by the workshop's own cleanup
+        Tags.of(app).add(key, value, exclude_resource_types=express)
+    Aspects.of(app).add(HelperResourceTags())
     for child in app.node.children:
         if isinstance(child, Stack):
             child.termination_protection = False

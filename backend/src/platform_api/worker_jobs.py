@@ -3,11 +3,13 @@
 Importing this module registers the handlers in `jobs.HANDLERS`; `backend/src/worker.py` does that at start-up. Every handler
 takes the JOB item and returns the `output` dict; exceptions become the job's `error` through `errors.from_exception`.
 
-A release run is two jobs so that neither comes near the worker's 15-minute timeout: `release` deploys the blueprint version to
-Dev when the Dev harness does not run it yet (a minute; four to five for a project's first harness) and queues `evaluate`, which
-runs the dataset (five to six minutes) and records the verdict. Both check that the release still follows them
-(`pipeline.jobId`): a run started again after a stall supersedes the old jobs, which then do nothing. Should a job still reach
-the Lambda limit, `jobs.run`'s watchdog records a TIMEOUT on the job and, through `on_run_timeout`, on the release.
+A release run is two jobs, run by the release pipeline's DeployDev and Evaluate actions (`platform_api.pipeline_actions`), so that
+neither comes near the worker's 15-minute timeout: `release` deploys the blueprint version to Dev when the Dev harness does not
+run it yet (a minute; four to five for a project's first harness) and creates `evaluate`, which runs the dataset (five to six
+minutes) and records the verdict. Both check that the release still follows them (`pipeline.jobId`, and the execution through
+the conditional writes): a run started again supersedes the old jobs, which then do nothing. Should a job still reach the Lambda
+limit, `jobs.run`'s watchdog records a TIMEOUT on the job and, through `on_run_timeout`, on the release. `promote` is run by the
+Prod deployment action once the approver has asked for the promotion in the platform.
 """
 
 from __future__ import annotations
@@ -19,6 +21,7 @@ from platform_sdk import agentcore
 
 from . import db, errors, jobs
 from .handlers import blueprints, catalogue, projects, releases
+from .handlers import resources as resources_store
 from .services import clients, evaluation_run
 from .services import harness as harness_service
 
@@ -28,6 +31,9 @@ INVOKE_TIMEOUT_SECONDS = 180
 
 def run_deploy(job: dict) -> dict:
     inp = job["input"]
+    releases.refuse_dev_change(
+        inp["projectId"], inp.get("env") or "dev"
+    )  # checked again here: the request may have raced
     project = projects.load_project(inp["projectId"])
     item = blueprints.load_blueprint(project["projectId"], inp["version"])
     return harness_service.deploy(project, item, inp.get("env") or "dev", job["createdBy"], job_id=job["jobId"])
@@ -87,8 +93,15 @@ def _release_following(job: dict) -> dict | None:
     return release
 
 
+def _still_owned(release: dict):
+    """The condition that the release still follows the execution it followed when the job read it."""
+    execution_id = (release.get("pipeline") or {}).get("executionId")
+    return releases.owned_by(execution_id) if execution_id else None
+
+
 def run_release(job: dict) -> dict:
-    """Stage one of a release run: deploy the blueprint version to Dev unless the Dev harness runs it, then queue `evaluate`."""
+    """Stage one of a release run (the DeployDev action): deploy the blueprint version to Dev unless the Dev harness runs it,
+    then create the `evaluate` job the Evaluate action runs."""
     release = _release_following(job)
     if release is None:
         return {"skipped": True, "reason": "the release no longer follows this job"}
@@ -110,7 +123,7 @@ def run_release(job: dict) -> dict:
             )
         else:
             pipeline.update(stage="DEPLOYING", deployJobId=job["jobId"], deploySkipped=False)
-            releases.save(release, expected_status="EVALUATING", pipeline=pipeline)
+            releases.save(release, expected_status="EVALUATING", condition=_still_owned(release), pipeline=pipeline)
             deployed = harness_service.deploy(project, item, "dev", job["createdBy"], job_id=job["jobId"])
             output = {"deploySkipped": False, "deploy": deployed}
             pipeline.update(
@@ -119,21 +132,19 @@ def run_release(job: dict) -> dict:
                 logGroup=deployed.get("logGroup"),
             )
         stage = "EVALUATING"
-        evaluate = jobs.create("evaluate", {**inp, "deployJobId": job["jobId"]}, job["createdBy"])
+        # the pipeline's Evaluate action runs this job; the UI follows it from now on
+        evaluate = jobs.create(
+            "evaluate",
+            {**inp, "deployJobId": job["jobId"]},
+            job["createdBy"],
+            ttl_seconds=jobs.PIPELINE_JOB_TTL_SECONDS,
+        )
         pipeline.update(stage="EVALUATING", jobId=evaluate["jobId"], evaluationJobId=evaluate["jobId"])
         try:
-            releases.save(release, expected_status="EVALUATING", pipeline=pipeline)
+            releases.save(release, expected_status="EVALUATING", condition=_still_owned(release), pipeline=pipeline)
         except errors.ApiError as exc:  # the release moved on while Dev was deploying: this evaluate job never runs
             jobs.set_status(evaluate["jobId"], "FAILED", error={"code": "CONFLICT", "message": exc.message})
             raise
-        try:
-            jobs.enqueue(evaluate)
-        except Exception as exc:
-            api_error = errors.from_exception(exc)
-            jobs.set_status(evaluate["jobId"], "FAILED", error=api_error.as_job_error())
-            raise errors.upstream(
-                f"the worker could not be started for the evaluation: {api_error.message}", code="WORKER_UNAVAILABLE"
-            ) from exc
     except Exception as exc:
         api_error = errors.from_exception(exc)
         logger.exception("run of release %s failed in stage %s", release["releaseId"], stage)
@@ -145,7 +156,8 @@ def run_release(job: dict) -> dict:
 
 
 def run_evaluate(job: dict) -> dict:
-    """Stage two: the dataset run against the Dev harness; the verdict moves the release to BLOCKED or PENDING_APPROVAL."""
+    """Stage two (the Evaluate action): the dataset run against the Dev harness; the verdict moves the release to BLOCKED or
+    PENDING_APPROVAL."""
     release = _release_following(job)
     if release is None:
         return {"skipped": True, "reason": "the release no longer follows this job"}
@@ -164,6 +176,20 @@ def run_evaluate(job: dict) -> dict:
             )
         evaluation_run.check_dev_key(project, bp)
         summary = evaluation_run.run(bp, harness)
+        # the verdict is about the harness version the dataset ran against: a Dev deployment in the meantime voids it
+        after = evaluation_run.dev_harness(project["projectId"])
+        before_version = ((harness or {}).get("attributes") or {}).get("version")
+        if (after or {}).get("attributes", {}).get(
+            "version"
+        ) != before_version or not evaluation_run.harness_runs_version(after, item["version"]):
+            raise errors.conflict(
+                f"the Dev harness changed during the evaluation (version {before_version} -> "
+                f"{((after or {}).get('attributes') or {}).get('version')}); run the release again",
+                code="HARNESS_CHANGED",
+            )
+        harness_service.tag_log_group(
+            ((harness or {}).get("attributes") or {}).get("logGroup"), project["projectId"], "dev"
+        )
         pipeline = {
             **(release.get("pipeline") or {}),
             "stage": "DONE",
@@ -234,6 +260,7 @@ def run_invoke(job: dict) -> dict:
                 429, "BUDGET_EXCEEDED", exc.message, details=budget_details(inp, exc.message)
             ) from exc
         raise
+    _tag_runtime_logs(inp)
     return {
         **result.summary(),
         "seconds": round(time.monotonic() - started, 1),
@@ -243,6 +270,16 @@ def run_invoke(job: dict) -> dict:
         "env": inp.get("env"),
         "projectId": inp.get("projectId"),
     }
+
+
+def _tag_runtime_logs(inp: dict) -> None:
+    """The first invocation of a harness creates its runtime log group (deploy and promotion found none to tag): tag it now.
+    A group that still does not exist is skipped; a refused tag call fails the job (`harness_service.tag_log_group`)."""
+    project_id, env = inp.get("projectId"), inp.get("env")
+    if not project_id or not env:
+        return
+    harness = resources_store.find_registered(project_id, env, "harness")
+    harness_service.tag_log_group(((harness or {}).get("attributes") or {}).get("logGroup"), project_id, env)
 
 
 def on_run_timeout(job: dict, error: dict) -> None:

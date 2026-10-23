@@ -137,6 +137,14 @@ LOCAL_UI_URL = "http://localhost:5173/"
 
 # Platform (API, table, Lambdas) - build contract sections 3 and 4
 TABLE_NAME = PREFIX
+# Module 6 release pipeline (names of the pipeline, stages and actions: platform_sdk.names)
+RELEASE_SOURCE_BUCKET_PREFIX = f"{PREFIX}-release-source"
+RELEASE_ARTIFACT_BUCKET_PREFIX = f"{PREFIX}-release-artifacts"
+RELEASE_ARTIFACT_DAYS = 30  # old snapshot versions and stage artifacts; executions read theirs within the day
+RELEASE_APPROVAL_DAYS = 7  # a manual approval left unanswered fails the execution (the release returns to DRAFT)
+REQUIRED_TAGS = {
+    "auto-delete": "no"
+}  # every taggable resource (platform_sdk.tags.REQUIRED_TAGS for run-time resources)
 API_NAME = f"{PREFIX}-api"
 API_FUNCTION_NAME = f"{PREFIX}-api"
 WORKER_FUNCTION_NAME = f"{PREFIX}-worker"

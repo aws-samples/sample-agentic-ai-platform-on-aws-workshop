@@ -122,6 +122,9 @@ def deploy(request):
     env = validation.env(validation.string(body, "env", required=False, default="dev"))
     if env != "dev":
         raise errors.validation("deploy targets env 'dev' only; Prod is reached by promoting an approved release")
+    from .releases import refuse_dev_change  # releases imports this module
+
+    refuse_dev_change(project_id, env)
     job = jobs.submit(
         "deploy",
         {"projectId": project_id, "env": env, "version": int(item["version"]), "model": item.get("model")},

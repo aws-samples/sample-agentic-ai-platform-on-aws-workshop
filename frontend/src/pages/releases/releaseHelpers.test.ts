@@ -20,6 +20,7 @@ import {
   scoreRows,
   sortNewestFirst,
   thresholdsText,
+  waitingForApprovalGate,
 } from "./releaseHelpers";
 
 const blocked: ReleaseEvaluation = {
@@ -135,6 +136,29 @@ const pipeline = (stage: ReleasePipeline["stage"], jobId = "J-run"): ReleasePipe
 });
 
 describe("state machine", () => {
+  it("waits for the native manual gate before enabling a decision", () => {
+    const release = { status: "APPROVED", pipeline: { executionId: "EX1", approvalReady: false } } as Release;
+    expect(waitingForApprovalGate(release)).toBe(true);
+    expect(waitingForApprovalGate({ ...release, pipeline: { ...release.pipeline!, approvalReady: true } })).toBe(false);
+    expect(waitingForApprovalGate({ ...release, status: "PROMOTED" })).toBe(false);
+    expect(waitingForApprovalGate({ ...release, pipeline: null })).toBe(false);
+  });
+  it("uses native execution state instead of job age for CodePipeline releases", () => {
+    const native = {
+      ...pipeline("DEPLOYING"),
+      executionId: "execution-1",
+      executionStatus: "InProgress",
+      startedAt: "2026-10-01T00:00:00Z",
+    };
+    expect(pipelineStuck({ status: "EVALUATING", pipeline: native }, undefined, true)).toBe(false);
+    expect(pipelineStuck({ status: "EVALUATING", pipeline: { ...native, executionStatus: undefined } }, undefined, true)).toBe(false);
+    expect(pipelineStuck({ status: "EVALUATING", pipeline: { ...native, executionStatus: "Failed" } }, undefined)).toBe(true);
+    expect(promotionStuck({ status: "PROMOTING", promotion: null, pipeline: native }, undefined, true)).toBe(false);
+    expect(promotionStuck({ status: "PROMOTING", promotion: null, pipeline: { ...native, executionStatus: "Failed" } }, undefined)).toBe(true);
+    expect(pipelineStuck({ status: "EVALUATING", pipeline: { ...native, executionId: undefined, retryable: true, retryAction: "run" } }, undefined)).toBe(true);
+    expect(pipelineStuck({ status: "EVALUATING", pipeline: { ...native, executionStatus: "Failed", retryable: false, retryAction: null } }, undefined)).toBe(false);
+  });
+
   it("mirrors the backend transitions", () => {
     expect(canDecide("PENDING_APPROVAL")).toBe(true);
     expect(canDecide("APPROVED")).toBe(false);

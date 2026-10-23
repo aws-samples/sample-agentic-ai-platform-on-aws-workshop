@@ -189,7 +189,19 @@ def register_harness(
         },
         by=by,
     )
+    tag_log_group(log_group, project_id, env)
     return {"harness": harness_row, "endpoint": endpoint_row, "logGroup": log_group}
+
+
+def tag_log_group(log_group: str | None, project_id: str, env: str) -> bool:
+    """auto-delete=no (and the project tags) on the runtime log group AgentCore created. False only while the group does not
+    exist yet (it appears on the harness's first invocation; the evaluation and the promotion tag it then); any other failure
+    (AccessDenied, throttling) is raised, so no deployment or evaluation succeeds without the required tag."""
+    if not log_group:
+        return False
+    return agentcore.tag_log_group(
+        log_group, {"ManagedBy": "platform", "ProjectId": project_id, "Environment": env}, client=clients.logs()
+    )
 
 
 def deploy_harness(project: dict, item: dict, env: str, by: str) -> dict:
@@ -281,6 +293,7 @@ def promote(project: dict, item: dict, by: str, job_id: str | None = None) -> di
         },
         by=by,
     )
+    tag_log_group(registered["logGroup"], project["projectId"], env)
     output = _output(harness, pieces, item, env, endpoint_name, registered["logGroup"], started)
     output.update(
         endpointArn=endpoint.get("arn"),

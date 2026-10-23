@@ -29,6 +29,26 @@ OBO_PROVIDER_AGENT = "kc-hr-agent"
 OBO_PROVIDER_GATEWAY = "kc-hr-obo-gateway"
 OBO_DEMO_WORKLOAD = "workshop_obo_demo"
 OBO_ROLE_POLICY = "obo-token-exchange"  # inline policy name on the Dev agent and gateway roles
+# Module 6 release pipeline (CodePipeline V2, QUEUED): one shared pipeline, one execution per release run. The stage and action
+# names are a contract between the CDK app (foundation/foundation/platform_stack.py), the backend and the `workshop` command.
+# QUEUED locks a stage while an execution is in it, so DeployDev and Evaluate share the one Validate stage (run orders 1 and 2):
+# no other release can deploy the shared Dev harness until this one's evaluation has finished.
+RELEASE_PIPELINE_NAME = "agent-platform-release"
+RELEASE_SOURCE_KEY = "release-source/release.zip"  # one key; every run is a new object version, pinned per execution
+RELEASE_SOURCE_ACTION = "ReleaseSnapshot"
+# QUEUED locks a stage while an execution is in it, so DeployDev and Evaluate share the one Validate stage (run orders 1 and 2):
+# no other release can deploy the shared Dev harness until this one's evaluation has finished.
+RELEASE_STAGES = ("Source", "Validate", "Approve", "Promote")
+RELEASE_VALIDATE_STAGE = "Validate"
+RELEASE_DEPLOY_ACTION = "DeployDev"
+RELEASE_EVALUATE_ACTION = "Evaluate"
+RELEASE_APPROVE_STAGE, RELEASE_APPROVE_ACTION = "Approve", "ApproveRelease"
+RELEASE_PROMOTE_STAGE, RELEASE_PROMOTE_GATE_ACTION, RELEASE_PROMOTE_ACTION = (
+    "Promote",
+    "ApprovePromotion",
+    "PromoteProd",
+)
+RELEASE_PIPELINE_VARIABLES = ("releaseId", "projectId", "blueprintVersion")
 POLICY_NAME_MAX = 48  # CreatePolicy `name`: 1-48 characters matching [A-Za-z][A-Za-z0-9_]* (botocore model, 8 Oct 2026)
 POLICY_NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 

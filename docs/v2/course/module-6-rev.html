@@ -17,6 +17,8 @@
       details.reference > summary { cursor: pointer; font-weight: 700; color: #25364a; }
       details.reference[open] > summary { margin-bottom: 12px; }
       #glossary .glossary { margin-top: 0; }
+      .release-screen img { display: block; width: 100%; height: auto; border: 1px solid #d5dce5; border-radius: 8px; }
+      .release-screen > a { display: block; }
     </style>
   </head>
   <body>
@@ -33,7 +35,7 @@
       <main>
         <section id="explain">
           <h2>From platform to workload <span class="time">Explain · 10 min</span></h2>
-          <p class="lead">The shared platform is ready. Now switch from Platform admin to Agent developer and build a workload in <strong>five steps</strong>:</p>
+          <p class="lead">The shared platform is ready. Now switch from Platform admin to Agent developer and build a workload in <strong>five steps</strong>, which one AWS CodePipeline execution carries out:</p>
 <ol class="concept-list">
   <li><strong>Build:</strong> write a blueprint.</li>
   <li><strong>Deploy:</strong> render it for Dev.</li>
@@ -46,39 +48,90 @@
   <p>Check that module 5's Dev cap is restored. In <code>design-record.yaml</code>, set <code>prompt_version: v1</code> under <code>module_6.inputs</code>, then run <code>workshop apply 6</code>. It waits about two and a half minutes for the two memories to become active, four to five minutes for the first Dev deployment (the first harness in the VPC waits for its network interfaces; later versions and the on-behalf-of twin reuse them and take under a minute), and five to six minutes for the evaluation. The planted prompt bug should produce a BLOCKED release. Continue reading while it runs.</p>
 </aside>
 
-          
 
+          <h3>One blueprint, one pipeline</h3>
+          <figcaption>The blueprint is the source. <br/>CodePipeline renders it into a harness (build), deploys it, evaluates it (test) and promotes it, like any software release. 
+            <br/>The rendering process resolves the blueprint specified gateway, key, memory and role, so the same blueprint becomes a Dev harness and later a Prod harness.</figcaption>
+          
           <figure>
-            <svg viewBox="0 0 960 170" role="img" aria-labelledby="fig6a-title">
-              <title id="fig6a-title">The AgentOps loop</title>
-              <defs><marker id="arr6a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
-              <rect class="d-box d-ours" x="20" y="40" width="130" height="56" style="fill:#fff8ea"/>
-              <text class="d-text d-title" x="85" y="63" text-anchor="middle">Blueprint</text>
-              <text class="d-text d-small" x="85" y="81" text-anchor="middle">version 1, 2, 3 ...</text>
-              <path class="d-arrow" d="M150 68 L176 68" marker-end="url(#arr6a)"/>
-              <rect class="d-box d-aws" x="178" y="40" width="130" height="56"/>
-              <text class="d-text d-title" x="243" y="63" text-anchor="middle">Deploy to Dev</text>
-              <text class="d-text d-small" x="243" y="81" text-anchor="middle">Harness · DEFAULT</text>
-              <path class="d-arrow" d="M308 68 L334 68" marker-end="url(#arr6a)"/>
-              <rect class="d-box d-blue" x="336" y="40" width="130" height="56"/>
-              <text class="d-text d-title" x="401" y="63" text-anchor="middle">Evaluate</text>
-              <text class="d-text d-small" x="401" y="81" text-anchor="middle">dataset · thresholds</text>
-              <path class="d-arrow" d="M466 68 L492 68" marker-end="url(#arr6a)"/>
-              <rect class="d-box d-people" x="494" y="40" width="130" height="56"/>
-              <text class="d-text d-title" x="559" y="63" text-anchor="middle">Approve</text>
-              <text class="d-text d-small" x="559" y="81" text-anchor="middle">Domain approver</text>
-              <path class="d-arrow" d="M624 68 L650 68" marker-end="url(#arr6a)"/>
-              <rect class="d-box d-aws" x="652" y="40" width="130" height="56"/>
-              <text class="d-text d-title" x="717" y="63" text-anchor="middle">Promote</text>
-              <text class="d-text d-small" x="717" y="81" text-anchor="middle">render for Prod · new version</text>
-              <path class="d-arrow" d="M782 68 L808 68" marker-end="url(#arr6a)"/>
-              <rect class="d-box d-platform" x="810" y="40" width="130" height="56"/>
-              <text class="d-text d-title" x="875" y="63" text-anchor="middle">Monitor</text>
-              <text class="d-text d-small" x="875" y="81" text-anchor="middle">online scores · spend</text>
-              <path class="d-arrow" d="M875 96 L875 130 L85 130 L85 98" marker-end="url(#arr6a)"/>
-              <text class="d-text d-small" x="480" y="146" text-anchor="middle">feedback: scores, spend, user comments become the next blueprint version</text>
+            <svg viewBox="0 0 960 310" role="img" aria-labelledby="fig6-pipe-title">
+              <title id="fig6-pipe-title">From blueprint to running agent: CodePipeline renders, deploys, evaluates and promotes one release</title>
+              <defs><marker id="arr6p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+
+              <rect class="d-box d-ours" x="16" y="92" width="150" height="100" style="fill:#fff8ea"/>
+              <text class="d-text d-title" x="91" y="116" text-anchor="middle">Blueprints</text>
+              <text class="d-text d-small" x="91" y="134" text-anchor="middle">Choose your prompts,</text>
+              <text class="d-text d-small" x="91" y="148" text-anchor="middle">model, tools, KBs, memory</text>
+              <text class="d-text d-small" x="91" y="162" text-anchor="middle">quality metrics</text>
+              <text class="d-strong d-tiny" x="91" y="180" text-anchor="middle">Config-driven Build</text>
+              <path class="d-arrow" d="M166 142 L200 142" marker-end="url(#arr6p)"/>
+
+              <rect class="d-group" x="190" y="44" width="750" height="180"/>
+              <text class="d-text d-title" x="202" y="64">AWS CodePipeline · CI/CD · one execution per release</text>
+              <text class="d-text d-small" x="928" y="64" text-anchor="end">Source → Validate → Approve → Promote</text>
+
+              <rect class="d-box" x="202" y="84" width="120" height="108"/>
+              <text class="d-text d-title" x="262" y="106" text-anchor="middle">Source</text>
+              <text class="d-text d-small" x="262" y="124" text-anchor="middle">release snapshot</text>
+              <text class="d-text d-small" x="262" y="138" text-anchor="middle">blueprint + prompt</text>
+              <text class="d-text d-small" x="262" y="152" text-anchor="middle">pinned S3 version</text>
+              <text class="d-text d-tiny" x="262" y="180" text-anchor="middle">Commit</text>
+              <path class="d-arrow" d="M322 142 L334 142" marker-end="url(#arr6p)"/>
+
+              <rect class="d-box d-dash" x="334" y="78" width="252" height="120" style="fill:none"/>
+              <text class="d-text d-tiny" x="340" y="90">Validate · one stage lock</text>
+              <rect class="d-box d-aws" x="340" y="96" width="112" height="90"/>
+              <text class="d-text d-title" x="396" y="116" text-anchor="middle">DeployDev</text>
+              <text class="d-text d-small" x="396" y="132" text-anchor="middle">render: resolve refs</text>
+              <text class="d-text d-small" x="396" y="146" text-anchor="middle">to Dev resources</text>
+              <text class="d-text d-small" x="396" y="160" text-anchor="middle">(Harness)</text>
+              <text class="d-text d-tiny" x="396" y="178" text-anchor="middle">Build + Deploy</text>
+              <path class="d-arrow" d="M452 142 L474 142" marker-end="url(#arr6p)"/>
+              <rect class="d-box d-blue" x="474" y="96" width="112" height="90"/>
+              <text class="d-text d-title" x="530" y="116" text-anchor="middle">Evaluate</text>
+              <text class="d-text d-small" x="530" y="132" text-anchor="middle">three judges</text>
+              <text class="d-text d-small" x="530" y="146" text-anchor="middle">thresholds</text>
+              <text class="d-text d-tiny" x="530" y="178" text-anchor="middle">Unit test</text>
+              <path class="d-arrow" d="M586 142 L598 142" marker-end="url(#arr6p)"/>
+
+              <rect class="d-box d-people" x="598" y="84" width="120" height="108"/>
+              <text class="d-text d-title" x="658" y="106" text-anchor="middle">Gate</text>
+              <text class="d-text d-small" x="658" y="124" text-anchor="middle">quality gate</text>
+              <text class="d-text d-small" x="658" y="138" text-anchor="middle">Domain approver</text>
+              <text class="d-text d-small" x="658" y="152" text-anchor="middle">reject → stop</text>
+              <text class="d-text d-tiny" x="658" y="180" text-anchor="middle">Review</text>
+              <path class="d-arrow" d="M718 142 L730 142" marker-end="url(#arr6p)"/>
+
+              <rect class="d-box d-dash" x="730" y="78" width="198" height="120" style="fill:none"/>
+              <text class="d-text d-tiny" x="736" y="90">Promote</text>
+              <rect class="d-box d-people" x="736" y="96" width="86" height="90"/>
+              <text class="d-text d-title" x="779" y="116" text-anchor="middle">Approve</text>
+              <text class="d-text d-small" x="779" y="132" text-anchor="middle">promotion gate</text>
+              <text class="d-text d-small" x="779" y="146" text-anchor="middle">same approver</text>
+              <text class="d-text d-tiny" x="779" y="178" text-anchor="middle">Release</text>
+              <path class="d-arrow" d="M822 142 L842 142" marker-end="url(#arr6p)"/>
+              <rect class="d-box d-aws" x="842" y="96" width="86" height="90"/>
+              <text class="d-text d-strong" x="885" y="116" text-anchor="middle">PromoteProd</text>
+              <text class="d-text d-small" x="885" y="132" text-anchor="middle">render for Prod</text>
+              <text class="d-text d-small" x="885" y="146" text-anchor="middle">UpdateHarness</text>
+              <text class="d-text d-tiny" x="885" y="178" text-anchor="middle">Deploy to Prod</text>
+
+              <path class="d-arrow" d="M396 186 L396 250" marker-end="url(#arr6p)"/>
+              <text class="d-text d-tiny" x="402" y="240">Create/UpdateHarness</text>
+              <path class="d-arrow" d="M530 186 L530 250" marker-end="url(#arr6p)"/>
+              <text class="d-text d-tiny" x="536" y="240">InvokeHarness</text>
+              <path class="d-arrow" d="M885 186 L885 250" marker-end="url(#arr6p)"/>
+              <text class="d-text d-tiny" x="879" y="240" text-anchor="end">UpdateHarness</text>
+              <rect class="d-box d-aws" x="340" y="250" width="246" height="50"/>
+              <text class="d-text d-strong" x="463" y="270" text-anchor="middle">AgentCore Runtime · Dev harness</text>
+              <text class="d-text d-small" x="463" y="288" text-anchor="middle">DEFAULT follows the latest version</text>
+              <rect class="d-box d-aws" x="730" y="250" width="198" height="50"/>
+              <text class="d-text d-strong" x="829" y="270" text-anchor="middle">Runtime · Prod harness</text>
+              <text class="d-text d-small" x="829" y="288" text-anchor="middle">new version · DEFAULT follows</text>
             </svg>
-            <figcaption>Module 6 takes the blueprint through release and promotion. Module 7 observes traffic and feeds the next improvement. The blueprint remains the release unit, including on the code path.</figcaption>
+            
+            <figcaption>Module 6 takes the blueprint through release and promotion. <br/>Module 7 observes traffic and feeds the next improvement. The blueprint remains the single release unit, whether running manually or through CICD.</figcaption>
+
           </figure>
 
           <h3>Why start with a blueprint?</h3>
@@ -104,7 +157,7 @@
     <tr><td>3 · Render</td><td>Resolve the environment's alias, vault key, gateway, filtered KB target, memory and agent role. Missing resources produce named errors</td><td>Apply output</td></tr>
     <tr><td>4 · Deploy</td><td>Worker creates an immutable Harness version on Runtime; Dev <code>DEFAULT</code> follows the latest</td><td>Releases · new version ~20 seconds; first VPC deployment ~4–5 minutes</td></tr>
     <tr><td>5 · Gate</td><td>Run the dataset, score results, compare thresholds → BLOCKED or PENDING_APPROVAL</td><td>Releases · ~5–6 minutes: one minute of invocations, a 180-second telemetry delay, then scoring</td></tr>
-    <tr><td>6 · Promote</td><td>Domain approver approves; worker creates the Prod key when missing, resolves Prod resources, creates its Harness (its <code>DEFAULT</code> endpoint follows the new version) and registers online evaluation</td><td>Release detail · first Prod deployment can take minutes; later versions are faster</td></tr>
+    <tr><td>6 · Promote</td><td>Domain approver approves and promotes through CodePipeline manual gates; the deployment action creates the Prod key when missing, resolves Prod resources, creates its Harness (its <code>DEFAULT</code> endpoint follows the new version) and registers online evaluation</td><td>Release detail · first Prod deployment can take minutes; later versions are faster</td></tr>
   </tbody>
 </table>
           <p class="note">The contract has <strong>two rules</strong>:</p>
@@ -162,7 +215,7 @@
               <text class="d-text" x="516" y="32" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
               <path class="d-arrow" d="M232 100 L248 76" marker-end="url(#arr6c)"/>
               <rect class="d-box d-platform d-ours" x="250" y="46" width="156" height="56"/>
-              <text class="d-text d-title" x="328" y="68" text-anchor="middle">Render + worker job</text>
+              <text class="d-text d-title" x="328" y="68" text-anchor="middle">CodePipeline release</text>
               <text class="d-text d-small" x="328" y="86" text-anchor="middle">references → real objects</text>
               <path class="d-arrow" d="M406 74 L422 74" marker-end="url(#arr6c)"/>
               <rect class="d-box d-aws d-ours" x="424" y="46" width="150" height="56"/>
@@ -384,7 +437,8 @@
   <li><strong>Thresholds:</strong> all four must pass; otherwise BLOCKED. Three are floors on the mean score. Harmfulness is the one ceiling: the judge scores a harmless answer 1, and the gate compares the harm rate (1 minus the mean) with 0.0. That is why the figure's 0.0 for Harmfulness is a harm rate, not a mean, and why the Releases screen shows a mean score of 1.0 beside a compared value of 0.0; a single harmful answer blocks the release.</li>
   <li><strong>Human:</strong> a passing release waits for Domain approver approval.</li>
 </ol>
-              <p class="also">The v1 prompt skips the knowledge base; v2 fixes the instruction. Compare each run's scores. Two paths run the gate today, and both use the thresholds of the team's blueprint. <code>workshop apply 6</code> runs the dataset from your machine and posts the scores, which the platform records as self-reported. A release created on the Releases screen, or run again there with <strong>Run evaluation</strong>, is run by the platform's worker instead: it deploys the version to Dev when the Dev harness does not run it yet, runs the same dataset and applies the thresholds, and the release page shows each step as it happens.</p>
+              <figure><img src="arch/module-6-codepipeline.svg" alt="CodePipeline release: versioned source, Dev deployment, evaluation, approval, and promotion; failed evaluation blocks release" style="width:100%;max-width:800px" /><figcaption>Native CodePipeline stages preserve the evaluation gate and separate approval and promotion decisions. <a href="../../release-pipeline.md">Deployment and recovery runbook</a>. <a href="arch/module-6-codepipeline.drawio">Editable diagram</a>.</figcaption></figure>
+              <p class="also">The v1 prompt skips the knowledge base; v2 fixes the instruction. Both <code>workshop apply 6</code> and the Releases screen now start the same AWS CodePipeline execution. The source action reads a versioned release snapshot. Within one Validate stage, DeployDev deploys the selected blueprint, then Evaluate runs the dataset and applies that blueprint's thresholds. The stage stays locked across both actions, so another release cannot replace Dev during evaluation. A failed threshold stops the execution with the release BLOCKED. A passing evaluation waits at the Approve gate. The command follows progress; it does not evaluate locally or upload self-reported scores.</p>
               <p class="prod"><strong>Production path.</strong> Platform-run evidence only (no self-reported scores), platform-owned minimum thresholds and approvals bound to the evaluated run.</p>
             </div>
           </div>
@@ -452,8 +506,8 @@
   <li><strong>Deploy:</strong> create or update the Prod Harness; its <code>DEFAULT</code> endpoint follows the new version.</li>
   <li><strong>Observe:</strong> register the online evaluation that module 7 reads. <code>hr_assistant_prod_online_eval</code> watches the Prod harness's spans and scores every Prod conversation (100 % sampling) with three judges, Helpfulness, Harmfulness and ToolSelectionAccuracy; scores arrive 8–11 minutes after a conversation goes quiet. This is a different set from the gate's four (only Harmfulness is in both): the gate compares each answer and tool sequence with the dataset's expected ones, and live traffic has no expected answers, so these judges score each conversation on its own.</li>
 </ol>
-              <p class="also">A platform worker runs promotion from the UI or API. A Git pipeline is discussed as a take-home path; it is not built today.</p>
-              <p class="prod"><strong>Production path.</strong> Drive promotion through a Git pipeline calling the platform API, with a second Prod approver.</p>
+              <p class="also">CodePipeline owns the release sequence. Approve and Promote remain separate actions on the Releases screen, each releasing a native manual gate through the authenticated platform API. The Promote action deploys Prod and registers online evaluation. Executions queue at each stage: an approval holds later releases at that gate, while earlier stages can continue.</p>
+              <p class="prod"><strong>Production path.</strong> This workshop starts a pipeline from an immutable blueprint snapshot. A Git-triggered build for exported Strands or LangGraph code is a separate extension; it is not part of this release pipeline.</p>
             </div>
           </div>
 
@@ -475,15 +529,36 @@
             <strong>From blueprint to Prod</strong>
             <p class="caption">Check the <strong>two runs</strong> started earlier:</p>
 <ol class="concept-list">
-  <li><strong>v1:</strong> memory (about 2.5 minutes), blueprint, first Dev deployment (4 to 5 minutes: the first harness in the VPC), a warm-up question (about 35 seconds), the on-behalf-of twin of the Dev harness (about half a minute) and evaluation (5 to 6 minutes): 12 to 15 minutes in all.</li>
+  <li><strong>v1:</strong> memory (about 2.5 minutes), blueprint, first Dev deployment (4 to 5 minutes: the first harness in the VPC), the on-behalf-of twin of the Dev harness (about half a minute) and evaluation (5 to 6 minutes): 12 to 15 minutes in all.</li>
   <li><strong>v2:</strong> corrected prompt, new Dev deployment, on-behalf-of twin, release and evaluation; about 6–7 minutes.</li>
 </ol>
-            <p class="caption">Read the output as it comes. The <strong>memory</strong> step creates the Dev and Prod memories and, on the first run only, writes two sample conversation events for employee E1001 (Alex) into the Dev memory: a stated preference for two-week leave blocks in August. AgentCore Memory extracts long-term preference records from them a few minutes later; <code>workshop apply 7</code> reads them back. The <strong>blueprint</strong> step prints the <em>Company policy questions</em> section of the prompt it stores: the one section that differs between v1 and v2, and exactly where v1 goes wrong. After <strong>deploy to Dev</strong> the command asks the new version one policy question (the remote-work question from the evaluation dataset), labelled warm-up: this first call carries the cold start of a new harness version, 35 to 40 seconds, and shows the prompt's behaviour before the evaluation runs. With v1 the answer comes from general knowledge, the tools list on that line is empty and no document is cited; with v2 the same line shows <code>hrkb___Retrieve</code> and the answer should cite the AnyCompany Remote Work Policy.</p>
+            <p class="caption">The <strong>memory</strong> step prepares Dev and Prod memory; the <strong>blueprint</strong> step stores the selected prompt and thresholds. CodePipeline then deploys Dev and evaluates it. The CLI prints the execution identifier and waits for the verdict. Use the Releases screen and CodePipeline execution to inspect each stage. After evaluation, the command prepares the on-behalf-of twin for the later exercises. With v1, expect BLOCKED; with v2, expect PENDING_APPROVAL. Queued executions can take longer while another release awaits a decision.</p>
             <ol class="steps">
               <li><div><span class="pill tag file">file</span>Compare <code>scenario/blueprint/blueprint.yaml</code> and the two prompts. Find the instruction changed in v2.</div></li>
-              <li><div><span class="pill tag screen">screen</span><strong>Releases:</strong> inspect the v1 BLOCKED scores and the v2 PENDING_APPROVAL result (release 1 and 2 on a fresh run).</div></li>
+              <li><div><span class="pill tag screen">screen</span><strong>Releases · release detail:</strong> open the release created by <code>workshop apply 6</code>. Under <strong>Evaluation gate → Release pipeline</strong>, note the <strong>Execution</strong> ID and select the <strong>Pipeline</strong> link to open AWS CodePipeline. Use the workshop AWS console session in the deployment Region (this example uses <code>us-east-1</code>). The application persona and AWS console sign-in are separate.
+                <figure class="release-screen">
+                  <a href="images/module-6-release-progress.png" target="_blank" rel="noopener"><img src="images/module-6-release-progress.png" width="1635" height="547" loading="lazy" alt="Release detail showing the Pipeline link, execution ID and InProgress execution status beside a passing evaluation awaiting approval" /></a>
+                  <figcaption>The Pipeline link opens the execution for this release. A passing evaluation can still show <code>InProgress</code> while the pipeline waits for approval. Select any screenshot to view it full size; your identifiers and timings will differ.</figcaption>
+                </figure>
+              </div></li>
+              <li><div><span class="pill tag screen">screen</span><strong>CodePipeline · execution progress:</strong> confirm the execution ID matches the release. If you opened the pipeline overview, choose <strong>Executions</strong> and open that ID. Follow <strong>Source → Validate → Approve → Promote</strong>. In Validate, <strong>DeployDev</strong> must succeed before <strong>Evaluate</strong> runs. Evaluation usually takes five to six minutes, including a three-minute wait for traces. It calls AgentCore's on-demand evaluation API from the worker Lambda; it does not create a managed evaluation job in the AgentCore console.
+                <p>For <strong>v1</strong>, expect Evaluate to fail and the application release to show <strong>BLOCKED</strong>; inspect its scores and thresholds. For a passing <strong>v2</strong>, expect Validate to succeed, <strong>ApproveRelease</strong> to wait for manual approval, and the application to show <strong>PENDING_APPROVAL</strong>.</p>
+                <figure class="release-screen">
+                  <a href="images/module-6-pipeline-approval.png" target="_blank" rel="noopener"><img src="images/module-6-pipeline-approval.png" width="1412" height="329" loading="lazy" alt="Pipeline overview with Source and Validate succeeded and ApproveRelease waiting; Promote displays an older execution" /></a>
+                  <figcaption>This overview shows the current release waiting at Approve, while the green Promote stage belongs to an older execution. Compare the IDs beneath the stage names: green in the overview does not prove that your release reached Prod.</figcaption>
+                </figure>
+              </div></li>
               <li><div><span class="pill tag screen">screen</span><strong>Playground · Dev:</strong> ask a policy question. The current v2 deployment should cite the knowledge base; compare it with v1's failed evaluation.</div></li>
-              <li><div><span class="pill tag screen">screen</span>Switch persona to Domain approver (user menu, top right). On the release's page, approve the v2 release and promote it. If the screen is unavailable, <code>workshop approve release</code> then <code>workshop promote</code> do the same through the API; the first of them also shows the developer and the admin being refused with 403 (separation of duties). Wait for the Prod deployment to become ready, then ask a question in <strong>Playground · Prod</strong>; its first response has a cold start of about 35 seconds.</div></li>
+              <li><div><span class="pill tag screen">screen</span><strong>Application · approve:</strong> switch persona to Domain approver (user menu, top right). Review the v2 scores, choose <strong>Approve</strong> and submit the decision. Return to the same CodePipeline execution and refresh: <strong>ApproveRelease</strong> should succeed, then <strong>ApprovePromotion</strong> should wait. Approval and promotion are separate decisions.
+                <figure class="release-screen">
+                  <a href="images/module-6-pipeline-promotion.png" target="_blank" rel="noopener"><img src="images/module-6-pipeline-promotion.png" width="1412" height="329" loading="lazy" alt="The same execution has passed ApproveRelease and now waits at ApprovePromotion; PromoteProd has not run" /></a>
+                  <figcaption>After approval, all four stage cards show the same execution ID. Promote is waiting at its manual gate; PromoteProd has not run yet.</figcaption>
+                </figure>
+              </div></li>
+              <li><div><span class="pill tag screen">screen</span><strong>Application · promote:</strong> return to the release and choose <strong>Promote to Prod</strong>, then confirm. The button becomes available when CodePipeline exposes the promotion gate; this can take tens of seconds. Submit both decisions through the application so the platform records the approver. Use the AWS console to inspect progress; do not approve the native gates directly or choose <strong>Release change</strong>.
+                <p>Watch <strong>ApprovePromotion</strong> succeed and <strong>PromoteProd</strong> run. Wait for this execution to show <strong>Succeeded</strong>, then confirm the application release is <strong>PROMOTED</strong> and its version history shows the Prod version on <code>DEFAULT</code>. Ask a question in <strong>Playground · Prod</strong>; its first response has a cold start of about 35 seconds.</p>
+                <p>If the application screen is unavailable, <code>workshop approve release</code> then <code>workshop promote</code> use the same API; the approval command also demonstrates developer and admin requests being refused with 403. If an action fails, inspect its error and the release's evaluation or promotion details before retrying. A queued execution may be waiting for an earlier release's approval.</p>
+              </div></li>
               <li><div><span class="pill tag command">command</span><code>workshop traffic --prod 3</code>: seed three Prod conversations for module 7's online scores.</div></li>
               <li><div><span class="pill tag command">command</span><code>workshop obo</code>: the whole chain. Steps 1 and 2 of its output sign Alex in (T0) and exchange by hand (T1). Step 3 is the real call: the employee asks the on-behalf-of harness over HTTPS with <code>Authorization: Bearer T0</code>: <em>What is my annual leave balance? My employee id is E1001.</em> The agent answers in Alex's name (Hi Alex, your annual leave balance is 12 days ...) using <code>hrapi___get_leave_balance</code>. Step 4 reads the evidence from the HR API log: <code>tool get_leave_balance: sub (same as T0), employee_id E1001, aud ['hr-tools-api'], azp hr-obo-gateway</code>. The first call of a new version takes 35 to 40 seconds; a warm run about 24 seconds end to end.</div></li>
               <li><div><span class="pill tag command">command</span>Optional: <code>workshop export</code> generates Strands Agents or LangGraph code from the Dev harness. The record's <code>export:</code> input picks the flavour (<code>--strands</code> or <code>--langgraph</code> overrides it); the file lands in <code>exports/hr_assistant_dev_strands_agent.py</code> or <code>hr_assistant_dev_langgraph_agent.py</code> (the command prints the path; <code>--out</code> changes the directory). <code>workshop export --run</code> runs it once on your laptop through the relay with a temporary model-gateway key that is deleted afterwards.</div></li>
@@ -514,7 +589,7 @@ OK   on behalf of alex.rivera: the HR API saw sub identical to T0, audience ['hr
             <!-- arch-svg:start -->
             <a href="arch/module-6.svg" target="_blank" rel="noopener"><img src="arch/module-6.svg" width="1600" height="1380" alt="AWS architecture after module 6: Module 6 · one agent in Dev and Prod, and its on-behalf-of twin" loading="lazy"/></a>
             <!-- arch-svg:end -->
-            <figcaption><strong>Changed:</strong> worker Lambda, DynamoDB, AgentCore Runtime (the Dev and Prod harnesses and, beside Dev, the on-behalf-of twin hr_assistant_dev_obo), Memory and Evaluations; also the Prod key, which promotion created in the model gateway and the token vault, and one inline policy on the Dev agent role. Runtime connects through interfaces in the private app subnets. The release passed its gate; promotion registered online evaluation. Two things the twin depends on are outside the figure: Keycloak, where AgentCore Identity exchanges the employee's token for the harness and again for the on-behalf-of gateway of module 4, and the HR API behind that gateway; both live in module 2's IdP stack outside the landing zone. Export remains optional. Click to open full size.</figcaption>
+            <figcaption><strong>Changed:</strong> CodePipeline, its private versioned source and artifact buckets, worker Lambda, DynamoDB, AgentCore Runtime (the Dev and Prod harnesses and, beside Dev, the on-behalf-of twin hr_assistant_dev_obo), Memory and Evaluations; also the Prod key, which promotion created in the model gateway and the token vault, and one inline policy on the Dev agent role. Runtime connects through interfaces in the private app subnets. The release passed its gate; promotion registered online evaluation. Two things the twin depends on are outside the figure: Keycloak, where AgentCore Identity exchanges the employee's token for the harness and again for the on-behalf-of gateway of module 4, and the HR API behind that gateway; both live in module 2's IdP stack outside the landing zone. Export remains optional. Click to open full size.</figcaption>
           </figure>
         </section>
       

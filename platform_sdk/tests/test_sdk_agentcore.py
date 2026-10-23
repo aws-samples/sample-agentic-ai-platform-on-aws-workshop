@@ -282,7 +282,12 @@ def test_create_or_update_harness_creates_with_tags(control, monkeypatch):
         {"harness": {**HARNESS, "status": "CREATING", "harnessVersion": "1"}},
         {
             "harnessName": "hr_assistant_dev",
-            "tags": {"Project": "workshop-agent-platform", "ManagedBy": "workshop", "ProjectId": "hr-assistant"},
+            "tags": {
+                "Project": "workshop-agent-platform",
+                "ManagedBy": "workshop",
+                "ProjectId": "hr-assistant",
+                "auto-delete": "no",
+            },
             **{k: v for k, v in spec.items() if k != "harnessName"},
         },
     )
@@ -329,7 +334,7 @@ def test_create_or_update_harness_recreates_a_failed_harness(control, monkeypatc
         {"harness": {**HARNESS, "status": "CREATING", "harnessVersion": "1"}},
         {
             "harnessName": "hr_assistant_dev",
-            "tags": {"Project": "workshop-agent-platform", "ManagedBy": "workshop"},
+            "tags": {"Project": "workshop-agent-platform", "ManagedBy": "workshop", "auto-delete": "no"},
             **{k: v for k, v in spec.items() if k != "harnessName"},
         },
     )

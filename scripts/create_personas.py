@@ -2,7 +2,7 @@
 """Create the three persona groups and users in the deployed Cognito pool and store their passwords in the users secret.
 
 The learning path does this in module 2 (`workshop apply 2`). This script is the same step for the all-at-once deployment
-(`scripts/deploy.sh`, the Workshop Studio deployer with DeployScope=all), so `scripts/doctor.py` and the `workshop` command find
+(`scripts/deploy.sh`), so `scripts/doctor.py` and the `workshop` command find
 the personas right after the deploy. Idempotent: existing groups and users are kept, existing passwords are reused.
 
 Usage: `uv run python scripts/create_personas.py` (AWS credentials and region from the environment).

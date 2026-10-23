@@ -427,6 +427,15 @@ export type PipelineStage = "DEPLOYING" | "EVALUATING" | "DONE" | "FAILED";
 /** The platform-run evaluation of a release: deploy the blueprint version to Dev (unless the Dev harness runs it already), run the dataset, apply the thresholds. */
 export interface ReleasePipeline {
   stage: PipelineStage;
+  executionId?: string;
+  pipelineName?: string;
+  consoleUrl?: string | null;
+  /** Native execution state; waiting in a queue or at approval is not a worker timeout. */
+  executionStatus?: string;
+  retryable?: boolean;
+  retryAction?: "run" | "promote" | null;
+  approvalGate?: "release" | "promotion" | null;
+  approvalReady?: boolean;
   /** The job to poll now: the "release" job while DEPLOYING, the "evaluate" job while EVALUATING, the last one afterwards. */
   jobId: string | null;
   /** null when the Dev harness already ran this blueprint version (deploy skipped). */

@@ -22,6 +22,7 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 
 from . import names
+from . import tags as tag_rules
 from .config import default_region
 from .litellm import BUDGET_PATTERNS
 
@@ -83,7 +84,7 @@ def data_client(region: str | None = None, read_timeout: int = 180):
 
 
 def _tags(extra: dict | None) -> dict:
-    return {**DEFAULT_TAGS, **(extra or {})}
+    return tag_rules.with_required({**DEFAULT_TAGS, **(extra or {})})
 
 
 def _paginate(client, operation: str, result_key: str, **kwargs) -> list[dict]:
@@ -697,7 +698,7 @@ def ensure_endpoint(
         if str(existing.get("targetVersion") or existing.get("liveVersion")) != version:
             client.update_harness_endpoint(harnessId=harness_id, endpointName=name, targetVersion=version)
     else:
-        kwargs: dict[str, Any] = dict(harnessId=harness_id, endpointName=name, targetVersion=version)
+        kwargs: dict[str, Any] = dict(harnessId=harness_id, endpointName=name, targetVersion=version, tags=_tags(None))
         if description:
             kwargs["description"] = description
         client.create_harness_endpoint(**kwargs)
@@ -1026,3 +1027,21 @@ def _wait_gone(lister: Callable[[], list], label: str, timeout: float = 120, eve
         if time.monotonic() - started > timeout:
             raise AgentCoreError(f"{label} still present after {timeout:.0f} s")
         time.sleep(every)
+
+
+def tag_log_group(name: str, extra: dict | None = None, region: str | None = None, client=None) -> bool:
+    """Tag a log group the service created (harness runtime logs): CreateHarness tags do not reach it. Returns False while the
+    group does not exist yet (the runtime creates it on first use); the next deploy or evaluation tags it then."""
+    client = client or boto3.client("logs", region_name=default_region(region))
+    groups = client.describe_log_groups(logGroupNamePrefix=name).get("logGroups") or []
+    group = next((g for g in groups if g.get("logGroupName") == name), None)
+    if group is None:
+        return False
+    arn = group.get("logGroupArn") or str(group.get("arn") or "").removesuffix(":*")
+    try:
+        client.tag_resource(resourceArn=arn, tags=_tags(extra))
+    except ClientError as exc:
+        if (exc.response.get("Error") or {}).get("Code") == "ResourceNotFoundException":  # deleted in between
+            return False
+        raise
+    return True

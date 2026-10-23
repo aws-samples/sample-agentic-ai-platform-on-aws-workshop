@@ -146,6 +146,7 @@ class ModelGatewayStack(Stack):
         config_bucket = s3.Bucket(
             self,
             "ConfigBucket",
+            encryption=s3.BucketEncryption.S3_MANAGED,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
             removal_policy=RemovalPolicy.DESTROY,
@@ -332,7 +333,11 @@ class ModelGatewayStack(Stack):
             # ServiceName, Cluster, InfrastructureRoleArn and Tags are create-only on AWS::ECS::ExpressGatewayService: any change
             # replaces the service (a second service with this fixed name cannot be created, and the endpoint would change).
             # The tags are therefore frozen here instead of inherited from the app-wide Tags aspect (excluded in app.py).
-            tags=[CfnTag(key="ManagedBy", value="cdk"), CfnTag(key="Project", value=config.PROJECT_TAG)],
+            tags=[
+                CfnTag(key="ManagedBy", value="cdk"),
+                CfnTag(key="Project", value=config.PROJECT_TAG),
+                *(CfnTag(key=k, value=v) for k, v in config.REQUIRED_TAGS.items()),
+            ],
         )
         # The first task must find config.yaml, a master key value and a reachable database.
         service.node.add_dependency(config_deployment)

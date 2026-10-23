@@ -83,7 +83,7 @@ export function CreateReleaseModal({ visible, defaultProjectId, onDismiss }: { v
       {
         onSuccess: (release) => {
           if (release.status === "DRAFT" && release.error) {
-            // 201 all the same: the release exists but the worker could not be started (WORKER_UNAVAILABLE); it can be run from its page
+            // The draft exists even when CodePipeline could not start; it can be retried from its page.
             notifications.warning(
               `Release ${release.releaseId} created, but the run did not start`,
               `${release.error.code}: ${release.error.message} The release page offers to run it again.`,
@@ -91,7 +91,7 @@ export function CreateReleaseModal({ visible, defaultProjectId, onDismiss }: { v
           } else {
             notifications.success(
               `Release ${release.releaseId} created`,
-              `Deploying and evaluating blueprint v${release.blueprintVersion}: the release page shows the progress (about 6 to 7 minutes).`,
+              `CodePipeline will deploy and evaluate blueprint v${release.blueprintVersion}. Follow execution progress on the release page.`,
             );
           }
           close();
@@ -122,9 +122,9 @@ export function CreateReleaseModal({ visible, defaultProjectId, onDismiss }: { v
       <Form errorText={create.error ? formatErrorContent(create.error) : undefined}>
         <SpaceBetween size="m">
           <Alert type="info">
-            A release is one blueprint version. Creating it deploys that version to Dev if the Dev harness does not run it yet, runs the evaluation
-            dataset against it and applies the version&apos;s thresholds, so it ends BLOCKED or PENDING_APPROVAL (about 6 to 7 minutes). Approval and
-            promotion to Prod follow on the release page.
+            A release is one blueprint version. CodePipeline deploys it to Dev, evaluates the dataset, and applies the version&apos;s thresholds,
+            producing BLOCKED or PENDING_APPROVAL. Approve and promote through the separate manual gates on the release page.
+            Executions queue behind earlier releases, including those waiting for approval.
           </Alert>
           <FormField label="Project" errorText={touched ? errors.projectId : undefined}>
             <Select

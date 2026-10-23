@@ -24,6 +24,7 @@ from typing import Any
 import yaml
 
 from . import names
+from . import tags as tag_rules
 
 API_VERSION = "platform/v1"
 KIND = "AgentBlueprint"
@@ -313,7 +314,9 @@ def find_resource(resources: list[dict], env: str, type_: str, name: str | None 
 
 
 def _unresolved(what: str, env: str, module_key: str, project_id: str, extra: str = "") -> BlueprintError:
-    message = f"{what} for project {project_id!r} environment {env!r} is not registered; create it in {MODULES[module_key]}"
+    message = (
+        f"{what} for project {project_id!r} environment {env!r} is not registered; create it in {MODULES[module_key]}"
+    )
     if extra:
         message += f" ({extra})"
     return BlueprintError("BLUEPRINT_UNRESOLVED", message, {"missing": module_key, "env": env, "project": project_id})
@@ -510,7 +513,7 @@ def tags_for(blueprint: Blueprint, env: str, managed_by: str = "platform") -> di
         tags["Domain"] = str(blueprint.domain)
     if blueprint.version is not None:
         tags["BlueprintVersion"] = str(blueprint.version)
-    return tags
+    return tag_rules.with_required(tags)
 
 
 # ---- the on-behalf-of variant of a rendered harness (module 6) ------------------------------------------------------------------

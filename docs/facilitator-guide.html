@@ -873,9 +873,7 @@
                 <label class="tick"><input type="checkbox" id="s1" />done</label
                 ><span class="text"
                   >Clone the repository (the learners do the same in Get started,
-                  step 1). <code>repo.zip</code> from
-                  <code>scripts/package_for_workshop_studio.py</code> is the
-                  deployer's CodeBuild source, not an attendee download.
+                  step 1).
                   <pre
                     class="code-dark"
                   ><code>git clone &lt;repository URL&gt; &amp;&amp; cd workshop-agentic-ai-platform   <span class="c"># frontend/dist is git-ignored: Part 2 builds it</span></code></pre>
@@ -1106,41 +1104,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                 >
               </div>
             </li>
-            <li>
-              <div>
-                <label class="tick"
-                  ><input type="checkbox" id="s11" />done</label
-                ><span class="text"
-                  ><details>
-                    <summary>
-                      Alternative: deploy through the Workshop Studio deployer
-                      template (what the event does; DeployScope pre-day about
-                      12 min, all about 20 min)
-                    </summary>
-                    <pre
-                      class="code-dark"
-                    ><code><span class="c"># build/workshop-studio/repo.zip + deployer.yaml; --skip-ui-check lets CodeBuild build the UI</span>
-uv run python scripts/package_for_workshop_studio.py
-aws s3 mb s3://&lt;bucket&gt; &amp;&amp; aws s3 cp build/workshop-studio/repo.zip s3://&lt;bucket&gt;/ws/repo.zip
-aws cloudformation deploy --stack-name agent-platform-deployer --template-file workshop-studio/deployer.yaml \
-  --capabilities CAPABILITY_IAM --parameter-overrides AssetsBucketName=&lt;bucket&gt; AssetsBucketPrefix=ws/
-<span class="c"># DeployScope defaults to pre-day (Web, Auth, Platform, Scenario); DeployScope=all deploys the seven stacks</span>
-<span class="c"># outputs: UiUrl, ApiUrl, ModelGatewayUrl, UsersSecretArn, PersonaPasswordsCommand, DoctorStatus, DeployerBuildId, DeployerBuildLogs</span>
-aws cloudformation describe-stacks --stack-name agent-platform-deployer --query &#x27;Stacks[0].Outputs&#x27;</code></pre>
-                    <p>
-                      Build logs: CloudWatch log group
-                      <code
-                        >/aws/codebuild/agent-platform-deployer-deployer</code
-                      >. <code>ModelGatewayUrl</code> reads "not deployed yet"
-                      until build phase 1; <code>PersonaPasswordsCommand</code>
-                      prints the passwords after build phase 2. Deleting the stack
-                      starts a destroy build (destroy path not yet exercised end
-                      to end).
-                    </p>
-                  </details></span
-                >
-              </div>
-            </li>
+
           </ol>
         </section>
         <section id="p3">
@@ -1469,13 +1433,9 @@ aws cloudformation describe-stacks --stack-name agent-platform-deployer --query 
                     Record <code>prompt_version: v2</code>.
                     <code>workshop apply 6</code> again,
                     <span class="pill wait">6-7 min</span>: new Dev version
-                    (<span class="pill wait">about 20 s</span>), the warm-up
-                    line now shows <code>hrkb___Retrieve</code> and cites the
-                    AnyCompany Remote Work Policy, the on-behalf-of twin,
-                    release 2 evaluation, <span class="pill wait">5-6 min</span>
-                    &rarr; PENDING_APPROVAL. Scores posted by the command are
-                    self-reported; a release created on the Releases screen (or
-                    <em>Run evaluation</em>) is run by the platform worker.
+                    and dataset evaluation in CodePipeline, then the on-behalf-of twin.
+                    Expect PENDING_APPROVAL. Both the command and Releases screen
+                    use the same pipeline; scores are produced by its Evaluate action.
                   </td>
                   <td>
                     <span class="pill ui">Releases</span>: release 2
@@ -2161,11 +2121,10 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                     <em>Run evaluation</em>)
                   </td>
                   <td>
-                    The platform worker runs it and
-                    <code>workshop apply 6</code> follows that run. Still
-                    EVALUATING after 15 minutes: open the Releases screen,
-                    <em>Run again</em> appears once the job has stalled, then
-                    run the command again.
+                    CodePipeline runs it and <code>workshop apply 6</code> follows that execution.
+                    Inspect the execution state on the Releases screen. A queued
+                    release can wait behind another release's approval; elapsed
+                    time alone does not mean it has stalled.
                   </td>
                 </tr>
                 <tr>
@@ -2274,24 +2233,7 @@ workshop deploy pre-day</code></pre>
                 >
               </div>
             </li>
-            <li>
-              <div>
-                <label class="tick"
-                  ><input type="checkbox" id="s17" />done</label
-                ><span class="text"
-                  >Workshop Studio test event deployed with
-                  <code>deployer.yaml</code>, <code>repo.zip</code> and
-                  <code>attendee-policy.json</code>, DeployScope
-                  <code>pre-day</code>; <code>DoctorStatus = PASS</code> in the
-                  outputs (the doctor passes with the landing zone and the
-                  personas not deployed; <code>ModelGatewayUrl</code> reads "not
-                  deployed yet"). See
-                  <a href="../workshop-studio/README.md"
-                    >workshop-studio/README.md</a
-                  >.</span
-                >
-              </div>
-            </li>
+
             <li>
               <div>
                 <label class="tick"
@@ -2338,8 +2280,7 @@ workshop deploy pre-day</code></pre>
             ><a href="v2/course/intro.html#setup-workspace">Get started</a
             ><a href="v2/course/cleanup.html">Clean up</a
             ><a href="workshop-guide.html">Workshop guide</a
-            ><a href="../workshop_cli/README.md">The workshop command</a
-            ><a href="../workshop-studio/README.md">Workshop Studio</a>
+            ><a href="../workshop_cli/README.md">The workshop command</a>
           </div>
         </section>
       </main>

@@ -1,6 +1,53 @@
 """Module 6 guards that need no AWS: the gateway-mode check before an evaluation, the closing line, the verdict printout."""
 
+from types import SimpleNamespace
+from unittest.mock import Mock
+
+import pytest
+
 from workshop_cli import apply_6
+
+
+def test_failed_native_execution_fails_the_command():
+    failed = {"releaseId": "R1", "status": "DRAFT", "error": {"code": "PIPELINE_FAILED", "message": "deployment failed"}}
+    with pytest.raises(apply_6.WorkshopError, match="deployment failed"):
+        apply_6.wait_for_platform_run(SimpleNamespace(developer=Mock()), failed)
+
+
+def test_release_runs_in_codepipeline_and_cli_only_follows(monkeypatch):
+    developer = Mock()
+    release = {"releaseId": "R1", "status": "DRAFT"}
+    running = {"releaseId": "R1", "status": "EVALUATING", "pipeline": {"executionId": "execution-1"}}
+    passed = {"releaseId": "R1", "status": "PENDING_APPROVAL"}
+    developer.get_release.return_value = running
+    ctx = SimpleNamespace(developer=developer, inputs=lambda module: {"max_leave_days": 10})
+    monkeypatch.setattr(apply_6, "dev_gateway_mode", lambda ctx: ("hr-dev", "ENFORCE"))
+    follow = Mock(return_value=passed)
+    monkeypatch.setattr(apply_6, "wait_for_platform_run", follow)
+    assert apply_6.run_release_pipeline(ctx, release, expect_pass=True) == passed
+    developer.run_release.assert_called_once_with("R1")
+    follow.assert_called_once_with(ctx, running)
+    developer.submit_evaluation.assert_not_called()
+    developer.deploy.assert_not_called()
+
+
+def test_running_release_is_followed_without_starting_another_execution(monkeypatch):
+    developer = Mock()
+    ctx = SimpleNamespace(developer=developer)
+    running = {"releaseId": "R1", "status": "EVALUATING"}
+    follow = Mock(return_value={"releaseId": "R1", "status": "BLOCKED"})
+    monkeypatch.setattr(apply_6, "wait_for_platform_run", follow)
+    assert apply_6.run_release_pipeline(ctx, running, expect_pass=False)["status"] == "BLOCKED"
+    developer.run_release.assert_not_called()
+
+
+def test_v2_gateway_guard_stops_before_starting_pipeline(monkeypatch):
+    developer = Mock()
+    ctx = SimpleNamespace(developer=developer, inputs=lambda module: {"max_leave_days": 10})
+    monkeypatch.setattr(apply_6, "dev_gateway_mode", lambda ctx: ("hr-dev", "LOG_ONLY"))
+    with pytest.raises(apply_6.WorkshopError, match="ENFORCE"):
+        apply_6.run_release_pipeline(ctx, {"releaseId": "R1", "status": "BLOCKED"}, expect_pass=True)
+    developer.run_release.assert_not_called()
 
 
 def test_gateway_mode_problem_only_while_the_gateway_does_not_enforce():

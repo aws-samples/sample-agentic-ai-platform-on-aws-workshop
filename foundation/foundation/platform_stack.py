@@ -1,5 +1,11 @@
 """Platform: DynamoDB table, backend role, API and worker Lambdas, HTTP API with the Cognito authorizer, EventBridge rule,
-and the UI runtime configuration (config.json) written into the Web bucket.
+the module 6 release pipeline (CodePipeline V2, QUEUED) and the UI runtime configuration (config.json) written into the Web bucket.
+
+The release pipeline: Source (S3 snapshot `release-source/release.zip` of a versioned bucket; every run is a new object version
+the backend pins with `sourceRevisions`, no trigger) -> Validate (DeployDev then Evaluate worker actions) -> Approve (manual) ->
+Promote (manual, then the worker's Prod deployment). Executions are QUEUED: one release at a time per stage, because every run
+deploys and evaluates the one shared Dev harness. The API answers the manual approvals on behalf of the approver
+(platform_api.handlers.releases), and the Prod deployment action refuses to run without the platform's approval record.
 
 No reference to the ModelGateway stack on purpose: the backend reads the model gateway URL and master key from SSM at run time
 and the UI takes the URL from GET /governance, so the control plane deploys before the landing zone (learning path, module 1)."""
@@ -17,14 +23,19 @@ from aws_cdk import (
 from aws_cdk import aws_apigatewayv2 as apigwv2
 from aws_cdk import aws_apigatewayv2_authorizers as authorizers
 from aws_cdk import aws_apigatewayv2_integrations as integrations
+from aws_cdk import aws_codepipeline as codepipeline
+from aws_cdk import aws_codepipeline_actions as cp_actions
 from aws_cdk import aws_dynamodb as dynamodb
 from aws_cdk import aws_events as events
 from aws_cdk import aws_events_targets as targets
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as lam
+from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_s3_deployment as s3deploy
 from aws_cdk import custom_resources as cr
 from constructs import Construct
+
+from platform_sdk import names
 
 from . import config
 from .auth_stack import AuthStack
@@ -260,9 +271,95 @@ class PlatformStack(Stack):
                 ),
             )
 
+        # --- Release pipeline storage --------------------------------------------------------------------------
+        def private_bucket(id: str, name: str, versioned: bool) -> s3.Bucket:
+            return s3.Bucket(
+                self,
+                id,
+                bucket_name=name,
+                versioned=versioned,
+                encryption=s3.BucketEncryption.S3_MANAGED,
+                block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+                enforce_ssl=True,
+                object_ownership=s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
+                lifecycle_rules=[
+                    s3.LifecycleRule(
+                        noncurrent_version_expiration=Duration.days(config.RELEASE_ARTIFACT_DAYS)
+                        if versioned
+                        else None,
+                        expiration=None if versioned else Duration.days(config.RELEASE_ARTIFACT_DAYS),
+                        abort_incomplete_multipart_upload_after=Duration.days(1),
+                    )
+                ],
+                removal_policy=RemovalPolicy.DESTROY,
+                auto_delete_objects=True,
+            )
+
+        source_bucket = private_bucket(
+            "ReleaseSourceBucket", f"{config.RELEASE_SOURCE_BUCKET_PREFIX}-{self.account}", versioned=True
+        )
+        artifact_bucket = private_bucket(
+            "ReleaseArtifactBucket", f"{config.RELEASE_ARTIFACT_BUCKET_PREFIX}-{self.account}", versioned=False
+        )
+        pipeline_arn = self.format_arn(service="codepipeline", resource=names.RELEASE_PIPELINE_NAME, region=self.region)
+        # snapshots: the backend writes new versions of the one key (and their tags); it never deletes a version
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["s3:PutObject", "s3:PutObjectTagging"],
+                resources=[source_bucket.arn_for_objects(names.RELEASE_SOURCE_KEY)],
+            )
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "codepipeline:StartPipelineExecution",
+                    "codepipeline:StopPipelineExecution",
+                    "codepipeline:RetryStageExecution",
+                    "codepipeline:GetPipelineState",
+                    "codepipeline:GetPipelineExecution",
+                ],
+                resources=[pipeline_arn],
+            )
+        )
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["codepipeline:PutApprovalResult"],
+                resources=[
+                    f"{pipeline_arn}/{names.RELEASE_APPROVE_STAGE}/{names.RELEASE_APPROVE_ACTION}",
+                    f"{pipeline_arn}/{names.RELEASE_PROMOTE_STAGE}/{names.RELEASE_PROMOTE_GATE_ACTION}",
+                ],
+            )
+        )
+        # PutJobSuccessResult / PutJobFailureResult support no resource-level permissions (Service Authorization Reference:
+        # resource type "*"); the CDK's LambdaInvokeAction grants them to the worker's role with resources "*" as well.
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["codepipeline:PutJobSuccessResult", "codepipeline:PutJobFailureResult"], resources=["*"]
+            )
+        )
+        # auto-delete=no on the runtime log groups AgentCore creates (CreateHarness tags do not reach them)
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["logs:TagResource"],
+                resources=[
+                    self.format_arn(
+                        service="logs",
+                        resource="log-group",
+                        resource_name="/aws/bedrock-agentcore/*",
+                        arn_format=ArnFormat.COLON_RESOURCE_NAME,
+                    )
+                ],
+            )
+        )
+
         # --- Lambdas (same bundle: backend/src + platform_sdk + pyyaml + requests) -----------------------------
         code = lam.Code.from_asset(str(config.BUILD_BACKEND_DIR))
-        environment = {"TABLE_NAME": table.table_name, "WORKER_FUNCTION_NAME": config.WORKER_FUNCTION_NAME}
+        environment = {
+            "TABLE_NAME": table.table_name,
+            "WORKER_FUNCTION_NAME": config.WORKER_FUNCTION_NAME,
+            "RELEASE_PIPELINE_NAME": names.RELEASE_PIPELINE_NAME,
+            "RELEASE_SOURCE_BUCKET": source_bucket.bucket_name,
+        }
         api_fn = lam.Function(
             self,
             "ApiFunction",
@@ -294,6 +391,84 @@ class PlatformStack(Stack):
             # version), a promote or a billed invoke after a timeout or crash. The job record carries the outcome instead.
             retry_attempts=0,
         )
+
+        # --- Release pipeline ----------------------------------------------------------------------------------
+        snapshot = codepipeline.Artifact("ReleaseSnapshot")
+
+        def worker_action(name: str, action: str, run_order: int = 1) -> cp_actions.LambdaInvokeAction:
+            parameters = {
+                "action": action,
+                "releaseId": "#{variables.releaseId}",
+                "projectId": "#{variables.projectId}",
+                "executionId": "#{codepipeline.PipelineExecutionId}",
+            }
+            return cp_actions.LambdaInvokeAction(
+                action_name=name,
+                lambda_=worker_fn,
+                inputs=[snapshot],
+                user_parameters_string=json.dumps(parameters),
+                run_order=run_order,
+            )
+
+        def approval(name: str, what: str, run_order: int = 1) -> cp_actions.ManualApprovalAction:
+            return cp_actions.ManualApprovalAction(
+                action_name=name,
+                additional_information=f"{what} in the platform UI (Releases): the platform answers this approval",
+                timeout=Duration.days(config.RELEASE_APPROVAL_DAYS),
+                run_order=run_order,
+            )
+
+        release_pipeline = codepipeline.Pipeline(
+            self,
+            "ReleasePipeline",
+            pipeline_name=names.RELEASE_PIPELINE_NAME,
+            pipeline_type=codepipeline.PipelineType.V2,
+            execution_mode=codepipeline.ExecutionMode.QUEUED,
+            artifact_bucket=artifact_bucket,
+            cross_account_keys=False,
+            restart_execution_on_update=False,
+            variables=[
+                codepipeline.Variable(variable_name=v, description=f"the release run's {v}")
+                for v in names.RELEASE_PIPELINE_VARIABLES
+            ],
+            stages=[
+                codepipeline.StageProps(
+                    stage_name="Source",
+                    actions=[
+                        cp_actions.S3SourceAction(
+                            action_name=names.RELEASE_SOURCE_ACTION,
+                            bucket=source_bucket,
+                            bucket_key=names.RELEASE_SOURCE_KEY,
+                            output=snapshot,
+                            trigger=cp_actions.S3Trigger.NONE,  # executions start from the platform only, pinned per run
+                        )
+                    ],
+                ),
+                codepipeline.StageProps(
+                    # QUEUED locks stages, not entire executions. Keep the Dev deployment and its evaluation
+                    # under the same lock so the next release cannot replace Dev before this evaluation finishes.
+                    stage_name="Validate",
+                    actions=[
+                        worker_action(names.RELEASE_DEPLOY_ACTION, "deploy-dev"),
+                        worker_action(names.RELEASE_EVALUATE_ACTION, "evaluate", run_order=2),
+                    ],
+                ),
+                codepipeline.StageProps(
+                    stage_name=names.RELEASE_APPROVE_STAGE,
+                    actions=[
+                        approval(names.RELEASE_APPROVE_ACTION, "The Domain approver approves or rejects the release")
+                    ],
+                ),
+                codepipeline.StageProps(
+                    stage_name=names.RELEASE_PROMOTE_STAGE,
+                    actions=[
+                        approval(names.RELEASE_PROMOTE_GATE_ACTION, "The Domain approver promotes the release"),
+                        worker_action(names.RELEASE_PROMOTE_ACTION, "promote", run_order=2),
+                    ],
+                ),
+            ],
+        )
+        self.release_pipeline = release_pipeline
 
         # --- HTTP API ------------------------------------------------------------------------------------------
         integration = integrations.HttpLambdaIntegration("ApiIntegration", api_fn)
@@ -406,3 +581,7 @@ class PlatformStack(Stack):
         publish(self, "table/name", table.table_name, "Platform DynamoDB table")
         publish(self, "backend/worker-function-name", worker_fn.function_name, "Async worker Lambda")
         publish(self, "roles/backend-role-arn", role.role_arn, "Backend Lambda role")
+        publish(
+            self, "release-pipeline/name", release_pipeline.pipeline_name, "Module 6 release pipeline (CodePipeline)"
+        )
+        publish(self, "release-pipeline/source-bucket", source_bucket.bucket_name, "Release snapshots (versioned)")

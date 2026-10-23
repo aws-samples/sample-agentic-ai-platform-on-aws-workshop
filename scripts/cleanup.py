@@ -29,12 +29,12 @@ LOG_GROUP_PREFIXES = (
     f"/aws/vendedlogs/{PREFIX}-",
     STACK_PREFIX,  # unnamed (generated-name) log groups of stack Lambdas, recreated by late log delivery after the stack is gone
 )
-AGENTCORE_LOG_GROUP_PREFIX = "/aws/bedrock-agentcore/"  # harness runtimes and evaluation results: created by the modules, reported only
+AGENTCORE_LOG_GROUP_PREFIX = (
+    "/aws/bedrock-agentcore/"  # harness runtimes and evaluation results: created by the modules, reported only
+)
 BUCKET_PREFIXES = (f"{PREFIX}-", "agentplatform-")
 BUCKET_TAG = ("ManagedBy", "cdk")  # every foundation bucket carries it (Tags aspect in foundation/app.py)
-DEPLOYER_PREFIX = (
-    f"{PREFIX}-deployer"  # workshop-studio/deployer.yaml stack: its role, Lambda and project are not leftovers
-)
+DEPLOYER_PREFIX = f"{PREFIX}-deployer"  # legacy event deployer: its role, Lambda and project are not leftovers
 
 
 def live_stacks(cfn) -> list[str]:
@@ -180,7 +180,9 @@ def report_leftovers(session) -> None:
         "AgentCore log group (harness or evaluation; `workshop cleanup` / lifecycle_test --only-cleanup remove them)",
         lambda: [
             g["logGroupName"]
-            for page in logs.get_paginator("describe_log_groups").paginate(logGroupNamePrefix=AGENTCORE_LOG_GROUP_PREFIX)
+            for page in logs.get_paginator("describe_log_groups").paginate(
+                logGroupNamePrefix=AGENTCORE_LOG_GROUP_PREFIX
+            )
             for g in page["logGroups"]
         ],
     )
