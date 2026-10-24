@@ -84,10 +84,9 @@ LITELLM_IMAGE_TAG = "v1.104.1"
 RELAY_FUNCTION_NAME = f"{PREFIX}-model-gateway-relay"
 RELAY_TIMEOUT_SECONDS = 120
 
-# Approved model aliases. Three vendors behind one gateway: Anthropic (Claude Opus 5, Claude Sonnet 5), OpenAI (GPT-6.1 Sol)
-# and Amazon (Nova 2 Lite), all through the `us.` cross-Region inference profiles that Workshop Studio accounts can use (Claude
-# Sonnet 5.5 and Haiku 4.5 are not provisionable there, 2026-10-20). Prices are LiteLLM's own values for the `us.` profiles (USD
-# per token); the alias list is also rendered into litellm/config.yaml.tpl - keep both in sync (tests/test_synth.py checks it).
+# Model aliases installed during bootstrap. Access varies by account and Region;
+# configuration alone does not prove provider invocation access. Sonnet 5 remains the HR default.
+# Keep these mappings/prices aligned with litellm/config.yaml.tpl (synthesis tests check parity).
 MODELS = [
     {
         "alias": "claude-opus-5",
@@ -124,6 +123,60 @@ MODELS = [
         "description": "Amazon Nova 2 Lite: lowest cost; simple classification and extraction tasks",
         "inputCostPerToken": 3.3e-07,
         "outputCostPerToken": 2.75e-06,
+    },
+    {
+        "alias": "claude-opus-4-8",
+        "modelId": "us.anthropic.claude-opus-4-8",
+        "provider": "bedrock",
+        "tier": "premium",
+        "description": "Claude Opus 4.8: verify provider access in your environment",
+        "inputCostPerToken": 5.5e-06,
+        "outputCostPerToken": 2.75e-05,
+    },
+    {
+        "alias": "claude-fable-5",
+        "modelId": "us.anthropic.claude-fable-5",
+        "provider": "bedrock",
+        "tier": "premium",
+        "description": "Claude Fable 5: verify provider access in your environment",
+        "inputCostPerToken": 1.1e-05,
+        "outputCostPerToken": 5.5e-05,
+    },
+    {
+        "alias": "claude-fable-5-1",
+        "modelId": "us.anthropic.claude-fable-5-1",
+        "provider": "bedrock",
+        "tier": "premium",
+        "description": "Claude Fable 5.1: verify provider access in your environment",
+        "inputCostPerToken": 1.1e-05,
+        "outputCostPerToken": 5.5e-05,
+    },
+    {
+        "alias": "claude-opus-5-5",
+        "modelId": "us.anthropic.claude-opus-5-5",
+        "provider": "bedrock",
+        "tier": "premium",
+        "description": "Claude Opus 5.5: verify provider access in your environment",
+        "inputCostPerToken": 4.4e-06,
+        "outputCostPerToken": 2.2e-05,
+    },
+    {
+        "alias": "claude-sonnet-5-5",
+        "modelId": "us.anthropic.claude-sonnet-5-5",
+        "provider": "bedrock",
+        "tier": "standard",
+        "description": "Claude Sonnet 5.5: verify provider access in your environment",
+        "inputCostPerToken": 2.2e-06,
+        "outputCostPerToken": 1.1e-05,
+    },
+    {
+        "alias": "claude-haiku-5-5",
+        "modelId": "us.anthropic.claude-haiku-5-5",
+        "provider": "bedrock",
+        "tier": "economy",
+        "description": "Claude Haiku 5.5: verify provider access in your environment",
+        "inputCostPerToken": 1.1e-07,
+        "outputCostPerToken": 5.5e-07,
     },
 ]
 

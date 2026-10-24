@@ -7,6 +7,7 @@ import time
 from datetime import UTC, datetime, timedelta
 
 import boto3
+from botocore.exceptions import ClientError
 
 from platform_sdk import agentcore, api, identity, litellm, mcp, metrics, names
 
@@ -157,27 +158,24 @@ def cap(ctx: Context, value: str) -> int:
     return 0
 
 
-TOKEN_VAULT_SECRET_PREFIX = "bedrock-agentcore-identity!default/apikey/"
-
-
 def dev_key_from_vault(ctx: Context, provider_name: str, secrets_client=None) -> str | None:
-    """The raw Dev key as the token vault keeps it: the API-key credential provider stores it in Secrets Manager under
-    `bedrock-agentcore-identity!default/apikey/<provider>-<suffix>` as `{"api_key_value": "sk-..."}` (seen live on 16 Oct 2026).
-    The learner's credentials are the account's administrator, so the CLI may read it; the harness reads it through AgentCore
-    Identity instead. None when the secret is not there (module 5 not run)."""
-    import boto3
-
+    """Read this exact provider's secret; model aliases can be prefixes of one another."""
+    try:
+        provider = identity.control_client(ctx.region).get_api_key_credential_provider(name=provider_name)
+    except ClientError as exc:
+        if exc.response.get("Error", {}).get("Code") == "ResourceNotFoundException":
+            return None
+        raise
     client = secrets_client or boto3.client("secretsmanager", region_name=ctx.region)
-    prefix = TOKEN_VAULT_SECRET_PREFIX + provider_name
-    page = client.list_secrets(Filters=[{"Key": "name", "Values": [prefix]}], MaxResults=20)
-    for row in page.get("SecretList", []):
-        if str(row.get("Name", "")).startswith(prefix):
-            value = client.get_secret_value(SecretId=row["ARN"]).get("SecretString") or ""
-            try:
-                return json.loads(value).get("api_key_value") or value
-            except ValueError:
-                return value
-    return None
+    secret_arn = provider["apiKeySecretArn"]["secretArn"]
+    value = client.get_secret_value(SecretId=secret_arn).get("SecretString") or ""
+    try:
+        parsed = json.loads(value)
+    except ValueError:
+        return value or None
+    if not isinstance(parsed, dict):
+        return None
+    return parsed.get(provider.get("apiKeySecretJsonKey") or "api_key_value")
 
 
 def _show_the_refusal(ctx: Context, dev_key: dict, model_alias: str) -> None:

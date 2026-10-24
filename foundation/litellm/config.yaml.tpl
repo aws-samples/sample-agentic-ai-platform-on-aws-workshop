@@ -46,6 +46,67 @@ model_list:
       input_cost_per_token: 3.3e-07
       output_cost_per_token: 2.75e-06
 
+  - model_name: claude-opus-4-8
+    litellm_params:
+      model: bedrock/converse/us.anthropic.claude-opus-4-8
+      aws_region_name: {{REGION}}
+      guardrailConfig:
+        guardrailIdentifier: "{{GUARDRAIL_ID}}"
+        guardrailVersion: "{{GUARDRAIL_VERSION}}"
+        trace: enabled
+      input_cost_per_token: 5.5e-06
+      output_cost_per_token: 2.75e-05
+  - model_name: claude-fable-5
+    litellm_params:
+      model: bedrock/converse/us.anthropic.claude-fable-5
+      aws_region_name: {{REGION}}
+      guardrailConfig:
+        guardrailIdentifier: "{{GUARDRAIL_ID}}"
+        guardrailVersion: "{{GUARDRAIL_VERSION}}"
+        trace: enabled
+      input_cost_per_token: 1.1e-05
+      output_cost_per_token: 5.5e-05
+  - model_name: claude-fable-5-1
+    litellm_params:
+      model: bedrock/converse/us.anthropic.claude-fable-5-1
+      aws_region_name: {{REGION}}
+      guardrailConfig:
+        guardrailIdentifier: "{{GUARDRAIL_ID}}"
+        guardrailVersion: "{{GUARDRAIL_VERSION}}"
+        trace: enabled
+      input_cost_per_token: 1.1e-05
+      output_cost_per_token: 5.5e-05
+  - model_name: claude-opus-5-5
+    litellm_params:
+      model: bedrock/converse/us.anthropic.claude-opus-5-5
+      aws_region_name: {{REGION}}
+      guardrailConfig:
+        guardrailIdentifier: "{{GUARDRAIL_ID}}"
+        guardrailVersion: "{{GUARDRAIL_VERSION}}"
+        trace: enabled
+      input_cost_per_token: 4.4e-06
+      output_cost_per_token: 2.2e-05
+  - model_name: claude-sonnet-5-5
+    litellm_params:
+      model: bedrock/converse/us.anthropic.claude-sonnet-5-5
+      aws_region_name: {{REGION}}
+      guardrailConfig:
+        guardrailIdentifier: "{{GUARDRAIL_ID}}"
+        guardrailVersion: "{{GUARDRAIL_VERSION}}"
+        trace: enabled
+      input_cost_per_token: 2.2e-06
+      output_cost_per_token: 1.1e-05
+  - model_name: claude-haiku-5-5
+    litellm_params:
+      model: bedrock/converse/us.anthropic.claude-haiku-5-5
+      aws_region_name: {{REGION}}
+      guardrailConfig:
+        guardrailIdentifier: "{{GUARDRAIL_ID}}"
+        guardrailVersion: "{{GUARDRAIL_VERSION}}"
+        trace: enabled
+      input_cost_per_token: 1.1e-07
+      output_cost_per_token: 5.5e-07
+
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   store_model_in_db: false

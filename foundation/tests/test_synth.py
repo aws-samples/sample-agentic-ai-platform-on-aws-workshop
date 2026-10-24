@@ -455,8 +455,9 @@ def test_model_gateway(templates) -> None:
     models_param = [
         r for r in t.find_resources("AWS::SSM::Parameter").values() if r["Properties"]["Name"].endswith("/models")
     ][0]
+    assert len(models_param["Properties"]["Value"].encode("utf-8")) <= 4096
     aliases = [m["alias"] for m in json.loads(models_param["Properties"]["Value"])]
-    assert aliases == ["claude-opus-5", "claude-sonnet-5", "gpt-6-1-sol", "nova-2-lite"]
+    assert aliases == [model["alias"] for model in config.MODELS]
 
 
 def test_litellm_config_template_matches_models() -> None:
@@ -485,6 +486,15 @@ def test_litellm_config_template_matches_models() -> None:
         "proxy_batch_write_at": 10,
     }
     assert doc["litellm_settings"] == {"drop_params": True}
+
+
+def test_claude_48_through_55_profiles_are_configured():
+    by_alias = {m["alias"]: m for m in config.MODELS}
+    for suffix in ("opus-4-8", "opus-5", "sonnet-5", "fable-5", "fable-5-1", "opus-5-5", "sonnet-5-5", "haiku-5-5"):
+        alias = f"claude-{suffix}"
+        assert by_alias[alias]["modelId"] == f"us.anthropic.{alias}"
+        assert by_alias[alias]["inputCostPerToken"] > 0
+        assert by_alias[alias]["outputCostPerToken"] > 0
 
 
 def test_auth(templates) -> None:
