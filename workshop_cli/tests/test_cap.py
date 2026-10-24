@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 from platform_sdk import litellm, names
 from workshop_cli import tools
@@ -40,6 +41,10 @@ class FakeSecrets:
         return {
             "SecretList": [
                 {
+                    "Name": "bedrock-agentcore-identity!default/apikey/litellm-hr-assistant-dev-claude-sonnet-5-5-abcd",
+                    "ARN": "arn:wrong-model-secret",
+                },
+                {
                     "Name": "bedrock-agentcore-identity!default/apikey/litellm-hr-assistant-dev-claude-sonnet-5-078f",
                     "ARN": "arn:secret",
                 }
@@ -75,10 +80,14 @@ def make_ctx(admin):
     )
 
 
-def test_dev_key_from_vault_reads_the_api_key_value():
+def test_dev_key_from_vault_reads_exact_provider_despite_colliding_aliases(monkeypatch):
     ctx = make_ctx(FakeAdmin())
+    control = Mock()
+    control.get_api_key_credential_provider.return_value = {"apiKeySecretArn": {"secretArn": "arn:secret"}}
+    monkeypatch.setattr(tools.identity, "control_client", lambda region: control)
     key = tools.dev_key_from_vault(ctx, "litellm-hr-assistant-dev-claude-sonnet-5", secrets_client=FakeSecrets())
     assert key == "sk-test-key"
+    control.get_api_key_credential_provider.assert_called_once_with(name="litellm-hr-assistant-dev-claude-sonnet-5")
 
 
 def test_cap_low_lowers_the_cap_and_shows_the_refusal(monkeypatch, capsys):

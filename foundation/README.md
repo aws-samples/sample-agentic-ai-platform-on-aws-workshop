@@ -92,7 +92,7 @@ use `common.publish(self, "<key>", value)` for every SSM parameter and output, a
   reachable from a browser; the Governance screen still shows the credentials, kept in the `agent-platform/litellm-master-key`
   secret. Health: `/health/liveliness` through the relay.
 - Network: 3 AZs (`/agent-platform/network/availability-zones`), app subnets = harness subnets, `network/private` = `true`.
-- Approved aliases: `claude-opus-5`, `claude-sonnet-5`, `gpt-6-1-sol`, `nova-2-lite` (three vendors, all `us.` inference profiles), each with the baseline guardrail bound
+- Model aliases: ten bootstrap-configured options from Anthropic, OpenAI and Amazon, each with the baseline guardrail bound. Sonnet 5 remains the default. See [the model list](../MODEL_CATALOG.md); keep `MODELS` in `foundation/config.py` and `litellm/config.yaml.tpl` aligned. Provider access varies by account and Region.
   (`guardrailConfig` in `litellm_params`) and explicit prices.
 - Personas: `admin`, `developer`, `approver` (emails `<persona>@anycompany.example`); passwords in the users secret.
   Sign in with `USER_PASSWORD_AUTH` (the `workshop` command, tests) or the Hosted UI (web app). The API expects the **ID token**.
