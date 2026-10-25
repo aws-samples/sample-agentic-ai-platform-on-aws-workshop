@@ -108,3 +108,14 @@ uv run ruff check . && uv run ruff format --check .
 (cd frontend && npm test && npm run typecheck && npm run build)
 (cd foundation && npx cdk synth)
 ```
+
+---
+
+## Security
+
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for security issue notifications. Please do not report security vulnerabilities in public GitHub issues.
+
+## License
+
+This library is licensed under the MIT-0 License. See the [LICENSE](LICENSE) file.
+Third-party attributions are listed in [NOTICE](NOTICE).
