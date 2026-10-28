@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Foundation health check: reads the platform configuration from SSM and exercises every deployed layer.
 
-Usage: `uv run python scripts/doctor.py [--show-passwords]` (AWS credentials and region from the environment, e.g.
-AWS_PROFILE=workshop AWS_DEFAULT_REGION=us-east-1). Exit code is non-zero when any check fails.
+Usage: `uv run python scripts/doctor.py [--show-passwords] [--record PATH]` (AWS credentials and region from the environment,
+e.g. AWS_PROFILE=workshop AWS_DEFAULT_REGION=us-east-1). Exit code is non-zero when any check fails.
+
+The LiteLLM probes use the model alias of the design record (`module_3.inputs.model`, the workshop default when the file or
+the field is missing), read like `workshop` reads it: `--record`, else WORKSHOP_RECORD, else design-record.yaml at the root.
 
 The control plane (Web, Auth, Platform stacks) must exist. Layers the learning path adds later are reported as "not deployed"
 instead of failing: the landing zone (Network, SharedServices, ModelGateway: `workshop apply 1`), the personas (`workshop
@@ -23,9 +26,11 @@ import os
 import sys
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import boto3
 import requests
+import yaml
 from botocore.exceptions import ClientError
 from rich.console import Console
 from rich.table import Table
@@ -34,6 +39,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from platform_sdk import config as platform_config  # noqa: E402
 from platform_sdk import litellm as platform_litellm  # noqa: E402
 from platform_sdk import names as platform_names  # noqa: E402
+from workshop_cli import record as workshop_record  # noqa: E402
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 # the interface endpoints the Network stack creates (private-landing-zone-design.md section 3), by service part of the name
 EXPECTED_INTERFACE_ENDPOINTS = {
@@ -156,10 +164,42 @@ def retrieve(session: boto3.Session, kb_id: str, query: str, flt: dict | None = 
     return out
 
 
+def record_model(record_path: str | None) -> str:
+    """The alias the participant chose (module_3.inputs.model, defaults applied); ValueError names the problem."""
+    path = Path(record_path or os.environ.get("WORKSHOP_RECORD") or REPO_ROOT / workshop_record.RECORD_FILE)
+    try:
+        document = workshop_record.load(path)
+    except yaml.YAMLError as exc:
+        mark = getattr(exc, "problem_mark", None)
+        where = f" (line {mark.line + 1})" if mark else ""
+        raise ValueError(f"{path} is not valid YAML{where}; fix it, then run `workshop record`") from None
+    except workshop_record.RecordError as exc:
+        raise ValueError(str(exc)) from None
+    except OSError as exc:
+        raise ValueError(
+            f"cannot read {path}: {exc.strerror or type(exc).__name__}; pass --record PATH or fix the file"
+        ) from None
+    chosen = workshop_record.inputs(document, 3)
+    # validate only the model choice: every other field keeps its default, so unrelated inputs are never traversed
+    projected = {"module_3": {"inputs": {"model": chosen.get("model"), "models": chosen.get("models")}}}
+    problems = [p for p in workshop_record.validate(projected) if p.startswith("module_3.inputs.model")]
+    if problems:
+        raise ValueError(f"{path}: " + "; ".join(problems))
+    return str(chosen["model"])
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Foundation health check")
     parser.add_argument("--show-passwords", action="store_true", help="print the persona passwords in the summary")
+    parser.add_argument(
+        "--record", help="path of design-record.yaml (default: WORKSHOP_RECORD, else the repository root)"
+    )
     args = parser.parse_args(argv)
+    try:
+        model = record_model(args.record)  # before any AWS call: a bad record fails here, locally
+    except ValueError as exc:
+        console.print(f"[red]Design record:[/red] {exc}")
+        return 1
 
     cfg = platform_config.load()  # region rule: AWS_REGION, AWS_DEFAULT_REGION, else us-east-1 (same as the SDK)
     session = boto3.Session(region_name=cfg.region)  # every check talks to the region the platform was deployed in
@@ -223,9 +263,9 @@ def main(argv: list[str] | None = None) -> int:
             "LiteLLM master key",
             "LiteLLM liveliness",
             "LiteLLM /v1/models",
-            "LiteLLM chat completion (claude-sonnet-5)",
-            "Guardrail blocks legal advice",
-            "Guardrail blocks prompt attack",
+            f"LiteLLM chat completion ({model})",
+            f"Guardrail blocks legal advice ({model})",
+            f"Guardrail blocks prompt attack ({model})",
             "X-Ray trace destination",
             "VPC posture",
             "Model gateway relay",
@@ -268,9 +308,7 @@ def main(argv: list[str] | None = None) -> int:
 
         def completion():
             t0 = time.time()
-            body = admin.chat_completion(
-                master_key, "claude-sonnet-5", [{"role": "user", "content": "Say OK"}], max_tokens=5
-            )
+            body = admin.chat_completion(master_key, model, [{"role": "user", "content": "Say OK"}], max_tokens=5)
             usage = body.get("usage", {})
             cost = admin.last_response_headers.get("x-litellm-response-cost", "?")
             return (
@@ -278,12 +316,10 @@ def main(argv: list[str] | None = None) -> int:
                 f"tokens {usage.get('prompt_tokens')}/{usage.get('completion_tokens')}, cost {cost} USD"
             )
 
-        report.run("LiteLLM chat completion (claude-sonnet-5)", with_admin(completion))
+        report.run(f"LiteLLM chat completion ({model})", with_admin(completion))
 
         def guardrail():
-            body = admin.chat_completion(
-                master_key, "claude-sonnet-5", [{"role": "user", "content": LEGAL_PROMPT}], max_tokens=200
-            )
+            body = admin.chat_completion(master_key, model, [{"role": "user", "content": LEGAL_PROMPT}], max_tokens=200)
             choice = body["choices"][0]
             text = (choice["message"].get("content") or "").strip()
             blocked = choice.get("finish_reason") == "content_filter" or text.startswith(
@@ -292,11 +328,11 @@ def main(argv: list[str] | None = None) -> int:
             assert blocked, f"not blocked: finish_reason={choice.get('finish_reason')} text={text[:80]!r}"
             return f"finish_reason={choice.get('finish_reason')} message={text[:60]!r}"
 
-        report.run("Guardrail blocks legal advice", with_admin(guardrail))
+        report.run(f"Guardrail blocks legal advice ({model})", with_admin(guardrail))
 
         def prompt_attack():
             body = admin.chat_completion(
-                master_key, "claude-sonnet-5", [{"role": "user", "content": INJECTION_PROMPT}], max_tokens=120
+                master_key, model, [{"role": "user", "content": INJECTION_PROMPT}], max_tokens=120
             )
             choice = body["choices"][0]
             text = (choice["message"].get("content") or "").strip()
@@ -305,7 +341,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             return f"finish_reason={choice.get('finish_reason')} (PROMPT_ATTACK filter, guardrail version {cfg.guardrail_version})"
 
-        report.run("Guardrail blocks prompt attack", with_admin(prompt_attack))
+        report.run(f"Guardrail blocks prompt attack ({model})", with_admin(prompt_attack))
 
         # Transaction Search is enabled by the SharedServices stack
         def xray():
