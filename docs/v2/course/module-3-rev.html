@@ -13,8 +13,8 @@
       .ours-box .concept-list + p { margin-top: 12px; }
       .start-now { margin: 0 0 18px; }
       .start-now p { margin: 6px 0 0; }
-      details.reference { margin: 14px 0; padding: 12px 14px; border: 1px solid #d5dce5; border-radius: 8px; }
-      details.reference > summary { cursor: pointer; font-weight: 700; color: #25364a; }
+      details.reference { margin: 14px 0; padding: 12px 14px; border: 1px solid #d5dbdb; border-radius: 8px; }
+      details.reference > summary { cursor: pointer; font-weight: 700; color: #232f3e; }
       details.reference[open] > summary { margin-bottom: 12px; }
       #glossary .glossary { margin-top: 0; }
     </style>
@@ -23,8 +23,8 @@
     <header class="hero">
       <div class="hero-inner">
         <h1>Module 3 · Control plane and governance</h1>
-        <p>Define who owns resources, sets rules and approves releases.</p>
-        <div class="meta"><span>Module 3 of 7</span><span>40 min</span><span>tenants</span><span>governance</span><span>approvals</span><span>catalogue</span></div>
+        <p>Define who owns resources, which rules apply at which level, and where approved tools, knowledge and models are found.</p>
+        <div class="meta"><span>Module 3 of 7</span><span>40 min</span><span>tenants</span><span>governance</span><span>catalogue</span></div>
       </div>
     </header>
 
@@ -40,7 +40,7 @@
   <li><strong>Ownership records:</strong> domains, projects and releases.</li>
 </ol>
 
-          
+
 
           <figure>
             <svg viewBox="0 0 960 248" role="img" aria-labelledby="fig3-open-title">
@@ -49,9 +49,9 @@
               <rect class="d-box d-people" x="12" y="50" width="126" height="28"/><text class="d-text" x="75" y="68" text-anchor="middle">Platform admin</text>
               <rect class="d-box d-people" x="12" y="104" width="126" height="28"/><text class="d-text" x="75" y="122" text-anchor="middle">Agent developer</text>
               <rect class="d-box d-people" x="12" y="158" width="126" height="28"/><text class="d-text" x="75" y="176" text-anchor="middle">Domain approver</text>
-              <path class="d-arrow" d="M138 64 L168 64" marker-end="url(#fig3-open-arr)"/>
+              <path class="d-arrow" d="M138 64 150 64 L150 118"/>
               <path class="d-arrow" d="M138 118 L168 118" marker-end="url(#fig3-open-arr)"/>
-              <path class="d-arrow" d="M138 172 L168 172" marker-end="url(#fig3-open-arr)"/>
+              <path class="d-arrow" d="M138 172 150 172 L150 118"/>
               <rect class="d-box d-platform d-ours" x="170" y="24" width="460" height="188"/>
               <text class="d-text d-title" x="180" y="42">Control plane · UI · API · state table · worker</text>
               <text class="d-text d-small d-strong" x="180" y="68">Rules</text>
@@ -96,10 +96,12 @@
         </section>
 
         <section id="decisions">
-          <h2>Four decisions <span class="time">Design · 10 min</span></h2>
+          <h2>Three decisions <span class="time">Design · 10 min</span></h2>
+          <p class="note">Who approves a release, and how approval patterns combine, moved to <a href="module-6-rev.html#d6-5">decision 6.5</a>, beside the pipeline that asks for the approval. The persona roles you use in this module's hands-on are unchanged.</p>
 
           <div class="card">
             <h4 class="q" id="d3-1"><span class="id">3.1</span>How are tenants modelled?</h4>
+            <p class="kind context">One boundary per layer, with no universal winner: choose the smallest boundary each layer can enforce.</p>
             <figure style="margin:0 0 10px">
             <svg viewBox="0 0 960 230" role="img" aria-labelledby="fig3a-title">
               <title id="fig3a-title">Tenancy: platform, domains, projects, agents per environment</title>
@@ -164,56 +166,14 @@
 
           <div class="card">
             <h4 class="q" id="d3-2"><span class="id">3.2</span>Governance: which rule lives at which level?</h4>
-            <figure style="margin:0 0 10px">
-            <svg viewBox="0 0 960 272" role="img" aria-labelledby="fig3b-title">
-              <title id="fig3b-title">Three governance levels and one gate: platform, domain, project, and a release gate at every promotion</title>
-              <defs><marker id="arr3b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
-              <rect class="d-box d-platform" x="20" y="14" width="850" height="56"/>
-              <text class="d-text d-title" x="36" y="36">Platform level</text>
-              <text class="d-text d-small" x="36" y="54">Platform admin</text>
-              <text class="d-text" x="240" y="36">models and safety filter for all · rulebook for tool calls · approved tools · default budgets</text>
-              <text class="d-text d-small" x="240" y="54">production: organisation-wide rules (SCPs) and resource policies</text>
-              <rect class="d-box d-people" x="20" y="78" width="850" height="56"/>
-              <text class="d-text d-title" x="36" y="100">Domain level</text>
-              <text class="d-text d-small" x="36" y="118">Domain approver</text>
-              <text class="d-text" x="240" y="100">says yes or no to a release, and sends it to Prod</text>
-              <text class="d-text d-small" x="240" y="118">production: domain gateways and policies, domain budgets, approvers bound to their domain</text>
-              <rect class="d-box d-aws" x="20" y="142" width="850" height="56"/>
-              <text class="d-text d-title" x="36" y="164">Project level</text>
-              <text class="d-text d-small" x="36" y="182">admin sets, team works inside</text>
-              <text class="d-text" x="240" y="164">the admin sets each project's tools, knowledge, models and budget</text>
-              <text class="d-text d-small" x="240" y="182">the team owns the agent and its quality bar · modules 4 to 6 · production: tightened templates</text>
-              <rect class="d-box d-blue" x="60" y="206" width="810" height="56"/>
-              <text class="d-text d-title" x="76" y="228">Release gate</text>
-              <text class="d-text d-small" x="76" y="246">per environment · Dev → Prod</text>
-              <text class="d-text" x="280" y="228">the test before Prod · the approval · the promotion · the rollback</text>
-              <text class="d-text d-small" x="280" y="246">the project's release, the domain's approval · worker now, CI/CD in production · module 6</text>
-              <path class="d-arrow" d="M898 20 L898 256" marker-end="url(#arr3b)"/>
-              <text class="d-text d-small" x="898" y="136" text-anchor="middle" transform="rotate(-90 898 140)" style="fill:#16191f">Governance flows down</text>
-              <path class="d-arrow d-dash" d="M934 256 L934 20" marker-end="url(#arr3b)"/>
-              <text class="d-text d-small" x="934" y="136" text-anchor="middle" transform="rotate(-90 934 140)" style="fill:#16191f">Evidence flows up</text>
-            </svg>
-            <figcaption>Rules flow down through three levels; a gate at every promotion. Evidence (tool calls, scores, spend and approvals) flows back up.</figcaption>
+
+            <figure>
+              <img src="images/module-3.2.png" style="width:100%;">
+              <img src="images/module-3.2_2.png" style="width:100%;">
+              <img src="images/module-3.2_3.png" style="width:100%;">
             </figure>
-            <table class="options">
-              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
-              <tbody>
-                <tr><td>Everything at platform level</td><td class="good">one team, one rulebook</td><td class="bad">a bottleneck; rules far from the business</td><td class="when">one domain, a few agents</td></tr>
-                <tr class="ours"><td>Layered: the platform sets guardrails, domains approve, projects own the rest, with a gate at every promotion</td><td class="good">each rule sits with the people who know; evidence at every level</td><td class="bad">three levels and a gate to design; rollout needs care</td><td class="when">several domains sharing one platform</td></tr>
-                <tr><td>Each project governs itself</td><td class="good">fastest for teams</td><td class="bad">no shared rules; every team reinvents them</td><td class="when">never for shared tools or models</td></tr>
-              </tbody>
-            </table>
-            <div class="ours-box">
-              <p><strong>This workshop.</strong> Governance has <strong>three levels and one gate</strong>. A level is defined by who owns its rules:</p>
-<ol class="concept-list">
-  <li><strong>Platform:</strong> models, guardrail, policy engine, catalogue approval and default caps.</li>
-  <li><strong>Domain:</strong> release approval.</li>
-  <li><strong>Project:</strong> the agent blueprint and thresholds, within admin-set allow-lists, roles, keys and budgets.</li>
-</ol>
-              <p class="also"><strong>Gate:</strong> evaluation before Prod, then promotion and rollback (module 6). The gate is not a fourth level, because it owns no rules of its own. At every promotion, here from Dev to Prod, it runs the project's release through the domain's approval. Today a worker runs it; in production a CI/CD pipeline does, with its checks in front of the platform API.</p>
-              <p class="also"><strong>SCPs are discussed, not built.</strong> The event account cannot administer its AWS Organization. A security-team SCP would add a permission ceiling; IAM must still grant access.</p>
-              <p class="prod"><strong>Production path.</strong> Add organization SCPs and gateway resource policies; do not assume RCP coverage for these services. Document effective rules and exceptions. Give domains their own gateways and policies.</p>
-            </div>
+
+
             <figure style="margin:10px 0 10px">
             <svg viewBox="0 0 960 212" role="img" aria-labelledby="fig3c-title">
               <title id="fig3c-title">Three layers of control on one call: SCP, IAM, the request</title>
@@ -249,106 +209,21 @@
     </tbody>
   </table>
 </details>
-            <p class="note">Decision 5.4 covers model routing. To prove where a request ran, read CloudTrail's <code>inferenceRegion</code> in the source Region; the endpoint called is not that evidence.</p>
+            <p class="note">Decision 5.3 covers model routing. To prove where a request ran, read CloudTrail's <code>inferenceRegion</code> in the source Region; the endpoint called is not that evidence.</p>
           </div>
 
           <div class="card">
-            <h4 class="q" id="d3-3"><span class="id">3.3</span>What needs approval, and who approves?</h4>
-            <figure style="margin:0 0 10px">
-              <svg viewBox="0 0 960 258" role="img" aria-labelledby="fig3-d3-title">
-                <title id="fig3-d3-title">Who approves what: a catalogue record, a release, a cap change</title>
-                <defs><marker id="fig3-d3-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker><marker id="fig3-d3-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b4471f"/></marker></defs>
-                <text class="d-text d-strong" x="12" y="42">Catalogue record</text>
-                <rect class="d-box d-platform" x="140" y="16" width="188" height="44"/><text class="d-text" x="234" y="42" text-anchor="middle">the apply command publishes</text>
-                <path class="d-arrow" d="M328 38 L358 38" marker-end="url(#fig3-d3-arr)"/>
-                <rect class="d-box" x="360" y="16" width="158" height="44"/><text class="d-text" x="439" y="42" text-anchor="middle">PENDING_APPROVAL</text>
-                <path class="d-arrow" d="M518 38 L548 38" marker-end="url(#fig3-d3-arr)"/>
-                <rect class="d-box d-people d-ours" x="550" y="16" width="162" height="44"/><text class="d-text" x="631" y="42" text-anchor="middle">Platform admin approves</text>
-                <path class="d-arrow" d="M712 38 L742 38" marker-end="url(#fig3-d3-arr)"/>
-                <rect class="d-box" x="744" y="16" width="204" height="44"/><text class="d-text" x="846" y="42" text-anchor="middle">APPROVED · a label, not a gate</text>
-
-                <text class="d-text d-strong" x="12" y="110">Release</text>
-                <rect class="d-box d-people" x="140" y="84" width="120" height="44"/>
-                <text class="d-text" x="200" y="102" text-anchor="middle">Agent developer</text>
-                <text class="d-text d-small" x="200" y="118" text-anchor="middle" style="fill:#16191f">submits</text>
-                <path class="d-arrow" d="M260 106 L298 106" marker-end="url(#fig3-d3-arr)"/>
-                <rect class="d-box d-blue" x="300" y="84" width="120" height="44"/>
-                <text class="d-text" x="360" y="102" text-anchor="middle">evaluation gate</text>
-                <text class="d-text d-small" x="360" y="118" text-anchor="middle" style="fill:#16191f">module 6</text>
-                <path class="d-arrow" d="M420 106 L458 106" marker-end="url(#fig3-d3-arr)"/>
-                <rect class="d-box" x="460" y="84" width="162" height="44"/><text class="d-text" x="541" y="110" text-anchor="middle">PENDING_APPROVAL</text>
-                <path class="d-arrow" d="M622 106 L660 106" marker-end="url(#fig3-d3-arr)"/>
-                <rect class="d-box d-people d-ours" x="662" y="84" width="120" height="44"/>
-                <text class="d-text" x="722" y="102" text-anchor="middle">Domain approver</text>
-                <text class="d-text d-small" x="722" y="118" text-anchor="middle" style="fill:#16191f">approves</text>
-                <path class="d-arrow" d="M782 106 L820 106" marker-end="url(#fig3-d3-arr)"/>
-                <rect class="d-box" x="822" y="84" width="126" height="44"/><text class="d-text" x="885" y="110" text-anchor="middle">promoted to Prod</text>
-                <rect class="d-box d-people" x="667" y="150" width="110" height="28"/><text class="d-text" x="722" y="168" text-anchor="middle">Platform admin</text>
-                <path class="d-arrow d-deny" d="M722 150 L722 130" marker-end="url(#fig3-d3-deny)"/>
-                <text class="d-text d-small" x="657" y="168" text-anchor="end" style="fill:#7a2e12">403: admins are blocked (separation of duties)</text>
-
-                <text class="d-text d-strong" x="12" y="226">Cap change</text>
-                <rect class="d-box d-people" x="140" y="200" width="198" height="44"/><text class="d-text" x="239" y="226" text-anchor="middle">Platform admin sets the cap</text>
-                <path class="d-arrow" d="M338 222 L376 222" marker-end="url(#fig3-d3-arr)"/>
-                <rect class="d-box" x="378" y="200" width="160" height="44"/><text class="d-text" x="458" y="226" text-anchor="middle">applied · no approval</text>
-              </svg>
-              <figcaption>Two approvals: admin for catalogue records; Domain approver for releases. Release builders cannot approve their own release. Admin cap changes need no approval; catalogue approval is only a label today.</figcaption>
-            </figure>
-            <table class="options">
-              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
-              <tbody>
-                <tr><td>The Platform admin approves everything</td><td class="good">simple</td><td class="bad">a bottleneck without domain knowledge</td><td class="when">one domain</td></tr>
-                <tr class="ours"><td>A Domain approver for the domain's releases, the admin for shared assets</td><td class="good">accountability sits with the knowledge</td><td class="bad">owner fields and routing to build</td><td class="when">several domains</td></tr>
-                <tr><td>Auto-approve by policy; humans only for Prod and high risk; two approvers</td><td class="good">fast</td><td class="bad">the policy becomes the control</td><td class="when">mature operations</td></tr>
-              </tbody>
-            </table>
-            <div class="ours-box">
-              <p><strong>This workshop.</strong> There are <strong>two approval routes</strong>:</p>
-<ul class="concept-list">
-  <li><strong>Catalogue record:</strong> Platform admin approves.</li>
-  <li><strong>Release:</strong> Domain approver approves; Platform admin cannot.</li>
-</ul>
-              <p class="prod"><strong>Production path.</strong> Bind approvers to domains, require two for Prod and bind approval to its evaluation evidence.</p>
-            </div>
-            <table class="plain">
-              <thead><tr><th>Action</th><th>Who, today</th><th>Approval, today</th><th>Where</th></tr></thead>
-              <tbody>
-                <tr><td>Create a domain or project; set caps, models, tools</td><td>Platform admin</td><td>none</td><td>Domains and projects</td></tr>
-                <tr><td>Approve a catalogue record</td><td>Platform admin</td><td>single stage; a label, not a gate</td><td>Catalogue</td></tr>
-                <tr><td>Flip a gateway from LOG_ONLY to ENFORCE</td><td>Platform admin</td><td>none</td><td>Governance</td></tr>
-                <tr><td>Deploy to Dev; submit a release</td><td>Agent developer</td><td>none; Dev only</td><td>Releases</td></tr>
-                <tr><td>Approve, reject, promote a release</td><td>Domain approver</td><td>single stage; admins get 403</td><td>Release detail</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="card">
-            <h4 class="q" id="d3-4"><span class="id">3.4</span>The catalogue: who may find it, who may change it, and how many registries?</h4>
+            <h4 class="q" id="d3-3"><span class="id">3.3</span>The catalogue: where it lives, who may find it, who may change it, and how many registries?</h4>
+            <p class="kind context">Choose a starting reference layout that follows the account layout of decision 1.1; an organisation can combine patterns by domain or workload.</p>
             <figure style="margin:0 0 10px">
               <svg viewBox="0 0 960 298" role="img" aria-labelledby="fig3-d4-title">
                 <title id="fig3-d4-title">Three ways to run the catalogue: one registry in the platform account, one organization-scoped registry shared across accounts, a registry per tenant plus a merged view</title>
                 <defs><marker id="fig3-d4-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
-                <!-- A this workshop -->
-                <text class="d-text d-title" x="22" y="24">A · One registry</text>
-                <rect class="d-box d-account d-ours d-glow" x="12" y="34" width="290" height="200"/>
-                <rect x="196" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
-                <text class="d-text" x="249" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
-                <rect class="d-box d-account" x="26" y="46" width="262" height="92"/>
-                <text class="d-text d-small" x="34" y="60">Platform account</text>
-                <rect class="d-box d-aws" x="34" y="66" width="246" height="64"/>
-                <text class="d-text" x="157" y="84" text-anchor="middle">Agent Registry</text>
-                <text class="d-text d-small" x="157" y="100" text-anchor="middle" style="fill:#16191f">agent_platform_catalogue</text>
-                <text class="d-text d-small" x="157" y="116" text-anchor="middle" style="fill:#16191f">3 records</text>
-                <rect class="d-box d-people" x="26" y="146" width="262" height="42"/>
-                <text class="d-text" x="157" y="164" text-anchor="middle">every persona reads it</text>
-                <text class="d-text d-small" x="157" y="180" text-anchor="middle" style="fill:#16191f">through the platform API</text>
-                <rect class="d-box d-people" x="26" y="196" width="262" height="28"/>
-                <text class="d-text" x="157" y="214" text-anchor="middle">Platform admin approves</text>
-                <text class="d-text d-small" x="157" y="250" text-anchor="middle">simple · this account's records only</text>
-                <text class="d-text d-small" x="157" y="264" text-anchor="middle">every reader sees every approved record</text>
-
-                <!-- B -->
-                <text class="d-text d-title" x="347" y="24">B · Organization-scoped registry</text>
+                <g transform="translate(-325 0)">
+                <!-- A recommended -->
+                <text class="d-text d-title" x="347" y="24">A · Organization-wide</text>
+                <rect x="533" y="12" width="94" height="20" rx="10" fill="#e3f4e1"/>
+                <text class="d-text" x="580" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#1d5b14">recommended</text>
                 <rect class="d-box d-account" x="337" y="34" width="290" height="200"/>
                 <text class="d-text d-small" x="351" y="48">Organization</text>
                 <rect class="d-box d-aws" x="351" y="54" width="262" height="46"/>
@@ -367,9 +242,30 @@
                 <text class="d-text d-small" x="482" y="217" text-anchor="middle" style="fill:#16191f">shared by RAM with a persona permission</text>
                 <text class="d-text d-small" x="482" y="250" text-anchor="middle">one inventory · detection is not approval</text>
                 <text class="d-text d-small" x="482" y="264" text-anchor="middle">search and list show every account's records</text>
+                </g>
+                <g transform="translate(325 0)">
+                <!-- B this workshop -->
+                <text class="d-text d-title" x="22" y="24">B · One account</text>
+                <rect class="d-box d-account d-ours d-glow" x="12" y="34" width="290" height="200"/>
+                <rect x="196" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
+                <text class="d-text" x="249" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+                <rect class="d-box d-account" x="26" y="46" width="262" height="92"/>
+                <text class="d-text d-small" x="34" y="60">Platform account</text>
+                <rect class="d-box d-aws" x="34" y="66" width="246" height="64"/>
+                <text class="d-text" x="157" y="84" text-anchor="middle">Agent Registry</text>
+                <text class="d-text d-small" x="157" y="100" text-anchor="middle" style="fill:#16191f">agent_platform_catalogue</text>
+                <text class="d-text d-small" x="157" y="116" text-anchor="middle" style="fill:#16191f">3 records</text>
+                <rect class="d-box d-people" x="26" y="146" width="262" height="42"/>
+                <text class="d-text" x="157" y="164" text-anchor="middle">every persona reads it</text>
+                <text class="d-text d-small" x="157" y="180" text-anchor="middle" style="fill:#16191f">through the platform API</text>
+                <rect class="d-box d-people" x="26" y="196" width="262" height="28"/>
+                <text class="d-text" x="157" y="214" text-anchor="middle">Platform admin approves</text>
+                <text class="d-text d-small" x="157" y="250" text-anchor="middle">simple · no automatic cross-account view</text>
+                <text class="d-text d-small" x="157" y="264" text-anchor="middle">every reader sees every approved record</text>
+                </g>
 
                 <!-- C -->
-                <text class="d-text d-title" x="672" y="24">C · A registry per tenant</text>
+                <text class="d-text d-title" x="672" y="24">C · Per account or tenant</text>
                 <rect class="d-box d-account" x="662" y="34" width="290" height="200"/>
                 <rect class="d-box d-aws" x="676" y="48" width="124" height="46"/>
                 <text class="d-text" x="738" y="66" text-anchor="middle">Registry A</text>
@@ -380,40 +276,49 @@
                 <path class="d-arrow" d="M738 142 L738 96" marker-end="url(#fig3-d4-arr)"/>
                 <path class="d-arrow" d="M876 142 L876 96" marker-end="url(#fig3-d4-arr)"/>
                 <rect class="d-box d-platform" x="676" y="144" width="262" height="30"/>
-                <text class="d-text" x="807" y="163" text-anchor="middle">merged view</text>
+                <text class="d-text" x="807" y="163" text-anchor="middle">your own unified discovery</text>
                 <text class="d-text d-tiny" x="807" y="194" text-anchor="middle">search reads one registry per call</text>
-                <text class="d-text d-tiny" x="807" y="208" text-anchor="middle">the merged view is your code</text>
+                <text class="d-text d-tiny" x="807" y="208" text-anchor="middle">no managed federation: you build it</text>
                 <text class="d-text d-small" x="807" y="250" text-anchor="middle">private metadata · own IdP, key, offboarding</text>
                 <text class="d-text d-small" x="807" y="264" text-anchor="middle">five registries per account by default</text>
 
                 <text class="d-text d-small" x="480" y="288" text-anchor="middle">Discover (search, read) · Publish and approve · Invoke: the endpoint's decision, never the catalogue's</text>
               </svg>
-              <figcaption>Three catalogue layouts. We use one account registry. An organization-scoped registry adds cross-account detection and sharing; a registry per tenant adds a private metadata boundary. In A and B, whoever may search sees every approved record.</figcaption>
+              <figcaption>Three catalogue layouts. A, one organization-wide registry shared across accounts, is the recommended reference with the platform and workload accounts of 1.1. This workshop uses B, one registry in one account, with no automatic visibility from other accounts. C keeps a registry per account or tenant; discovery across them is code you write, not a managed federation. In A and B, whoever may search sees every approved record.</figcaption>
             </figure>
             <table class="options">
               <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
               <tbody>
-                <tr class="ours"><td>One registry in the platform account</td><td class="good">simple; one approval queue</td><td class="bad">this account's records only; sharing is manual; every reader sees every approved record's name and endpoint</td><td class="when">one platform, one account</td></tr>
-                <tr><td>One organization-scoped registry, shared across accounts</td><td class="good">auto-detects the supported Runtimes and Gateways in the member accounts; one inventory; shared by RAM with a persona permission</td><td class="bad">one per organisation per Region; a delegated administrator (recommended) to own it; detection is not approval; record-owner conditions do not cover search and list, so only a share without those two actions hides other accounts' records</td><td class="when">many accounts, central curation</td></tr>
-                <tr><td>A registry per tenant, plus a merged view</td><td class="good">private metadata; a tenant's own IdP, key and offboarding</td><td class="bad">five registries per account per Region by default; search reads one registry per call, so a merged view is your code; auth type, JWT URL and key are fixed at creation</td><td class="when">private metadata, or contractual isolation</td></tr>
+                <tr class="rec"><td><span class="opt-tag rec">Recommended</span><br>A · One organization-wide registry, shared across accounts</td><td class="good">auto-detects the supported Runtimes and Gateways in the member accounts; one inventory; shared by RAM with a persona permission</td><td class="bad">one per organisation per Region; a delegated administrator (recommended) to own it; detection is not approval; record-owner conditions do not cover search and list, so only a share without those two actions hides other accounts' records</td><td class="when">many accounts, central curation</td></tr>
+                <tr class="ours"><td><span class="opt-tag ws">This workshop</span><br>B · One registry in one account</td><td class="good">simple; one approval queue</td><td class="bad">no automatic cross-account visibility: other accounts see it only through a share you set up; every reader sees every approved record's name and endpoint</td><td class="when">one platform, one account</td></tr>
+                <tr><td>C · A registry per account or tenant, plus your own unified discovery</td><td class="good">private metadata; a tenant's own IdP, key and offboarding</td><td class="bad">five registries per account per Region by default; search reads one registry per call, so unified discovery is your code; auth type, JWT URL and key are fixed at creation</td><td class="when">private metadata, or contractual isolation</td></tr>
+              </tbody>
+            </table>
+            <table class="plain">
+              <thead><tr><th>Layout</th><th>Who owns the registry</th><th>Who sees which records</th><th>Across accounts</th></tr></thead>
+              <tbody>
+                <tr><td>A · organization-wide</td><td>a delegated administrator account, for the whole organisation in one Region</td><td>everyone the RAM share lets search: every approved record from every member account, unless the share leaves out search and list</td><td>built in: detection of member accounts' Runtimes and Gateways, and RAM sharing</td></tr>
+                <tr><td>B · one account (this workshop)</td><td>the platform account</td><td>every persona, through the platform API: every approved record</td><td>none automatically; only a share you set up yourself</td></tr>
+                <tr><td>C · per account or tenant</td><td>each account or tenant</td><td>only that registry's readers</td><td>none: a search reads one registry, so unified discovery is your own code</td></tr>
               </tbody>
             </table>
             <div class="ours-box">
-              <p><strong>This workshop.</strong> Module 4 creates one AWS Agent Registry. Admin approves records; every persona reads them through the platform. Decision 5.3 explains the service choice.</p>
+              <p><strong>This workshop.</strong> Module 4 creates one AWS Agent Registry, <code>agent_platform_catalogue</code>, and submits three records; the Platform admin approves them in <a href="module-5-rev.html#hands-on">module 5's hands-on</a>; every persona reads them through the platform API. Approval is a visible label today: it does not block deployment or invocation.</p>
+              <p class="also"><strong>Why a registry rather than the platform's own table:</strong> Agent Registry brings approval states, an event on every state change and discovery beyond one platform; a private catalogue table is simpler but needs a custom API before anything outside the platform can find a record.</p>
               <p class="also">Keep <strong>three permissions</strong> separate:</p>
 <ol class="concept-list">
-  <li><strong>Discover:</strong> one fixed type per registry: IAM or corporate JWT. We use IAM through the platform API. Whoever may search or list sees every approved record. The record-owner condition keys apply when a named record is read or changed, not to search and list. When a registry is shared across accounts (option B), only a RAM share that leaves out those two actions keeps other accounts' records out of view.</li>
+  <li><strong>Discover:</strong> one fixed type per registry: IAM or corporate JWT. We use IAM through the platform API. Whoever may search or list sees every approved record. The record-owner condition keys apply when a named record is read or changed, not to search and list. When a registry is shared across accounts (option A), only a RAM share that leaves out those two actions keeps other accounts' records out of view.</li>
   <li><strong>Publish and approve:</strong> always IAM.</li>
   <li><strong>Invoke:</strong> the endpoint's permissions apply. Discovery and an approval label grant no execution access.</li>
 </ol>
-              <p class="prod"><strong>Production path.</strong> Use an organization-scoped IAM registry with auto-detection and read-only or consumer RAM sharing. IDE builders need a separate JWT registry or mediated view. Make domain-owner approval part of the release gate (3.2).</p>
+              <p class="prod"><strong>Production path.</strong> Use an organization-scoped IAM registry with auto-detection and read-only or consumer RAM sharing. IDE builders need a separate JWT registry or mediated view. Allow deployment only with approved references, and let the record's domain owner approve it (3.2, 6.5).</p>
             </div>
             <table class="plain">
-              <thead><tr><th>Permission</th><th>This workshop</th><th>Production</th></tr></thead>
+              <thead><tr><th>Permission</th><th>This workshop (B)</th><th>Production (A)</th></tr></thead>
               <tbody>
                 <tr><td>Discover: search, browse, read, the registry's MCP endpoint</td><td>every persona, through the platform API (IAM)</td><td>one discovery type per registry: IAM where agents and other accounts read it (a read-only or consumer RAM share); a separate JWT registry, or a mediated view, for builders in their IDE</td></tr>
                 <tr><td>Publish and approve: create, submit, approve, deprecate</td><td>the apply command publishes; the Platform admin approves (IAM)</td><td>a publisher role per team; a curator per domain; an admin share for a delegated curator</td></tr>
-                <tr><td>Invoke: call the tool or agent a record points at</td><td>the project's allow-list and its gateway role (3.2, 4.3)</td><td>the endpoint's own authorisation, always; the user's consent for user-owned tools</td></tr>
+                <tr><td>Invoke: call the tool or agent a record points at</td><td>the project's allow-list and its gateway role (3.2, 4.2)</td><td>the endpoint's own authorisation, always; the user's consent for user-owned tools</td></tr>
               </tbody>
             </table>
             <p class="note">A search match does not prove tool compatibility. Check the endpoint's permissions, user consent where needed, and the project's allow-list.</p>
@@ -429,10 +334,9 @@
     <span class="in">model</span>:   <span class="s">claude-sonnet-5</span>                        <span class="c"># the alias the agent uses (one of models)</span>
     <span class="in">budget</span>:  <span class="s">{usd: 5, period: 7d, tpm: 200000, rpm: 200}</span>
   <span class="k">decisions</span>:
-    <span class="k">tenancy</span>:    {<span class="k">workshop</span>: <span class="s">templates</span>,               <span class="k">my_call</span>: <span class="s">"..."</span>}
-    <span class="k">governance</span>: {<span class="k">workshop</span>: <span class="s">layered</span>,                 <span class="k">my_call</span>: <span class="s">"..."</span>}
-    <span class="k">approvals</span>:  {<span class="k">workshop</span>: <span class="s">admin + domain-approver</span>, <span class="k">my_call</span>: <span class="s">"..."</span>}
-    <span class="k">registry</span>:   {<span class="k">workshop</span>: <span class="s">one-registry</span>,            <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># every persona reads; the admin approves</span></code></pre>
+    <span class="k">tenancy</span>:    {<span class="k">workshop</span>: <span class="s">templates</span>}
+    <span class="k">governance</span>: {<span class="k">workshop</span>: <span class="s">layered</span>}
+    <span class="k">registry</span>:   {<span class="k">workshop</span>: <span class="s">one-registry</span>}            <span class="c"># AWS Agent Registry; every persona reads; the admin approves</span></code></pre>
           <p class="caption"><strong>Bold keys are apply inputs.</strong> Finance's domain and project are fixed: module 4 uses them to test isolation. The platform configures ten aliases from three vendors (see <code>MODEL_CATALOG.md</code> in the repository); this project may use two, <code>claude-sonnet-5</code>, the model its agent runs on, and <code>gpt-6-1-sol</code>, while <code>claude-opus-5</code> and <code>nova-2-lite</code> stay approved platform-wide but outside the project's list. Approval is the platform's decision; which approved models a project may use is the project's.</p>
         </section>
 
@@ -445,7 +349,7 @@
               <li><div><span class="pill tag command">command</span><code>workshop apply 3</code>: create two domains and two projects. Each project gets four roles (a pair per environment) and one model budget. After its title line and the path of your record, the command prints four sections. <strong>domains</strong> and <strong>projects</strong> report what it created; run it again and the same lines say <code>exists</code> (or <code>existed: aligned it</code> if you changed the models in your record), because every apply adopts what is already there. <strong>what the platform stamped for the HR project</strong> lists the model-gateway team with its models and budget, then the agent role and the gateway role of each environment. <strong>the boundary, proven from the agent role</strong> first prints who may assume the Dev agent role (the AgentCore service, and the account root so that this command can), then assumes it and calls the Finance and the HR tool Lambda directly. Both calls must end in <code>AccessDeniedException</code>, followed by an <code>OK</code> line: those two denials are the proof this module is after. The project's agent reaches tools only through its own gateway, which module 4 creates. The run takes well under a minute; a brand-new role can make it wait up to a minute more for IAM. Expected lines below.</div></li>
               <li><div><span class="pill tag screen">screen</span><strong>Domains and projects:</strong> check the project's caps, models and roles.</div></li>
               <li><div><span class="pill tag screen">screen</span>In IAM, open the two Dev roles the platform stamped: <code>agent-platform-proj-hr-assistant-dev-agent</code> (the command's last <code>look</code> line prints its console link) and <code>agent-platform-proj-hr-assistant-dev-gateway</code>. The agent role has no <code>bedrock:InvokeModel</code> and no <code>lambda:InvokeFunction</code>; its only path to a tool is <code>bedrock-agentcore:InvokeGateway</code> on gateways named <code>hr-assistant-dev-gw*</code>. The gateway role is the one allowed to invoke the HR tools Lambda and query the knowledge base. Both trust the account root: the first shortcut from decision 3.1. The command already proved the Lambda half: both direct calls from the agent role ended in <code>AccessDeniedException</code>.</div></li>
-              <li><div><span class="pill tag record">record</span>Write your four module 3 decisions.</div></li>
+              <li><div><span class="pill tag record">record</span>Read the module 3 record entries in <code>design-record.yaml</code> and compare each with the option marked <span class="opt-tag rec">Recommended</span> on this page.</div></li>
             </ol>
 <pre class="code-dark"><code><span class="c"># workshop apply 3, first run (lines shortened; a re-run says "exists" where this says "created")</span>
 == workshop apply 3: Control plane and governance: onboard the domains and projects
@@ -487,7 +391,7 @@ workshop apply 3 done in 0.4 min</code></pre>
             <figcaption><strong>Changed:</strong> DynamoDB, ECS Express Mode and IAM. Projects provide a common scope for permissions, policy, audit and cost. SCPs stay faded: they are taught, not built. Two things the figure does not show: the corporate IdP from module 2 (stack AgentPlatform-Idp: Keycloak behind its own API Gateway, in a small public VPC outside the landing zone) is unchanged here, and AgentCore Identity, drawn as a module 5 object, already holds the two OAuth2 credential providers <code>kc-hr-agent</code> and <code>kc-hr-obo-gateway</code> from module 2; module 5 adds the model key. Click to open full size.</figcaption>
           </figure>
         </section>
-      
+
         <section id="glossary">
           <h2>Glossary</h2>
           <div class="glossary">
@@ -521,7 +425,7 @@ workshop apply 3 done in 0.4 min</code></pre>
           <a href="module-3-rev.html">3 · Control plane and governance <span class="d">40 min</span></a>
           <a href="module-4-rev.html">4 · Tool plane <span class="d">40 min</span></a>
           <a href="module-5-rev.html">5 · Model gateway <span class="d">40 min</span></a>
-          <a href="module-6-rev.html">6 · AgentOps <span class="d">40 min</span></a>
+          <a href="module-6-rev.html">6 · Project blueprints and delivery <span class="d">40 min</span></a>
           <a href="module-7-rev.html">7 · Operate and observe <span class="d">40 min</span></a>
           <a href="cleanup.html">Clean up <span class="d">35 min</span></a>
         </nav>

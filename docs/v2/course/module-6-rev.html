@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Module 6 · AgentOps</title>
+    <title>Module 6 · Project blueprints and delivery</title>
     <link rel="stylesheet" href="course.css" />
       <style>
       .concept-list { margin: 6px 0 14px; padding-left: 24px; }
@@ -13,20 +13,20 @@
       .ours-box .concept-list + p { margin-top: 12px; }
       .start-now { margin: 0 0 18px; }
       .start-now p { margin: 6px 0 0; }
-      details.reference { margin: 14px 0; padding: 12px 14px; border: 1px solid #d5dce5; border-radius: 8px; }
-      details.reference > summary { cursor: pointer; font-weight: 700; color: #25364a; }
+      details.reference { margin: 14px 0; padding: 12px 14px; border: 1px solid #d5dbdb; border-radius: 8px; }
+      details.reference > summary { cursor: pointer; font-weight: 700; color: #232f3e; }
       details.reference[open] > summary { margin-bottom: 12px; }
       #glossary .glossary { margin-top: 0; }
-      .release-screen img { display: block; width: 100%; height: auto; border: 1px solid #d5dce5; border-radius: 8px; }
+      .release-screen img { display: block; width: 100%; height: auto; border: 1px solid #d5dbdb; border-radius: 8px; }
       .release-screen > a { display: block; }
     </style>
   </head>
   <body>
     <header class="hero">
       <div class="hero-inner">
-        <h1>Module 6 · AgentOps</h1>
-        <p>Build an agent, test its release, approve it and promote it to Prod.</p>
-        <div class="meta"><span>Module 6 of 7</span><span>40 min</span><span>blueprint</span><span>evaluate</span><span>release</span></div>
+        <h1>Module 6 · Blueprints and delivery</h1>
+        <p>Decide how much freedom a project gets and who owns its delivery, then build an agent from a blueprint, test its release, approve it and promote it to Prod.</p>
+        <div class="meta"><span>Module 6 of 7</span><span>40 min</span><span>ownership</span><span>blueprint</span><span>evaluate</span><span>release</span></div>
       </div>
     </header>
 
@@ -35,7 +35,7 @@
       <main>
         <section id="explain">
           <h2>From platform to workload <span class="time">Explain · 10 min</span></h2>
-          <p class="lead">The shared platform is ready. Now switch from Platform admin to Agent developer and build a workload in <strong>five steps</strong>, which one AWS CodePipeline execution carries out:</p>
+          <p class="lead">The shared platform is ready. This module decides what a <strong>project</strong> may do on it, then takes one project, the HR assistant, from a blueprint to Prod. Switch from Platform admin to Agent developer and build a workload in <strong>five steps</strong>; one AWS CodePipeline execution carries out the last four:</p>
 <ol class="concept-list">
   <li><strong>Build:</strong> write a blueprint.</li>
   <li><strong>Deploy:</strong> render it for Dev.</li>
@@ -50,9 +50,7 @@
 
 
           <h3>One blueprint, one pipeline</h3>
-          <figcaption>The blueprint is the source. <br/>CodePipeline renders it into a harness (build), deploys it, evaluates it (test) and promotes it, like any software release. 
-            <br/>The rendering process resolves the blueprint specified gateway, key, memory and role, so the same blueprint becomes a Dev harness and later a Prod harness.</figcaption>
-          
+
           <figure>
             <svg viewBox="0 0 960 310" role="img" aria-labelledby="fig6-pipe-title">
               <title id="fig6-pipe-title">From blueprint to running agent: CodePipeline renders, deploys, evaluates and promotes one release</title>
@@ -129,9 +127,6 @@
               <text class="d-text d-strong" x="829" y="270" text-anchor="middle">Runtime · Prod harness</text>
               <text class="d-text d-small" x="829" y="288" text-anchor="middle">new version · DEFAULT follows</text>
             </svg>
-            
-            <figcaption>Module 6 takes the blueprint through release and promotion. <br/>Module 7 observes traffic and feeds the next improvement. The blueprint remains the single release unit, whether running manually or through CICD.</figcaption>
-
           </figure>
 
           <h3>Why start with a blueprint?</h3>
@@ -145,59 +140,49 @@
     <tr><td>Portable release</td><td>Blueprint stays the release unit across implementations</td><td>Keep framework details out of the release contract</td></tr>
   </tbody>
 </table>
-          <p class="note"><strong>Tradeoff:</strong> this Harness configures one Strands Agents loop. Custom multi-agent graphs, branching workflows or existing frameworks need the code path.</p>
+          <p><strong>Tradeoff:</strong> this Harness configures one Strands Agents loop. Custom multi-agent graphs, branching workflows or existing frameworks need the code path.</p>
 
-          <h3>Six steps from blueprint to running agent</h3>
-          <p>The table below is the same journey in finer detail, as the platform carries it out. Your Build step is its Write and Validate, your Deploy is its Render and Deploy, your Evaluate is its Gate, and your Release and Promote together are its Promote.</p>
-          <table class="plain">
-  <thead><tr><th>Step</th><th>What happens</th><th>Where to look</th></tr></thead>
-  <tbody>
-    <tr><td>1 · Write</td><td>References such as <code>model/claude-sonnet-5</code> and <code>tool/hr-core</code>; prompt, limits, budget and thresholds</td><td><code>scenario/blueprint/</code></td></tr>
-    <tr><td>2 · Validate</td><td>Store the spec and prompt as a version. Reject unknown kinds, unapproved or disabled models, and out-of-range limits or thresholds</td><td>Project · Blueprints</td></tr>
-    <tr><td>3 · Render</td><td>Resolve the environment's alias, vault key, gateway, filtered KB target, memory and agent role. Missing resources produce named errors</td><td>Apply output</td></tr>
-    <tr><td>4 · Deploy</td><td>Worker creates an immutable Harness version on Runtime; Dev <code>DEFAULT</code> follows the latest</td><td>Releases · new version ~20 seconds; first VPC deployment ~4–5 minutes</td></tr>
-    <tr><td>5 · Gate</td><td>Run the dataset, score results, compare thresholds → BLOCKED or PENDING_APPROVAL</td><td>Releases · ~5–6 minutes: one minute of invocations, a 180-second telemetry delay, then scoring</td></tr>
-    <tr><td>6 · Promote</td><td>Domain approver approves and promotes through CodePipeline manual gates; the deployment action creates the Prod key when missing, resolves Prod resources, creates its Harness (its <code>DEFAULT</code> endpoint follows the new version) and registers online evaluation</td><td>Release detail · first Prod deployment can take minutes; later versions are faster</td></tr>
-  </tbody>
-</table>
+
           <p class="note">The contract has <strong>two rules</strong>:</p>
 <ul class="concept-list">
   <li><strong>Team chooses:</strong> use-case references within the project's allow-list.</li>
   <li><strong>Platform resolves:</strong> role, key, memory, gateway and network. The blueprint cannot replace these.</li>
 </ul>
 
-          <h3 id="on-behalf-of-twin">The agent that acts on your behalf</h3>
-          <p>The Dev and Prod harnesses are called with SigV4 (Playground, evaluation, <code>workshop traffic</code>) and reach their tools as the project's agent role: the service identity of decision 2.2. A SigV4 call carries no employee, and AgentCore propagates no per-user identity downstream from it, so there is nothing to exchange. The on-behalf-of chain (2.5, 4.5) therefore gets a harness of its own. <code>workshop apply 6</code> renders the latest blueprint for Dev once more and patches <strong>three things</strong>:</p>
-<ul class="concept-list">
-  <li><strong>Inbound:</strong> a JWT authorizer that trusts the realm anycompany and accepts the audience hr-agent.</li>
-  <li><strong>Tool gateway:</strong> the on-behalf-of gateway of module 4, called with OAuth TOKEN_EXCHANGE through the provider kc-hr-agent for the audience hr-obo-gateway.</li>
-  <li><strong>Memory:</strong> off. One question needs none, and a memory would need an actor id per employee.</li>
-</ul>
-          <p>The result is <code>hr_assistant_dev_obo</code>, the twin of <code>hr_assistant_dev</code>: the same model alias, prompt, limits and agent role, plus one inline policy on that role, <code>obo-token-exchange</code>. The policy does two things: it lets the role ask AgentCore Identity for the exchange through kc-hr-agent, and it lets the twin fetch its model key from the token vault under its own workload identity, <code>harness_hr_assistant_dev_obo-*</code>, which the role template does not cover because it names only the Dev harness's identity, <code>harness_hr_assistant_dev-*</code>. The twin is called over HTTPS with <code>Authorization: Bearer</code> and the employee's token T0, not with a signed request. Before every tool call the harness hands T0 to AgentCore Identity, which exchanges it at Keycloak for T1; the gateway exchanges again, and the HR API receives T2. The harness code never sees a secret or an exchange. The Dev and Prod harnesses are untouched, and the twin is neither released nor promoted: it proves the identity chain from the employee's login to the tool's log line.</p>
-          <table class="plain">
-  <thead><tr><th></th><th>Dev harness hr_assistant_dev</th><th>On-behalf-of twin hr_assistant_dev_obo</th></tr></thead>
-  <tbody>
-    <tr><td>Who may call it</td><td>An IAM identity allowed to invoke it, with a SigV4 signature</td><td>A token from the realm anycompany with the audience hr-agent, sent as <code>Authorization: Bearer</code></td></tr>
-    <tr><td>Tool gateway</td><td>hr-assistant-dev-gw, signed with the agent role</td><td>hr-assistant-dev-gw-obo, with a token exchanged through kc-hr-agent for the audience hr-obo-gateway</td></tr>
-    <tr><td>What the tool learns</td><td>The arguments, under the gateway's role</td><td>The arguments and a token for hr-tools-api: sub, employee_id, aud, azp</td></tr>
-    <tr><td>Memory</td><td>This project's Dev memory</td><td>Off</td></tr>
-    <tr><td>Release and promotion</td><td>Yes: the gate, the approver, promotion</td><td>No: a demonstration of the identity chain</td></tr>
-  </tbody>
-</table>
+<h3 >The agent that acts on your behalf</h3>
+  <p>The Dev and Prod harnesses are called with SigV4 (Playground, evaluation, <code>workshop traffic</code>) and reach their tools as the project's agent role. A SigV4 call carries no employee, and AgentCore propagates no per-user identity downstream from it, so there is nothing to exchange. The on-behalf-of chain (Module 4) therefore gets a harness of its own. <code>workshop apply 6</code> renders the latest blueprint for Dev once more and patches <strong>three things</strong>:</p>
+  <ul class="concept-list">
+    <li><strong>Inbound:</strong> a JWT authorizer that trusts the realm anycompany and accepts the audience hr-agent.</li>
+    <li><strong>Tool gateway:</strong> the on-behalf-of gateway of module 4, called with OAuth TOKEN_EXCHANGE through the provider kc-hr-agent for the audience hr-obo-gateway.</li>
+    <li><strong>Memory:</strong> off. One question needs none, and a memory would need an actor id per employee.</li>
+  </ul>
 
-          <details class="reference"><summary>Optional path · Export code and use your own pipeline</summary>
+  <table class="plain">
+    <thead><tr><th></th><th>HR Assistant (DEV)</th><th>HR Assistant (OBO)</th></tr></thead>
+    <tbody>
+      <tr><td>Who may call it</td><td>An IAM identity allowed to invoke it, with a SigV4 signature</td><td>A token from the realm anycompany with the audience hr-agent, sent as <code>Authorization: Bearer</code></td></tr>
+      <tr><td>Tool gateway</td><td>hr-assistant-dev-gw, signed with the agent role</td><td>hr-assistant-dev-gw-obo, with a token exchanged through kc-hr-agent for the audience hr-obo-gateway</td></tr>
+      <tr><td>What the tool learns</td><td>The arguments, under the gateway's role</td><td>The arguments and a token for hr-tools-api: sub, employee_id, aud, azp</td></tr>
+      <tr><td>Memory</td><td>This project's Dev memory</td><td>Off</td></tr>
+      <tr><td>Release and promotion</td><td>Yes: the gate, the approver, promotion</td><td>No: a demonstration of the identity chain</td></tr>
+    </tbody>
+  </table>
+
+
+<div class="reference">
+  <h3 id="on-behalf-of-twin">Export code and use your own pipeline</h3>
           <p><code>workshop export</code> generates Strands Agents or LangGraph code from the Dev Harness. It keeps <strong>four things</strong>:</p>
-<ul class="concept-list">
-  <li>Model alias and model-gateway key path.</li>
-  <li>MCP gateway tools.</li>
-  <li>Agent execution role.</li>
-  <li>System prompt.</li>
-</ul>
+  <ul class="concept-list">
+    <li>Model alias and model-gateway key path.</li>
+    <li>MCP gateway tools.</li>
+    <li>Agent execution role.</li>
+    <li>System prompt.</li>
+  </ul>
           <p>Code owners take over <strong>five responsibilities</strong>: memory, limits, tracing, Runtime deployment and the release gate. Execution has <strong>two paths</strong>:</p>
-<ul class="concept-list">
-  <li><strong>Laptop:</strong> <code>workshop export --run</code> starts a local relay proxy, sets <code>MODEL_GATEWAY_BASE</code> and runs once with a temporary key that is deleted afterwards.</li>
-  <li><strong>Runtime:</strong> deploy with the Harness's VPC configuration to reach the private model gateway.</li>
-</ul>
+  <ul class="concept-list">
+    <li><strong>Laptop:</strong> <code>workshop export --run</code> starts a local relay proxy, sets <code>MODEL_GATEWAY_BASE</code> and runs once with a temporary key that is deleted afterwards.</li>
+    <li><strong>Runtime:</strong> deploy with the Harness's VPC configuration to reach the private model gateway.</li>
+  </ul>
           <figure>
             <svg viewBox="0 0 960 300" role="img" aria-labelledby="fig6c-title">
               <title id="fig6c-title">Two paths onto one platform: the blueprint rendered by the platform, or exported code built by a pipeline</title>
@@ -219,8 +204,7 @@
               <text class="d-text d-small" x="328" y="86" text-anchor="middle">references → real objects</text>
               <path class="d-arrow" d="M406 74 L422 74" marker-end="url(#arr6c)"/>
               <rect class="d-box d-aws d-ours" x="424" y="46" width="150" height="56"/>
-              <text class="d-text d-title" x="499" y="68" text-anchor="middle">Dev harness</text>
-              <text class="d-text d-small" x="499" y="86" text-anchor="middle">DEFAULT · version 1, 2, 3</text>
+              <text class="d-text d-title" x="499" y="78" text-anchor="middle">Dev harness</text>
               <path class="d-arrow" d="M574 74 L590 74" marker-end="url(#arr6c)"/>
               <rect class="d-box d-blue d-ours" x="592" y="46" width="180" height="56"/>
               <text class="d-text d-title" x="682" y="68" text-anchor="middle">Release gate</text>
@@ -228,7 +212,7 @@
               <path class="d-arrow" d="M772 74 L788 74" marker-end="url(#arr6c)"/>
               <rect class="d-box d-aws d-ours" x="790" y="46" width="140" height="56"/>
               <text class="d-text d-title" x="860" y="68" text-anchor="middle">Prod harness</text>
-              <text class="d-text d-small" x="860" y="86" text-anchor="middle">DEFAULT · promoted version</text>
+              <text class="d-text d-small" x="860" y="86" text-anchor="middle">pinned version</text>
 
               <text class="d-text d-title" x="250" y="136">B · Exported code, built by your pipeline</text>
               <rect x="566" y="120" width="52" height="20" rx="10" fill="#eef0f3"/>
@@ -236,15 +220,14 @@
               <path class="d-arrow d-dash" d="M232 160 L248 174" marker-end="url(#arr6c)"/>
               <rect class="d-box d-platform" x="250" y="148" width="156" height="56" style="stroke-dasharray:5 4"/>
               <text class="d-text d-title" x="328" y="170" text-anchor="middle">workshop export</text>
-              <text class="d-text d-small" x="328" y="188" text-anchor="middle">Strands or LangGraph code</text>
+              <text class="d-text d-small" x="328" y="188" text-anchor="middle">Strands or LangGraph</text>
               <path class="d-arrow d-dash" d="M406 176 L422 176" marker-end="url(#arr6c)"/>
               <rect class="d-box d-platform" x="424" y="148" width="150" height="56" style="stroke-dasharray:5 4"/>
-              <text class="d-text d-title" x="499" y="170" text-anchor="middle">Git + pipeline</text>
-              <text class="d-text d-small" x="499" y="188" text-anchor="middle">tests · agentcore deploy</text>
+              <text class="d-text d-title" x="499" y="180" text-anchor="middle">Git + pipeline</text>
               <path class="d-arrow d-dash" d="M574 176 L590 176" marker-end="url(#arr6c)"/>
               <rect class="d-box d-aws" x="592" y="148" width="180" height="56" style="stroke-dasharray:5 4"/>
               <text class="d-text d-title" x="682" y="170" text-anchor="middle">Agent on Runtime</text>
-              <text class="d-text d-small" x="682" y="188" text-anchor="middle">container or code · your loop</text>
+              <text class="d-text d-small" x="682" y="188" text-anchor="middle">container or code + your loop</text>
               <path class="d-arrow d-dash" d="M700 148 L700 104" marker-end="url(#arr6c)"/>
               <text class="d-text d-small" x="708" y="128">the same gate, by the platform API</text>
 
@@ -261,41 +244,41 @@
   <tbody>
     <tr><td>Commit</td><td>Code in Git; credentials fetched at runtime from the vault or Secrets Manager</td><td>Keys, caps and rotation</td></tr>
     <tr><td>Test</td><td>Unit tests and Dev dataset evaluation</td><td>Evaluation rules and thresholds</td></tr>
-    <tr><td>Deploy</td><td>Runtime container or direct code deploy via <code>agentcore deploy</code> or CDK (decision 1.3)</td><td>Project role, tags and network</td></tr>
+    <tr><td>Deploy</td><td>Runtime container or direct code deploy via <code>agentcore deploy</code> or CDK</td><td>Project role, tags and network</td></tr>
     <tr><td>Release</td><td>Register Runtime and submit evaluation through the platform API</td><td>Human approval, gate and version promotion</td></tr>
     <tr><td>Observe</td><td>OpenTelemetry export to the Harness's backend</td><td>Transaction Search, online evaluation and dashboard</td></tr>
   </tbody>
 </table>
           <p class="note"><strong>Workshop scope:</strong> export is available and optional; this pipeline is discussed, not built. Code must still use the model-gateway key and tool gateway.</p>
-</details>
+</div>
         </section>
 
         <section id="decisions">
-          <h2>Three decisions <span class="time">Design · 10 min</span></h2>
+          <h2>Decisions <span class="time">Design · 10 min</span></h2>
+          <p class="lead">Two groups of decisions. <strong>What a project may do</strong>: how much freedom it gets (6.1). <strong>How one release moves</strong>: gates and approvals (6.2) and promotion (6.3). Ownership matters from the start; the course discusses it here, beside the delivery it shapes.</p>
           <aside class="hands-on start-now" aria-label="Start the second evaluation run">
   <strong>Run 2 · after Run 1 finishes · about 6–7 minutes</strong>
   <p>Read the v1 release's BLOCKED verdict. Set <code>prompt_version: v2</code>, then run <code>workshop apply 6</code> again. Discuss the decisions while the corrected prompt is evaluated.</p>
 </aside>
 
           <div class="card">
-            <h4 class="q" id="d6-1"><span class="id">6.1</span>What is an agent, and what is the unit of release?</h4>
+            <h4 class="q" id="d6-1"><span class="id">6.1</span>How much freedom does a project get?</h4>
+            <p class="kind combine">Paths that coexist: a platform usually offers more than one, and each project takes the one that fits its team and its agent.</p>
             <table class="options">
-              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
+              <thead><tr><th>Path</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
               <tbody>
-                <tr class="ours"><td>Harness from a YAML blueprint; immutable versions</td><td class="good">no containers; consistent governed build; later versions deploy in seconds</td><td class="bad">configuration limits custom orchestration</td><td class="when">most agents; teams needing consistency</td></tr>
-                <tr><td>A container on AgentCore Runtime</td><td class="good">any framework, any logic</td><td class="bad">a build pipeline; minutes per build; governance re-applied in code</td><td class="when">custom orchestration</td></tr>
-                <tr><td>Direct code deploy on Runtime</td><td class="good">no Docker</td><td class="bad">code to own; the same governance gap</td><td class="when">small custom agents</td></tr>
+                <tr class="ours rec"><td><span class="opt-tag rec">Recommended default</span><span class="opt-tag ws">This workshop</span><br>Blueprint path: the team writes a YAML blueprint; the platform renders, deploys and releases it as a Harness with immutable versions</td><td class="good">governed by construction; one release pipeline; later versions deploy in seconds</td><td class="bad">configuration limits custom orchestration</td><td class="when">most agents; teams that want the platform to carry deployment and release</td></tr>
+                <tr><td>Provisioned environment: the platform stamps the project's roles, gateway, model key, memory and network; the team brings its own code (a container or direct code deploy) and its own pipeline</td><td class="good">any framework, any logic; the team moves at its own pace</td><td class="bad">the team owns memory, limits, tracing, deployment and the gate; the platform checks releases through its API</td><td class="when">custom orchestration, and a team with engineering and on-call capacity</td></tr>
+                <tr><td>A stack per project, reviewed in Git by the platform team</td><td class="good">auditable, reviewable</td><td class="bad">slow onboarding; the platform team in the loop</td><td class="when">few projects, strict change control</td></tr>
+                <tr><td>A full platform copy per project team (decision 1.1, layout C)</td><td class="good">autonomy; simple trust</td><td class="bad">duplicated governance; copies drift</td><td class="when">teams must not depend on each other</td></tr>
               </tbody>
             </table>
+
             <div class="ours-box">
-              <p><strong>This workshop.</strong> Use a YAML blueprint with the Harness. When configuration is insufficient, export to <strong>Strands Agents or LangGraph</strong>; both are available. Code keeps the alias, tools, role and prompt, and adds its own memory, limits, tracing, deployment and gate.</p>
-              <p class="also">Memory has <strong>two boundaries</strong>:</p>
-<ul class="concept-list">
-  <li><strong>Environment:</strong> one memory per project and environment; Dev and Prod do not share it.</li>
-  <li><strong>User:</strong> the caller supplies the user ID. The agent does not guess it. Events expire after 30 days. The on-behalf-of twin takes the person from its token and runs without memory.</li>
-</ul>
-              <p class="also"><strong>Network:</strong> VPC mode connects Runtime through interfaces in the private app subnets and Harness security group. Render fixes this configuration. Initial interface creation adds deployment time; model and shared-service calls need no internet path.</p>
-              <p class="prod"><strong>Production path.</strong> Use containers for custom orchestration, keeping the blueprint as the release unit. MCP servers on Runtime follow the same gate and promotion.</p>
+              <p><strong>This workshop.</strong> Every project takes the <strong>blueprint path</strong>: a YAML blueprint rendered into a Harness, with immutable versions. When configuration is not enough, <code>workshop export</code> generates <strong>Strands Agents or LangGraph</strong> code that keeps the alias, tools, role and prompt; the code then owns its memory, limits, tracing, deployment and gate.</p>
+
+              <p class="also"><strong>Memory:</strong> one per project and environment; the caller supplies the user ID and events expire after 30 days. The on-behalf-of twin takes the person from its token and runs without memory. <strong>Network:</strong> render puts every harness in VPC mode in the app subnets, behind the harness security group.</p>
+              <p class="prod"><strong>Production path.</strong> Offer the provisioned-environment path beside the blueprint path for teams that need custom orchestration, keeping a release unit the platform can gate. </p>
             </div>
             <figure>
               <svg viewBox="0 0 960 210" role="img" aria-labelledby="fig6b-title">
@@ -350,32 +333,33 @@
           </div>
 
           <div class="card">
-            <h4 class="q" id="d6-2"><span class="id">6.2</span>How does a release pass?</h4>
+            <h4 class="q" id="d6-3"><span class="id">6.2</span>How does a release pass: gates and approvals?</h4>
+            <p class="kind combine">Gates and approvals that stack: each catches a different kind of fault, and a release passes them in order.</p>
             <figure style="margin:0 0 10px">
-              <svg viewBox="0 0 960 298" role="img" aria-labelledby="fig6-d2-title">
-                <title id="fig6-d2-title">How a release passes: the dataset run against the Dev harness, scored by four evaluators against the thresholds, then the Domain approver; the two alternatives beside it</title>
-                <defs><marker id="fig6-d2-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+              <svg viewBox="0 0 960 298" role="img" aria-labelledby="fig6-gate-title">
+                <title id="fig6-gate-title">How a release passes: the dataset run against the Dev harness, scored by four evaluators against the thresholds, then the Domain approver; the gates that stack before and after it</title>
+                <defs><marker id="fig6-gate-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
 
-                <text class="d-text d-title" x="22" y="24">A · A dataset run, evaluators, thresholds, then a human</text>
+                <text class="d-text d-title" x="22" y="24">The built gate: a dataset run, evaluators, thresholds, then a human</text>
                 <rect x="526" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
                 <text class="d-text" x="579" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
                 <rect class="d-box d-account d-ours d-glow" x="12" y="34" width="620" height="228"/>
                 <rect class="d-box d-platform" x="28" y="46" width="170" height="44"/>
                 <text class="d-text" x="113" y="64" text-anchor="middle">Dataset</text>
                 <text class="d-text d-small" x="113" y="80" text-anchor="middle">10 scripted conversations</text>
-                <path class="d-arrow" d="M198 68 L216 68" marker-end="url(#fig6-d2-arr)"/>
+                <path class="d-arrow" d="M198 68 L216 68" marker-end="url(#fig6-gate-arr)"/>
                 <rect class="d-box d-aws" x="218" y="46" width="120" height="44"/>
                 <text class="d-text" x="278" y="64" text-anchor="middle">Dev harness</text>
                 <text class="d-text d-small" x="278" y="80" text-anchor="middle">DEFAULT</text>
-                <path class="d-arrow" d="M338 68 L356 68" marker-end="url(#fig6-d2-arr)"/>
+                <path class="d-arrow" d="M338 68 L356 68" marker-end="url(#fig6-gate-arr)"/>
                 <rect class="d-box d-blue" x="358" y="46" width="120" height="44"/>
                 <text class="d-text" x="418" y="64" text-anchor="middle">Spans</text>
                 <text class="d-text d-small" x="418" y="80" text-anchor="middle">in CloudWatch</text>
-                <path class="d-arrow" d="M478 68 L496 68" marker-end="url(#fig6-d2-arr)"/>
+                <path class="d-arrow" d="M478 68 L496 68" marker-end="url(#fig6-gate-arr)"/>
                 <rect class="d-box d-blue" x="498" y="46" width="120" height="44"/>
                 <text class="d-text" x="558" y="64" text-anchor="middle">4 evaluators</text>
                 <text class="d-text d-small" x="558" y="80" text-anchor="middle">built-in</text>
-                <path class="d-arrow" d="M558 90 L558 102" marker-end="url(#fig6-d2-arr)"/>
+                <path class="d-arrow" d="M558 90 L558 102" marker-end="url(#fig6-gate-arr)"/>
 
                 <rect class="d-group" x="28" y="104" width="590" height="148"/>
                 <text class="d-text d-small" x="40" y="120">scores against the thresholds in the blueprint</text>
@@ -405,30 +389,22 @@
                 <rect class="d-box" x="396" y="128" width="220" height="50"/>
                 <text class="d-text" x="506" y="148" text-anchor="middle">prompt v2 → all pass</text>
                 <text class="d-text d-small d-strong" x="506" y="166" text-anchor="middle" style="fill:#16191f">PENDING_APPROVAL</text>
-                <path class="d-arrow" d="M506 178 L506 198" marker-end="url(#fig6-d2-arr)"/>
+                <path class="d-arrow" d="M506 178 L506 198" marker-end="url(#fig6-gate-arr)"/>
                 <rect class="d-box d-people" x="396" y="200" width="220" height="44"/>
                 <text class="d-text" x="506" y="226" text-anchor="middle">Domain approver's click</text>
                 <text class="d-text d-small" x="322" y="282" text-anchor="middle">repeatable · a regression is caught before Prod · dataset evaluation is public preview</text>
 
                 <rect class="d-box" x="662" y="34" width="290" height="58"/>
-                <text class="d-text d-strong" x="807" y="52" text-anchor="middle">B · Human review only</text>
-                <text class="d-text d-small" x="807" y="68" text-anchor="middle">cheap to start · no repeatability</text>
-                <text class="d-text d-tiny" x="807" y="82" text-anchor="middle">when: the first weeks</text>
+                <text class="d-text d-strong" x="807" y="52" text-anchor="middle">Before it: code quality and scans</text>
+                <text class="d-text d-small" x="807" y="68" text-anchor="middle">lint · static · dynamic · pentest</text>
+                <text class="d-text d-tiny" x="807" y="82" text-anchor="middle">recommended for code paths · not built</text>
                 <rect class="d-box" x="662" y="108" width="290" height="58"/>
-                <text class="d-text d-strong" x="807" y="126" text-anchor="middle">C · Online evaluation only</text>
-                <text class="d-text d-small" x="807" y="142" text-anchor="middle">real traffic · problems reach users first</text>
-                <text class="d-text d-tiny" x="807" y="156" text-anchor="middle">when: low-risk agents</text>
+                <text class="d-text d-strong" x="807" y="126" text-anchor="middle">After it: online evaluation</text>
+                <text class="d-text d-small" x="807" y="142" text-anchor="middle">real Prod traffic, scored after the fact</text>
+                <text class="d-text d-tiny" x="807" y="156" text-anchor="middle">registered at promotion · module 7</text>
               </svg>
               <figcaption>The demo scorecard shows v1 failing three thresholds; its numbers come from the 8 Oct 2026 dry runs, measured with the previous aliases Claude Sonnet 5.5 and Haiku 4.5, and the rehearsal with <code>claude-sonnet-5</code> is pending. v2 should pass and wait for approval. Read the actual scores in Releases; a failing metric blocks promotion.</figcaption>
             </figure>
-            <table class="options">
-              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
-              <tbody>
-                <tr class="ours"><td>A dataset run with built-in evaluators and thresholds, then a human</td><td class="good">repeatable; a regression is caught before Prod</td><td class="bad">dataset evaluation is public preview; a dataset to maintain</td><td class="when">always</td></tr>
-                <tr><td>Human review only</td><td class="good">cheap to start</td><td class="bad">no repeatability</td><td class="when">the first weeks</td></tr>
-                <tr><td>Online evaluation only</td><td class="good">real traffic</td><td class="bad">problems reach users first</td><td class="when">low-risk agents</td></tr>
-              </tbody>
-            </table>
             <div class="ours-box">
               <p><strong>This workshop.</strong> The release gate has <strong>four parts</strong>:</p>
 <ol class="concept-list">
@@ -438,17 +414,56 @@
   <li><strong>Human:</strong> a passing release waits for Domain approver approval.</li>
 </ol>
               <figure><img src="arch/module-6-codepipeline.svg" alt="CodePipeline release: versioned source, Dev deployment, evaluation, approval, and promotion; failed evaluation blocks release" style="width:100%;max-width:800px" /><figcaption>Native CodePipeline stages preserve the evaluation gate and separate approval and promotion decisions. <a href="../../release-pipeline.md">Deployment and recovery runbook</a>. <a href="arch/module-6-codepipeline.drawio">Editable diagram</a>.</figcaption></figure>
-              <p class="also">The v1 prompt skips the knowledge base; v2 fixes the instruction. Both <code>workshop apply 6</code> and the Releases screen now start the same AWS CodePipeline execution. The source action reads a versioned release snapshot. Within one Validate stage, DeployDev deploys the selected blueprint, then Evaluate runs the dataset and applies that blueprint's thresholds. The stage stays locked across both actions, so another release cannot replace Dev during evaluation. A failed threshold stops the execution with the release BLOCKED. A passing evaluation waits at the Approve gate. The command follows progress; it does not evaluate locally or upload self-reported scores.</p>
+              <p class="also">The v1 prompt skips the knowledge base; v2 fixes the instruction. <code>workshop apply 6</code> and the Releases screen start the <strong>same AWS CodePipeline execution</strong>, one per release, in four stages:</p>
+              <ol class="concept-list">
+                <li><strong>Source:</strong> a versioned snapshot of the release.</li>
+                <li><strong>Validate:</strong> DeployDev, then Evaluate with the blueprint's thresholds. The stage stays locked across both, so another release cannot replace Dev mid-evaluation. A failed threshold ends the execution: the release is BLOCKED, and a fix is a new release.</li>
+                <li><strong>Approve:</strong> a manual gate the Domain approver releases.</li>
+                <li><strong>Promote:</strong> a second manual gate in the same execution, then PromoteProd.</li>
+              </ol>
+              <p class="also">The command only follows progress: it does not evaluate locally, and the API refuses self-reported scores.</p>
+              <table class="plain">
+                <thead><tr><th>Gate</th><th>Today</th><th>Recommended in production</th></tr></thead>
+                <tbody>
+                  <tr><td>Evaluation: dataset, evaluators, thresholds</td><td>built: Validate stage</td><td>platform-owned minimum thresholds</td></tr>
+                  <tr><td>Human approval</td><td>built: Approve and Promote gates</td><td>domain-bound approvers; two for Prod</td></tr>
+                  <tr><td>Code quality: lint and unit tests</td><td>not built</td><td>for exported or project-owned code</td></tr>
+                  <tr><td>Static security scan of code and dependencies</td><td>not built</td><td>for exported or project-owned code and containers</td></tr>
+                  <tr><td>Dynamic scan against the Dev deployment</td><td>not built</td><td>before Prod for agents with external endpoints or tools</td></tr>
+                  <tr><td>Penetration test</td><td>not built</td><td>before first Prod release and after major change</td></tr>
+                </tbody>
+              </table>
               <p class="prod"><strong>Production path.</strong> Platform-run evidence only (no self-reported scores), platform-owned minimum thresholds and approvals bound to the evaluated run.</p>
             </div>
+
+            <div class="ours-box">
+              <p><strong>This workshop.</strong> There are <strong>two approval routes</strong>:</p>
+              <ul class="concept-list">
+                <li><strong>Catalogue record:</strong> Platform admin approves (module 5's hands-on).</li>
+                <li><strong>Release:</strong> Domain approver approves and promotes; the Platform admin and the Agent developer get 403.</li>
+              </ul>
+              <p class="also">The API checks the caller's group, not whether the approver also submitted the release: separation of duties comes from keeping the developer and approver groups apart, as the three personas do.</p>
+              <p class="prod"><strong>Production path.</strong> Bind approvers to domains, require two for Prod, bind approval to its evaluation evidence and refuse self-approval by identity.</p>
+            </div>
+            <table class="plain">
+              <thead><tr><th>Action</th><th>Who, today</th><th>Approval, today</th><th>Where</th></tr></thead>
+              <tbody>
+                <tr><td>Create a domain or project; set caps, models, tools</td><td>Platform admin</td><td>none</td><td>Domains and projects</td></tr>
+                <tr><td>Approve a catalogue record</td><td>Platform admin</td><td>single stage; a label, not a gate</td><td>Catalogue</td></tr>
+                <tr><td>Flip a gateway from LOG_ONLY to ENFORCE</td><td>Platform admin</td><td>none</td><td>Governance</td></tr>
+                <tr><td>Deploy to Dev; submit a release</td><td>Agent developer</td><td>none; Dev only</td><td>Releases</td></tr>
+                <tr><td>Approve, reject, promote a release</td><td>Domain approver</td><td>single stage; admins get 403</td><td>Release detail</td></tr>
+              </tbody>
+            </table>
           </div>
 
           <div class="card">
-            <h4 class="q" id="d6-3"><span class="id">6.3</span>How does it reach Prod?</h4>
+            <h4 class="q" id="d6-4"><span class="id">6.3</span>How does it reach Prod?</h4>
+            <p class="kind context">Follows the account layout of decision 1.1; an organisation with several layouts uses both.</p>
             <figure style="margin:0 0 10px">
-              <svg viewBox="0 0 960 296" role="img" aria-labelledby="fig6-d3-title">
-                <title id="fig6-d3-title">Two ways to reach Prod: promote an immutable version in one account, or re-render into a Prod account</title>
-                <defs><marker id="fig6-d3-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
+              <svg viewBox="0 0 960 296" role="img" aria-labelledby="fig6-prod-title">
+                <title id="fig6-prod-title">Two ways to reach Prod: promote an immutable version in one account, or re-render into a Prod account</title>
+                <defs><marker id="fig6-prod-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
 
                 <text class="d-text d-title" x="22" y="24">A · Promote an immutable version in one account</text>
                 <rect x="366" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
@@ -458,7 +473,7 @@
                 <rect class="d-box d-aws" x="26" y="58" width="220" height="44"/>
                 <text class="d-text" x="136" y="76" text-anchor="middle">Dev harness hr_assistant_dev</text>
                 <text class="d-text d-small" x="136" y="92" text-anchor="middle">DEFAULT → latest</text>
-                <path class="d-arrow" d="M136 102 L136 120" marker-end="url(#fig6-d3-arr)"/>
+                <path class="d-arrow" d="M136 102 L136 120" marker-end="url(#fig6-prod-arr)"/>
                 <text class="d-text d-small" x="146" y="116">promotion = render for Prod → new version</text>
                 <rect class="d-group" x="26" y="122" width="432" height="128"/>
                 <text class="d-text d-strong" x="36" y="140">Prod harness hr_assistant_prod</text>
@@ -469,7 +484,7 @@
                 <rect class="d-box d-aws" x="180" y="150" width="60" height="28"/>
                 <text class="d-text" x="210" y="169" text-anchor="middle">v3</text>
                 <text class="d-text d-tiny" x="252" y="169">immutable versions</text>
-                <path class="d-arrow" d="M210 198 L210 180" marker-end="url(#fig6-d3-arr)"/>
+                <path class="d-arrow" d="M210 198 L210 180" marker-end="url(#fig6-prod-arr)"/>
                 <rect class="d-box" x="172" y="198" width="76" height="28"/>
                 <text class="d-text" x="210" y="217" text-anchor="middle">DEFAULT</text>
                 <text class="d-text d-tiny" x="256" y="217">endpoint · follows the latest version</text>
@@ -482,7 +497,7 @@
                 <text class="d-text d-small" x="514" y="76">Dev account</text>
                 <rect class="d-box d-aws" x="514" y="84" width="408" height="32"/>
                 <text class="d-text" x="718" y="105" text-anchor="middle">Dev harness · DEFAULT → latest</text>
-                <path class="d-arrow" d="M718 126 L718 166" marker-end="url(#fig6-d3-arr)"/>
+                <path class="d-arrow" d="M718 126 L718 166" marker-end="url(#fig6-prod-arr)"/>
                 <text class="d-text d-small" x="730" y="150">render again, cross-account trust</text>
                 <rect class="d-box d-account" x="502" y="168" width="432" height="66"/>
                 <text class="d-text d-small" x="514" y="184">Prod account</text>
@@ -495,8 +510,8 @@
             <table class="options">
               <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
               <tbody>
-                <tr class="ours"><td>Promote an immutable version in one account</td><td class="good">immutable versions; rollback by promoting again</td><td class="bad">one account; no pinned endpoint</td><td class="when">Dev and Prod in one account</td></tr>
-                <tr><td>Re-render into a Prod account</td><td class="good">an account wall</td><td class="bad">cross-account plumbing</td><td class="when">account per environment</td></tr>
+                <tr class="ours"><td><span class="opt-tag ws">This workshop</span><br>Promote an immutable version in one account</td><td class="good">immutable versions; rollback by promoting again</td><td class="bad">one account; no pinned endpoint</td><td class="when">Dev and Prod in one account</td></tr>
+                <tr class="rec"><td><span class="opt-tag rec">With layout 1.1 A</span><br>Re-render into a Prod account</td><td class="good">an account wall</td><td class="bad">cross-account plumbing</td><td class="when">account per environment</td></tr>
               </tbody>
             </table>
             <div class="ours-box">
@@ -518,9 +533,12 @@
     <span class="in">thresholds</span>:     <span class="s">{Correctness: 0.8, GoalSuccessRate: 0.9, TrajectoryInOrderMatch: 0.9, Harmfulness: 0.0}</span>
     <span class="in">export</span>:         <span class="s">strands</span>                     <span class="c"># strands | langgraph</span>
   <span class="k">decisions</span>:
-    <span class="k">agent_form</span>:   {<span class="k">workshop</span>: <span class="s">harness-from-blueprint</span>,       <span class="k">my_call</span>: <span class="s">"..."</span>}
-    <span class="k">release_gate</span>: {<span class="k">workshop</span>: <span class="s">dataset + thresholds + human</span>, <span class="k">my_call</span>: <span class="s">"..."</span>}
-    <span class="k">promotion</span>:    {<span class="k">workshop</span>: <span class="s">default-endpoint</span>,             <span class="k">my_call</span>: <span class="s">"..."</span>}</code></pre>
+    <span class="k">project_freedom</span>: {<span class="k">workshop</span>: <span class="s">blueprint-path</span>}             <span class="c"># 6.1: Harness from a YAML blueprint; export is the way out</span>
+    <span class="k">operating_model</span>: {<span class="k">workshop</span>: <span class="s">federated</span>}                  <span class="c"># 6.2: the operating model; the platform team shares, project teams build, the domain accepts</span>
+    <span class="k">pipeline_owner</span>:  {<span class="k">workshop</span>: <span class="s">platform-pipeline</span>}          <span class="c"># 6.3: one CodePipeline the platform owns</span>
+    <span class="k">approvals</span>:       {<span class="k">workshop</span>: <span class="s">admin-catalogue + domain-release</span>}  <span class="c"># 6.5</span>
+    <span class="k">release_gate</span>:    {<span class="k">workshop</span>: <span class="s">evaluation + human-approval</span>}       <span class="c"># 6.5</span>
+    <span class="k">promotion</span>:       {<span class="k">workshop</span>: <span class="s">default-endpoint</span>}           <span class="c"># 6.6</span></code></pre>
         </section>
 
         <section id="hands-on">
@@ -562,7 +580,7 @@
               <li><div><span class="pill tag command">command</span><code>workshop traffic --prod 3</code>: seed three Prod conversations for module 7's online scores.</div></li>
               <li><div><span class="pill tag command">command</span><code>workshop obo</code>: the whole chain. Steps 1 and 2 of its output sign Alex in (T0) and exchange by hand (T1). Step 3 is the real call: the employee asks the on-behalf-of harness over HTTPS with <code>Authorization: Bearer T0</code>: <em>What is my annual leave balance? My employee id is E1001.</em> The agent answers in Alex's name (Hi Alex, your annual leave balance is 12 days ...) using <code>hrapi___get_leave_balance</code>. Step 4 reads the evidence from the HR API log: <code>tool get_leave_balance: sub (same as T0), employee_id E1001, aud ['hr-tools-api'], azp hr-obo-gateway</code>. The first call of a new version takes 35 to 40 seconds; a warm run about 24 seconds end to end.</div></li>
               <li><div><span class="pill tag command">command</span>Optional: <code>workshop export</code> generates Strands Agents or LangGraph code from the Dev harness. The record's <code>export:</code> input picks the flavour (<code>--strands</code> or <code>--langgraph</code> overrides it); the file lands in <code>exports/hr_assistant_dev_strands_agent.py</code> or <code>hr_assistant_dev_langgraph_agent.py</code> (the command prints the path; <code>--out</code> changes the directory). <code>workshop export --run</code> runs it once on your laptop through the relay with a temporary model-gateway key that is deleted afterwards.</div></li>
-              <li><div><span class="pill tag record">record</span>Write your three module 6 decisions.</div></li>
+              <li><div><span class="pill tag record">record</span>Read the module 6 record entries in <code>design-record.yaml</code> and compare each with the option marked <span class="opt-tag rec">Recommended</span> on this page.</div></li>
             </ol>
 <pre class="code-dark"><code><span class="c"># workshop obo after module 6: the whole chain (lines shortened)</span>
 == 1  the employee signs in at Keycloak: alex.rivera (E1001), client hr-portal
@@ -592,13 +610,14 @@ OK   on behalf of alex.rivera: the HR API saw sub identical to T0, audience ['hr
             <figcaption><strong>Changed:</strong> CodePipeline, its private versioned source and artifact buckets, worker Lambda, DynamoDB, AgentCore Runtime (the Dev and Prod harnesses and, beside Dev, the on-behalf-of twin hr_assistant_dev_obo), Memory and Evaluations; also the Prod key, which promotion created in the model gateway and the token vault, and one inline policy on the Dev agent role. Runtime connects through interfaces in the private app subnets. The release passed its gate; promotion registered online evaluation. Two things the twin depends on are outside the figure: Keycloak, where AgentCore Identity exchanges the employee's token for the harness and again for the on-behalf-of gateway of module 4, and the HR API behind that gateway; both live in module 2's IdP stack outside the landing zone. Export remains optional. Click to open full size.</figcaption>
           </figure>
         </section>
-      
+
         <section id="glossary">
           <h2>Glossary</h2>
           <div class="glossary">
             <dl>
               <dt>Workload</dt><dd>An agent and its blueprint, memories, harnesses and releases.</dd>
-              <dt>AgentOps</dt><dd>Build, test, approve, promote, observe and improve agents.</dd>
+              <dt>Project blueprint</dt><dd>Course name for a project's path to Prod: the <code>Project</code> definition the admin onboards (module 3) and the <code>AgentBlueprint</code> the team writes; the platform renders, tests, approves and promotes it. The two artifact kinds keep their names.</dd>
+              <dt>Delivery</dt><dd>Build, test, approve, promote, observe and improve agents (often called AgentOps).</dd>
               <dt>Blueprint</dt><dd>YAML specification of model, prompt, tools, knowledge, memory, limits, budget and evaluation thresholds.</dd>
               <dt>Harness</dt><dd>AgentCore's configuration-driven agent, using a Strands Agents loop.</dd>
               <dt>Runtime</dt><dd>Managed compute for a Harness or custom agent code.</dd>
@@ -606,7 +625,7 @@ OK   on behalf of alex.rivera: the HR API saw sub identical to T0, audience ['hr
               <dt>Version, endpoint</dt><dd>Immutable numbered configuration; a pointer to a version. Both environments use <code>DEFAULT</code>, which follows the latest version (named endpoints are denied in the event accounts).</dd>
               <dt>Evaluator</dt><dd>A judge that scores an aspect of agent behaviour.</dd>
               <dt>Release gate</dt><dd>Dataset evaluation against thresholds, followed by human approval.</dd>
-              <dt>Export, pipeline</dt><dd>Generate Strands Agents or LangGraph code; use CI/CD to test, deploy and release it.</dd>
+              <dt>Export, pipeline</dt><dd>Generate Strands Agents or LangGraph code; a project-owned pipeline would test and deploy it, then hand the release to the platform's gate (discussed, not built).</dd>
               <dt>On-behalf-of twin</dt><dd>hr_assistant_dev_obo: the Dev harness rendered once more with a JWT authorizer, so it can act for the employee who called it.</dd>
             </dl>
           </div>
@@ -628,7 +647,7 @@ OK   on behalf of alex.rivera: the HR API saw sub identical to T0, audience ['hr
           <a href="module-3-rev.html">3 · Control plane and governance <span class="d">40 min</span></a>
           <a href="module-4-rev.html">4 · Tool plane <span class="d">40 min</span></a>
           <a href="module-5-rev.html">5 · Model gateway <span class="d">40 min</span></a>
-          <a href="module-6-rev.html">6 · AgentOps <span class="d">40 min</span></a>
+          <a href="module-6-rev.html">6 · Project blueprints and delivery <span class="d">40 min</span></a>
           <a href="module-7-rev.html">7 · Operate and observe <span class="d">40 min</span></a>
           <a href="cleanup.html">Clean up <span class="d">35 min</span></a>
         </nav>

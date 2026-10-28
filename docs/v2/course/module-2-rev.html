@@ -13,8 +13,8 @@
       .ours-box .concept-list + p { margin-top: 12px; }
       .start-now { margin: 0 0 18px; }
       .start-now p { margin: 6px 0 0; }
-      details.reference { margin: 14px 0; padding: 12px 14px; border: 1px solid #d5dce5; border-radius: 8px; }
-      details.reference > summary { cursor: pointer; font-weight: 700; color: #25364a; }
+      details.reference { margin: 14px 0; padding: 12px 14px; border: 1px solid #d5dbdb; border-radius: 8px; }
+      details.reference > summary { cursor: pointer; font-weight: 700; color: #232f3e; }
       details.reference[open] > summary { margin-bottom: 12px; }
       #glossary .glossary { margin-top: 0; }
     </style>
@@ -53,7 +53,7 @@
   <strong>Start now · about 8 minutes</strong>
   <p>Run <code>workshop apply 2</code>. Its first run also deploys the corporate identity provider (Keycloak), so it takes about eight minutes. Continue reading while it runs.</p>
 </aside>
-                    
+
                     <figure>
                         <svg viewBox="0 -8 960 338" role="img" aria-labelledby="fig2-title">
                             <title id="fig2-title">Three identity needs: people, agents, credentials</title>
@@ -78,14 +78,14 @@
                                 y1="118"
                                 x2="960"
                                 y2="118"
-                                stroke="#e5e8eb"
+                                stroke="#e3e8ef"
                             />
                             <line
                                 x1="0"
                                 y1="215"
                                 x2="960"
                                 y2="215"
-                                stroke="#e5e8eb"
+                                stroke="#e3e8ef"
                             />
                             <rect
                                 class="d-box d-people"
@@ -345,8 +345,19 @@
                                 text-anchor="middle"
                             >models</text>
                         </svg>
-                        <figcaption>The three personas use Cognito tokens; agents sign tool calls with IAM; model keys stay in the token vault. The dashed corporate IdP above Cognito is the brokered option of decision 2.1 and is not built here. The corporate IdP this module does deploy, Keycloak, is a second login for the HR scenario's employees and is not federated into Cognito: decision 2.4 places it, and decision 2.5 brings the employee's identity to the tools by exchanging that token at every door rather than passing it through. IAM identifies the service, not the employee; module 6 adds one exception, an on-behalf-of twin of the Dev agent that carries the employee's identity. Roles arrive in module 3 and keys in module 5.</figcaption>
+                        <figcaption>The three personas use Cognito tokens; agents sign tool calls with IAM; model keys stay in the token vault. The dashed corporate IdP above Cognito is the brokered option of decision 2.1 and is not built here. The corporate IdP this module does deploy, Keycloak, is a second login for the HR scenario's employees and is not federated into Cognito: <a href="#employee-login">the employees' login</a> explains it, and decision 2.4 brings the employee's identity to the tools by exchanging that token at every door rather than passing it through. IAM identifies the service, not the employee; module 6 adds one exception, an on-behalf-of twin of the Dev agent that carries the employee's identity. Roles arrive in module 3 and keys in module 5.</figcaption>
                     </figure>
+                    <h3 id="identity-goals">Three goals for an agent's identity</h3>
+                    <p>Take the HR assistant. An employee asks for their leave balance; the agent calls the HR system; the HR system must answer for that employee and nobody else. A finance agent never sees the call. Three goals follow, and every decision in this module serves one of them:</p>
+                    <table class="plain">
+                        <thead><tr><th>Goal</th><th>What it means</th><th>In this lab</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Identity propagation</strong></td><td>the person the agent acts for reaches the tool, in a token the tool can verify</td><td>demonstrated: the on-behalf-of chain T0 → T1 → T2 of decision 2.4, modules 4 and 6</td></tr>
+                            <tr><td><strong>Scope attenuation</strong></td><td>least-privilege delegation: each hop receives only what the next resource or task needs, such as a token bound to the next door; not a promise that every hop holds strictly fewer permissions</td><td>demonstrated as <strong>audience binding</strong>: every exchange binds <code>aud</code> to the next door, and Keycloak's audience mappers decide which audiences a client may ask for. Not demonstrated: OAuth <code>scope</code> enforcement. The realm defines no client scopes and no tool checks one; a production design would add scopes per tool, enforced by the resource server that receives them</td></tr>
+                            <tr><td><strong>Autonomous workload identity</strong></td><td>an agent that runs with no person behind it has an identity of its own, with its own permissions</td><td>built: each harness runs as its project's execution role (SigV4) with an AgentCore workload identity; the Dev and Prod agents use only this</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="note">Identity providers support these goals unevenly. Cognito issues tokens but cannot exchange one; Keycloak exchanges only access tokens, so AgentCore Identity must name that subject token type. Check your own provider's token exchange support before you design the chain.</p>
                     <h3 id="employee-behind-the-agent">The employee behind the agent</h3>
                     <p>Look again at the middle lane of the figure. The agent signs its tool call with its own role, so the tool sees a service and nothing else. For a tool that answers the same way for everyone, this is fine. For a tool that holds personal data, such as the leave balance of one employee, it is not: the tool has to take the agent's word for whose record it should open. If the agent passes the wrong employee id, by mistake or because a prompt talked it into it, the tool cannot tell. The honest fix is for the tool to learn who asked from something it can verify, and that something is a token.</p>
                     <p>A token is a signed note. It says who the holder is (the <code>sub</code> claim), whom the note is addressed to (<code>aud</code>, the audience), what it allows (<code>scope</code>), who signed it (<code>iss</code>, the issuer) and until when (<code>exp</code>). A well-built door accepts only a note addressed to it, and that is the single most useful rule in this module. It rules out the obvious shortcut, where the agent simply forwards the employee's own token to every tool it calls. One note would then open every door: a tool that received it could replay it against any other service the employee may use, acting as the employee without the employee's knowledge. Security people call this the confused deputy, and the MCP specification forbids the practice, which it calls token passthrough.</p>
@@ -382,6 +393,26 @@
                             </tr>
                         </tbody>
                     </table>
+                <h3 id="employee-login">The employees' login: Keycloak in this lab</h3>
+                    <p>Where the employees sign in is not a separate design decision: in production it is the company's existing identity provider, such as Okta or Entra ID, and the platform's own sign-in can be brokered to it (decision 2.1). This lab still needs a login that can exchange tokens. Cognito's token endpoint knows the authorization code, refresh token and client credentials grants, and not RFC 8693, and an event account has no SaaS tenant, so <code>workshop apply 2</code> runs Keycloak as the stand-in.</p>
+                    <div class="ours-box">
+                            <p><strong>This workshop.</strong> Personas keep signing in at Cognito (2.1). Employees get a second login, <strong>Keycloak 26.8.1</strong>, run by us: the point is a real RFC 8693 token exchange, which Cognito cannot do, and a lab account has no SaaS tenant. It has <strong>three parts</strong>:</p>
+<ul class="concept-list">
+  <li><strong>Task:</strong> one Fargate task in a small public VPC of its own, outside the private landing zone.</li>
+  <li><strong>Door:</strong> an internal load balancer, exposed over HTTPS by an API Gateway HTTP API: a free certificate, no domain, a stable issuer.</li>
+  <li><strong>Realm:</strong> <code>anycompany</code>, imported from <code>foundation/keycloak/realm.json</code> at every start.</li>
+</ul>
+                            <p class="also">The realm has <strong>four clients</strong>:</p>
+<ul class="concept-list">
+  <li><code>hr-portal</code>: public, password grant; the HR portal's login. Its tokens carry the audience <code>hr-agent</code>.</li>
+  <li><code>hr-agent</code>: confidential, token exchange on; an audience mapper lets it mint tokens for <code>hr-obo-gateway</code>.</li>
+  <li><code>hr-obo-gateway</code>: confidential, token exchange on; its mapper mints tokens for <code>hr-tools-api</code>.</li>
+  <li><code>hr-tools-api</code>: an audience only.</li>
+</ul>
+                            <p class="also">The audience mappers are the rule book: a token can only be exchanged by a client named in its <code>aud</code>, and a client can only ask for audiences its own mappers mint. Every exchanged token keeps <code>sub</code> and <code>employee_id</code>, gets a new <code>aud</code>, and names the asking client in <code>azp</code>.</p>
+                            <p class="also"><strong>Shortcut:</strong> Keycloak runs in development mode and keeps its data in the task. After a task restart the realm comes back from the file but the employee does not; run <code>workshop apply 2</code> again.</p>
+                            <p class="prod"><strong>Production path.</strong> Okta or Entra ID as the employees' issuer, with MFA and lifecycle owned by the identity team. The design of the chain carries over, but the switch is not a URL change: validate that the new provider supports RFC 8693 and the grants you need, which clients may exchange for which audiences, and the claims, audiences and scopes each hop receives.</p>
+                        </div>
                 </section>
                 <!-- Personas -->
                 <section id="personas">
@@ -400,311 +431,19 @@
                     <p class="note">One more person appears in modules 2, 4 and 6: <strong>Alex Rivera</strong>, employee E1001 in the sample data. Alex is not a hat you wear. Alex signs in at the corporate IdP, not at Cognito, and <code>workshop obo</code> performs that sign-in to show what an agent can do on an employee's behalf.</p>
                 </section>
                 <section id="decisions">
-                    <h2>Five decisions
+                    <h2>Decisions
                         <span class="time">Design · 10 min</span>
                     </h2>
                     <div class="card">
                         <h4 class="q" id="d2-1">
                             <span class="id">2.1</span>Who signs people in?
                         </h4>
-                        <figure style="margin:0 0 10px">
-                            <svg viewBox="0 0 960 298" role="img" aria-labelledby="fig2-d1-title">
-                                <title id="fig2-d1-title">Who signs people in: a Cognito user pool, a corporate IdP brokered into Cognito, or the IdP as the direct issuer</title>
-                                <defs>
-                                    <marker
-                                        id="fig2-d1-arr"
-                                        viewBox="0 0 10 10"
-                                        refX="9"
-                                        refY="5"
-                                        markerWidth="7"
-                                        markerHeight="7"
-                                        orient="auto-start-reverse"
-                                    >
-                                        <path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/>
-                                    </marker>
-                                </defs>
-                                <text class="d-text d-title" x="22" y="24">A · Cognito user pool</text>
-                                <rect
-                                    class="d-box d-account d-ours d-glow"
-                                    x="12"
-                                    y="34"
-                                    width="290"
-                                    height="230"
-                                />
-                                <rect
-                                    x="196"
-                                    y="12"
-                                    width="106"
-                                    height="20"
-                                    rx="10"
-                                    fill="#ffe3b3"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="249"
-                                    y="26"
-                                    text-anchor="middle"
-                                    style="font-size:11.5px;font-weight:700;fill:#6b3d00"
-                                >this workshop</text>
-                                <rect
-                                    class="d-box d-people"
-                                    x="26"
-                                    y="46"
-                                    width="262"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="157"
-                                    y="64"
-                                    text-anchor="middle"
-                                >People</text>
-                                <path class="d-arrow" d="M157 74 L157 90" marker-end="url(#fig2-d1-arr)"/>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="26"
-                                    y="92"
-                                    width="262"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="157"
-                                    y="110"
-                                    text-anchor="middle"
-                                >Amazon Cognito</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="157"
-                                    y="126"
-                                    text-anchor="middle"
-                                >user pool · 3 groups</text>
-                                <path class="d-arrow" d="M157 136 L157 158" marker-end="url(#fig2-d1-arr)"/>
-                                <text class="d-text d-small" x="165" y="152">token (group inside)</text>
-                                <rect
-                                    class="d-box d-platform"
-                                    x="26"
-                                    y="160"
-                                    width="262"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="157"
-                                    y="178"
-                                    text-anchor="middle"
-                                >Platform UI and API</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="157"
-                                    y="194"
-                                    text-anchor="middle"
-                                >route allowed by group</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="157"
-                                    y="226"
-                                    text-anchor="middle"
-                                >Switch persona swaps the token</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="157"
-                                    y="240"
-                                    text-anchor="middle"
-                                >in your browser (workshop shortcut)</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="157"
-                                    y="286"
-                                    text-anchor="middle"
-                                >works on day one · no single sign-on</text>
-                                <text class="d-text d-title" x="347" y="24">B · Corporate IdP, brokered</text>
-                                <rect
-                                    class="d-box d-account"
-                                    x="337"
-                                    y="34"
-                                    width="290"
-                                    height="230"
-                                />
-                                <rect
-                                    class="d-box d-people"
-                                    x="351"
-                                    y="46"
-                                    width="262"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="482"
-                                    y="64"
-                                    text-anchor="middle"
-                                >People</text>
-                                <path class="d-arrow" d="M482 74 L482 90" marker-end="url(#fig2-d1-arr)"/>
-                                <rect
-                                    class="d-box"
-                                    x="351"
-                                    y="92"
-                                    width="262"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="482"
-                                    y="110"
-                                    text-anchor="middle"
-                                >Corporate IdP</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="482"
-                                    y="126"
-                                    text-anchor="middle"
-                                >Okta, Entra ID, Keycloak</text>
-                                <path class="d-arrow" d="M482 136 L482 156" marker-end="url(#fig2-d1-arr)"/>
-                                <text class="d-text d-small" x="490" y="151">federated in</text>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="351"
-                                    y="158"
-                                    width="262"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="482"
-                                    y="176"
-                                    text-anchor="middle"
-                                >Amazon Cognito</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="482"
-                                    y="192"
-                                    text-anchor="middle"
-                                >issues the token</text>
-                                <path class="d-arrow" d="M482 202 L482 222" marker-end="url(#fig2-d1-arr)"/>
-                                <text class="d-text d-small" x="490" y="217">token</text>
-                                <rect
-                                    class="d-box d-platform"
-                                    x="351"
-                                    y="224"
-                                    width="262"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="482"
-                                    y="242"
-                                    text-anchor="middle"
-                                >Platform UI and API</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="482"
-                                    y="286"
-                                    text-anchor="middle"
-                                >single sign-on · one more hop</text>
-                                <text class="d-text d-title" x="672" y="24">C · The IdP as the direct issuer</text>
-                                <rect
-                                    class="d-box d-account"
-                                    x="662"
-                                    y="34"
-                                    width="290"
-                                    height="230"
-                                />
-                                <rect
-                                    class="d-box d-people"
-                                    x="676"
-                                    y="46"
-                                    width="262"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="807"
-                                    y="64"
-                                    text-anchor="middle"
-                                >People</text>
-                                <path class="d-arrow" d="M807 74 L807 90" marker-end="url(#fig2-d1-arr)"/>
-                                <rect
-                                    class="d-box"
-                                    x="676"
-                                    y="92"
-                                    width="262"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="807"
-                                    y="110"
-                                    text-anchor="middle"
-                                >Corporate IdP</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="807"
-                                    y="126"
-                                    text-anchor="middle"
-                                >the direct issuer, no Cognito</text>
-                                <path class="d-arrow" d="M715 136 L715 170" marker-end="url(#fig2-d1-arr)"/>
-                                <path class="d-arrow" d="M807 136 L807 170" marker-end="url(#fig2-d1-arr)"/>
-                                <path class="d-arrow" d="M899 136 L899 170" marker-end="url(#fig2-d1-arr)"/>
-                                <text
-                                    class="d-text d-small"
-                                    x="761"
-                                    y="157"
-                                    text-anchor="middle"
-                                >token</text>
-                                <rect
-                                    class="d-box d-platform"
-                                    x="676"
-                                    y="172"
-                                    width="78"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="715"
-                                    y="190"
-                                    text-anchor="middle"
-                                >UI</text>
-                                <rect
-                                    class="d-box d-platform"
-                                    x="768"
-                                    y="172"
-                                    width="78"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="807"
-                                    y="190"
-                                    text-anchor="middle"
-                                >API</text>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="860"
-                                    y="172"
-                                    width="78"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="899"
-                                    y="190"
-                                    text-anchor="middle"
-                                >gateways</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="807"
-                                    y="226"
-                                    text-anchor="middle"
-                                >every component trusts the IdP</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="807"
-                                    y="286"
-                                    text-anchor="middle"
-                                >fewer parts · tied to one IdP</text>
-                            </svg>
-                            <figcaption>Three sign-in patterns: local Cognito users, a corporate IdP through Cognito, or a direct IdP. Orange marks the workshop choice. The HR scenario's employees are a separate population and sign in at Keycloak (decision 2.4).</figcaption>
+
+                        <figure>
+                            <img src="images/module-2.1.png" style="width:100%;">
                         </figure>
+
+
                         <table class="options">
                             <thead>
                                 <tr>
@@ -715,20 +454,20 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr class="ours">
-                                    <td>Cognito user pool, local users and groups</td>
-                                    <td class="good">works on day one; simple</td>
-                                    <td class="bad">a separate user store; no single sign-on</td>
-                                    <td class="when">a pilot or a workshop</td>
-                                </tr>
                                 <tr>
-                                    <td>Corporate IdP (Okta, Entra ID, Keycloak) federated into Cognito, "brokered"</td>
+                                    <td>A · Corporate IdP (Okta, Entra ID, Keycloak) federated into Cognito, "brokered"</td>
                                     <td class="good">single sign-on; one token issuer for every component</td>
                                     <td class="bad">one more hop to configure</td>
                                     <td class="when">an enterprise with an IdP</td>
                                 </tr>
-                                <tr>
-                                    <td>The IdP as the direct issuer, no Cognito</td>
+                                <tr class="ours">
+                                    <td><span class="opt-tag ws">This workshop</span><br>B · Cognito user pool, local users and groups</td>
+                                    <td class="good">works on day one; simple</td>
+                                    <td class="bad">a separate user store; no single sign-on</td>
+                                    <td class="when">a pilot or a workshop</td>
+                                </tr>
+                                <tr  class="rec">
+                                    <td><span class="opt-tag rec">Recommended</span><br>C · The IdP as the direct issuer, no Cognito</td>
                                     <td class="good">fewer parts</td>
                                     <td class="bad">every component must trust the IdP; tied to one IdP</td>
                                     <td class="when">the IdP team owns tokens end to end</td>
@@ -743,7 +482,7 @@
   <li><code>approvers</code>, role <code>approver</code>: approve releases and promote them.</li>
 </ul>
                             <p class="also">The three persona users are named after their roles, <code>admin</code>, <code>developer</code> and <code>approver</code>: that is what you type at sign-in, while the group names are what you see in the Cognito console. The API checks the token's group on every write. Only the Domain approver can approve a release; the Platform admin cannot. This is <strong>separation of duties</strong>. Groups already travel in the token, so no separate user-role attribute is needed.</p>
-                            <p class="also">These groups are the platform's own users. Employees who talk to the HR assistant never touch the platform console; they sign in at the company login, which decision 2.4 brings into the lab as Keycloak.</p>
+                            <p class="also">These groups are the platform's own users. Employees who talk to the HR assistant never touch the platform console; they sign in at the company login, which this lab runs as Keycloak (<a href="#employee-login">the employees' login</a>).</p>
                             <p class="also"><strong>Switch persona</strong> is a workshop shortcut with <strong>two steps</strong>:</p>
 <ul class="concept-list">
   <li><code>POST /me/switch</code> signs in the selected persona using its stored password.</li>
@@ -756,248 +495,13 @@
                         <h4 class="q" id="d2-2">
                             <span class="id">2.2</span>How do agents authenticate to the tool gateway?
                         </h4>
-                        <figure style="margin:0 0 10px">
-                            <svg viewBox="0 0 960 284" role="img" aria-labelledby="fig2-d2-title">
-                                <title id="fig2-d2-title">How an agent authenticates to the tool gateway: a SigV4 call signed by its execution role, or an OAuth token (JWT) that carries the user</title>
-                                <defs>
-                                    <marker
-                                        id="fig2-d2-arr"
-                                        viewBox="0 0 10 10"
-                                        refX="9"
-                                        refY="5"
-                                        markerWidth="7"
-                                        markerHeight="7"
-                                        orient="auto-start-reverse"
-                                    >
-                                        <path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/>
-                                    </marker>
-                                </defs>
-                                <text class="d-text d-title" x="22" y="24">A · IAM SigV4 with the execution role</text>
-                                <rect
-                                    class="d-box d-account d-ours d-glow"
-                                    x="12"
-                                    y="34"
-                                    width="460"
-                                    height="216"
-                                />
-                                <rect
-                                    x="366"
-                                    y="12"
-                                    width="106"
-                                    height="20"
-                                    rx="10"
-                                    fill="#ffe3b3"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="419"
-                                    y="26"
-                                    text-anchor="middle"
-                                    style="font-size:11.5px;font-weight:700;fill:#6b3d00"
-                                >this workshop</text>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="26"
-                                    y="48"
-                                    width="280"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="166"
-                                    y="66"
-                                    text-anchor="middle"
-                                >Agent</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="166"
-                                    y="82"
-                                    text-anchor="middle"
-                                >role agent-platform-proj-hr-assistant-dev-agent</text>
-                                <path class="d-arrow" d="M166 92 L166 116" marker-end="url(#fig2-d2-arr)"/>
-                                <text class="d-text d-small" x="176" y="108">signed call (SigV4)</text>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="26"
-                                    y="118"
-                                    width="280"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="166"
-                                    y="136"
-                                    text-anchor="middle"
-                                >Gateway hr-assistant-dev-gw</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="166"
-                                    y="152"
-                                    text-anchor="middle"
-                                >IAM: InvokeGateway on this project's gateways</text>
-                                <path class="d-arrow" d="M166 162 L166 186" marker-end="url(#fig2-d2-arr)"/>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="26"
-                                    y="188"
-                                    width="280"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="166"
-                                    y="206"
-                                    text-anchor="middle"
-                                >Tools</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="166"
-                                    y="222"
-                                    text-anchor="middle"
-                                >see a service identity</text>
-                                <rect
-                                    class="d-box d-ghost"
-                                    x="322"
-                                    y="48"
-                                    width="136"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text d-ghost-text"
-                                    x="390"
-                                    y="66"
-                                    text-anchor="middle"
-                                >Employee</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="390"
-                                    y="94"
-                                    text-anchor="middle"
-                                >the user is not</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="390"
-                                    y="108"
-                                    text-anchor="middle"
-                                >in this call</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="242"
-                                    y="272"
-                                    text-anchor="middle"
-                                >SigV4 · IAM boundary per project + env</text>
-                                <text class="d-text d-title" x="497" y="24">B · OAuth token (JWT)</text>
-                                <rect
-                                    class="d-box d-account"
-                                    x="487"
-                                    y="34"
-                                    width="460"
-                                    height="216"
-                                />
-                                <rect
-                                    class="d-box d-people"
-                                    x="501"
-                                    y="48"
-                                    width="110"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="556"
-                                    y="66"
-                                    text-anchor="middle"
-                                >Employee</text>
-                                <path class="d-arrow" d="M611 62 L659 62" marker-end="url(#fig2-d2-arr)"/>
-                                <rect
-                                    class="d-box"
-                                    x="661"
-                                    y="48"
-                                    width="110"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="716"
-                                    y="66"
-                                    text-anchor="middle"
-                                >Issuer</text>
-                                <path class="d-arrow" d="M771 62 L819 62" marker-end="url(#fig2-d2-arr)"/>
-                                <text
-                                    class="d-text d-small"
-                                    x="795"
-                                    y="54"
-                                    text-anchor="middle"
-                                >token</text>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="821"
-                                    y="48"
-                                    width="110"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="876"
-                                    y="66"
-                                    text-anchor="middle"
-                                >Agent</text>
-                                <path class="d-arrow" d="M876 76 L876 110" marker-end="url(#fig2-d2-arr)"/>
-                                <text
-                                    class="d-text d-small"
-                                    x="866"
-                                    y="97"
-                                    text-anchor="end"
-                                >token</text>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="821"
-                                    y="112"
-                                    width="110"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="876"
-                                    y="130"
-                                    text-anchor="middle"
-                                >Gateway</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="876"
-                                    y="146"
-                                    text-anchor="middle"
-                                >JWT authorizer</text>
-                                <path class="d-arrow" d="M876 156 L876 190" marker-end="url(#fig2-d2-arr)"/>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="781"
-                                    y="192"
-                                    width="150"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="856"
-                                    y="210"
-                                    text-anchor="middle"
-                                >Tools</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="856"
-                                    y="226"
-                                    text-anchor="middle"
-                                >can act as the user</text>
-                                <text class="d-text d-small" x="501" y="210">JWT when a tool must act as the employee,</text>
-                                <text class="d-text d-small" x="501" y="226">for example an HR system (decisions 2.4 and 2.5)</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="717"
-                                    y="272"
-                                    text-anchor="middle"
-                                >the user's identity reaches the tool · an issuer and an exchange to run</text>
-                            </svg>
-                            <figcaption>IAM identifies the agent service. A user JWT can carry the employee's identity when tools must act on their behalf. The Dev and Prod agents use A; module 6's on-behalf-of agent uses B, exchanging the token at every door instead of passing it through (decision 2.5).</figcaption>
+                        <p class="kind combine">Both are used, by different agents and at different gateways: A for the Dev and Prod harnesses, B for the on-behalf-of twin.</p>
+
+                        <figure>
+                            <img src="images/module-2.2.png" style="width:100%;">
                         </figure>
+
+
                         <table class="options">
                             <thead>
                                 <tr>
@@ -1009,22 +513,30 @@
                             </thead>
                             <tbody>
                                 <tr class="ours">
-                                    <td>IAM SigV4 with the agent's execution role</td>
+                                    <td><span class="opt-tag ws">This workshop · Dev and Prod harnesses</span><br>A · IAM SigV4 with the agent's execution role</td>
                                     <td class="good">no token plumbing; project and environment boundary</td>
-                                    <td class="bad">the end user's identity does not reach the tools, unless the tool is reached on the employee's behalf (decision 2.5)</td>
+                                    <td class="bad">the person does not reach the tool</td>
                                     <td class="when">internal tools; a service identity is enough</td>
                                 </tr>
-                                <tr>
-                                    <td>An OAuth token (JWT)</td>
-                                    <td class="good">the user's identity can flow to the tool</td>
+                                <tr class="ours">
+                                    <td><span class="opt-tag ws">This workshop · on-behalf-of twin</span><br>B · An OAuth token (JWT) for the person</td>
+                                    <td class="good">the person's identity can reach the tool</td>
                                     <td class="bad">an issuer, a token exchange, more setup</td>
-                                    <td class="when">tools must act as the user</td>
+                                    <td class="when">the tool must act for the person</td>
                                 </tr>
                             </tbody>
                         </table>
                         <div class="ours-box">
-                            <p><strong>This workshop.</strong> Agents sign calls with SigV4. A template creates <strong>one role pair per project and environment</strong>. The agent role can invoke only its own gateway; Dev cannot reach Prod.</p>
-                            <p class="prod"><strong>Production path.</strong> Use JWTs when tools must act as the employee. Keep IAM for internal tools where a service identity is enough. Decisions 2.4 and 2.5 build that JWT path beside the IAM one, on the same tools.</p>
+                            <p><strong>This workshop.</strong> Two callers, two doors, the same HR tools behind them:</p>
+                            <table class="plain">
+                                <thead><tr><th>Caller</th><th>Gateway and its inbound check</th><th>How the tool is then reached</th></tr></thead>
+                                <tbody>
+                                    <tr><td>A · <code>hr_assistant_dev</code>, <code>hr_assistant_prod</code>, as the agent role <code>agent-platform-proj-hr-assistant-&lt;env&gt;-agent</code></td><td><code>hr-assistant-&lt;env&gt;-gw</code>: IAM, <code>InvokeGateway</code> on <code>hr-assistant-&lt;env&gt;-gw*</code></td><td>the gateway's own role, <code>…-&lt;env&gt;-gateway</code>, invokes the Lambda tools and the knowledge base</td></tr>
+                                    <tr><td>B · <code>hr_assistant_dev_obo</code>, with token T1</td><td><code>hr-assistant-dev-gw-obo</code>: <code>CUSTOM_JWT</code>, audience <code>hr-obo-gateway</code></td><td>the gateway exchanges T1 for T2 and calls the HR API (2.4)</td></tr>
+                                </tbody>
+                            </table>
+                            <p class="also">A template creates <strong>one role pair per project and environment</strong>, an agent role and a gateway role. The agent role can invoke only its own gateways; Dev cannot reach Prod.</p>
+                            <p class="prod"><strong>Production path.</strong> Use JWTs when tools must act as the employee. Keep IAM for internal tools where a service identity is enough. Decision 2.4 follows the person along route B.</p>
                         </div>
                         <pre class="code-dark"><code>{
   <span class="k">"Effect"</span>: <span class="s">"Allow"</span>,
@@ -1037,273 +549,16 @@
   <li>No <code>bedrock:InvokeModel</code>: model access uses a model-gateway key instead.</li>
 </ul>
                     </div>
+
                     <div class="card">
                         <h4 class="q" id="d2-3">
-                            <span class="id">2.3</span>Where do agent secrets live?
+                            <span class="id">2.3</span>How does the employee's identity reach the tools?
                         </h4>
-                        <figure style="margin:0 0 10px">
-                            <svg viewBox="0 0 960 280" role="img" aria-labelledby="fig2-d3-title">
-                                <title id="fig2-d3-title">Where agent secrets live: IAM roles only, an API key in the AgentCore Identity token vault, or OAuth2 credential providers</title>
-                                <defs>
-                                    <marker
-                                        id="fig2-d3-arr"
-                                        viewBox="0 0 10 10"
-                                        refX="9"
-                                        refY="5"
-                                        markerWidth="7"
-                                        markerHeight="7"
-                                        orient="auto-start-reverse"
-                                    >
-                                        <path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/>
-                                    </marker>
-                                </defs>
-                                <text class="d-text d-title" x="22" y="24">A · IAM roles only</text>
-                                <rect
-                                    class="d-box d-account"
-                                    x="12"
-                                    y="34"
-                                    width="290"
-                                    height="212"
-                                />
-                                <rect
-                                    class="d-box d-aws"
-                                    x="26"
-                                    y="48"
-                                    width="262"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="157"
-                                    y="66"
-                                    text-anchor="middle"
-                                >Agent role</text>
-                                <path class="d-arrow" d="M157 76 L157 118" marker-end="url(#fig2-d3-arr)"/>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="26"
-                                    y="120"
-                                    width="262"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="157"
-                                    y="138"
-                                    text-anchor="middle"
-                                >AWS tools</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="157"
-                                    y="154"
-                                    text-anchor="middle"
-                                >Lambda, knowledge base</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="157"
-                                    y="196"
-                                    text-anchor="middle"
-                                >no secret to rotate</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="157"
-                                    y="268"
-                                    text-anchor="middle"
-                                >nothing to rotate · AWS tools only</text>
-                                <text class="d-text d-title" x="347" y="24">B · Token vault</text>
-                                <rect
-                                    class="d-box d-account d-ours d-glow"
-                                    x="337"
-                                    y="34"
-                                    width="290"
-                                    height="212"
-                                />
-                                <rect
-                                    x="521"
-                                    y="12"
-                                    width="106"
-                                    height="20"
-                                    rx="10"
-                                    fill="#ffe3b3"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="574"
-                                    y="26"
-                                    text-anchor="middle"
-                                    style="font-size:11.5px;font-weight:700;fill:#6b3d00"
-                                >this workshop</text>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="351"
-                                    y="48"
-                                    width="262"
-                                    height="58"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="482"
-                                    y="66"
-                                    text-anchor="middle"
-                                >AgentCore Identity</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="482"
-                                    y="82"
-                                    text-anchor="middle"
-                                >token vault · API-key provider</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="482"
-                                    y="96"
-                                    text-anchor="middle"
-                                >litellm-hr-assistant-dev-claude-sonnet-5</text>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="351"
-                                    y="140"
-                                    width="60"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="381"
-                                    y="158"
-                                    text-anchor="middle"
-                                >Agent</text>
-                                <path class="d-arrow" d="M381 140 L381 108" marker-end="url(#fig2-d3-arr)"/>
-                                <text class="d-text d-small" x="389" y="128">1 · fetch key</text>
-                                <path class="d-arrow" d="M411 154 L501 154" marker-end="url(#fig2-d3-arr)"/>
-                                <text
-                                    class="d-text d-small"
-                                    x="456"
-                                    y="172"
-                                    text-anchor="middle"
-                                >2 · call with</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="456"
-                                    y="186"
-                                    text-anchor="middle"
-                                >the key</text>
-                                <rect
-                                    class="d-box d-platform"
-                                    x="503"
-                                    y="140"
-                                    width="110"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="558"
-                                    y="158"
-                                    text-anchor="middle"
-                                >Model gateway</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="482"
-                                    y="212"
-                                    text-anchor="middle"
-                                >never in agent config</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="482"
-                                    y="226"
-                                    text-anchor="middle"
-                                >one key per agent, environment and model</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="482"
-                                    y="268"
-                                    text-anchor="middle"
-                                >fetched at run time · rotation is yours</text>
-                                <text class="d-text d-title" x="672" y="24">C · OAuth2 providers</text>
-                                <rect
-                                    class="d-box d-account d-ours d-glow"
-                                    x="662"
-                                    y="34"
-                                    width="290"
-                                    height="212"
-                                />
-                                <rect
-                                    x="846"
-                                    y="12"
-                                    width="106"
-                                    height="20"
-                                    rx="10"
-                                    fill="#ffe3b3"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="899"
-                                    y="26"
-                                    text-anchor="middle"
-                                    style="font-size:11.5px;font-weight:700;fill:#6b3d00"
-                                >this workshop</text>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="676"
-                                    y="48"
-                                    width="262"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="807"
-                                    y="66"
-                                    text-anchor="middle"
-                                >Agent</text>
-                                <path class="d-arrow" d="M807 76 L807 94" marker-end="url(#fig2-d3-arr)"/>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="676"
-                                    y="96"
-                                    width="262"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="807"
-                                    y="114"
-                                    text-anchor="middle"
-                                >AgentCore Identity</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="807"
-                                    y="130"
-                                    text-anchor="middle"
-                                >OAuth2 credential provider</text>
-                                <path class="d-arrow" d="M730 140 L730 184" marker-end="url(#fig2-d3-arr)"/>
-                                <text class="d-text d-small" x="738" y="158">token: M2M (client credentials)</text>
-                                <text class="d-text d-small" x="738" y="174">or on behalf of a user (consent)</text>
-                                <rect
-                                    class="d-box"
-                                    x="676"
-                                    y="186"
-                                    width="262"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="807"
-                                    y="204"
-                                    text-anchor="middle"
-                                >SaaS tool</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="807"
-                                    y="220"
-                                    text-anchor="middle"
-                                >for example an HR system</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="807"
-                                    y="268"
-                                    text-anchor="middle"
-                                >the SaaS standard · most setup</text>
-                            </svg>
-                            <figcaption>Three credential approaches: IAM needs no stored AWS secret; API keys live in the vault; OAuth supports service or user access to other systems. We use B for the model key and C for the two Keycloak clients of the on-behalf-of chain; AgentCore Identity holds their secrets and the agent never sees them.</figcaption>
+
+                        <figure>
+                            <img src="images/module-2.3.png" style="width:100%;">
                         </figure>
+
                         <table class="options">
                             <thead>
                                 <tr>
@@ -1314,800 +569,28 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>IAM roles only</td>
-                                    <td class="good">nothing to rotate</td>
-                                    <td class="bad">only for AWS tools</td>
-                                    <td class="when">all tools are AWS resources</td>
-                                </tr>
-                                <tr class="ours">
-                                    <td>An API key in the AgentCore Identity token vault</td>
-                                    <td class="good">fetched at run time; never in agent config</td>
-                                    <td class="bad">rotation is yours to run</td>
-                                    <td class="when">non-AWS APIs, such as the model gateway</td>
-                                </tr>
-                                <tr class="ours">
-                                    <td>OAuth2 credential providers: M2M, or on behalf of a user</td>
-                                    <td class="good">the standard for SaaS; user consent possible</td>
-                                    <td class="bad">most setup</td>
-                                    <td class="when">SaaS tools, for example an HR system</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div class="ours-box">
-                            <p><strong>This workshop.</strong> There are <strong>two credential paths</strong>:</p>
-<ul class="concept-list">
-  <li><strong>Tools:</strong> IAM roles cover agent → gateway → tool; no static secret.</li>
-  <li><strong>Models:</strong> one key per agent, environment and model, stored as an API-key provider in AgentCore Identity. The agent fetches it at runtime.</li>
-  <li><strong>On-behalf-of chain:</strong> the Keycloak client secrets of hr-agent and hr-obo-gateway live in the same vault as OAuth2 credential providers, <code>kc-hr-agent</code> and <code>kc-hr-obo-gateway</code>. AgentCore Identity uses them for the token exchange; the agent code never sees them (2.5).</li>
-</ul>
-                            <p class="prod"><strong>Production path.</strong> Add OAuth providers for SaaS. For an HR system, use the on-behalf-of exchange of decision 2.5, so the tool acts for the employee who asked; use the consent-based three-legged flow for SaaS tools that require each user's consent.</p>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h4 class="q" id="d2-4">
-                            <span class="id">2.4</span>Which login do employees use, and where does it run?
-                        </h4>
-                        <figure style="margin:0 0 10px">
-                            <svg viewBox="0 0 960 298" role="img" aria-labelledby="fig2-d4-title">
-                                <title id="fig2-d4-title">Where the employees' login runs: Cognito with the corporate IdP federated in, a self-hosted Keycloak, or a SaaS identity provider</title>
-                                <defs>
-                                    <marker
-                                        id="fig2-d4-arr"
-                                        viewBox="0 0 10 10"
-                                        refX="9"
-                                        refY="5"
-                                        markerWidth="7"
-                                        markerHeight="7"
-                                        orient="auto-start-reverse"
-                                    >
-                                        <path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/>
-                                    </marker>
-                                </defs>
-                                <text class="d-text d-title" x="22" y="24">A · Cognito only, IdP federated in</text>
-                                <rect
-                                    class="d-box d-account"
-                                    x="12"
-                                    y="34"
-                                    width="290"
-                                    height="230"
-                                />
-                                <rect
-                                    class="d-box d-people"
-                                    x="26"
-                                    y="46"
-                                    width="262"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="157"
-                                    y="64"
-                                    text-anchor="middle"
-                                >Employees</text>
-                                <path class="d-arrow" d="M157 74 L157 90" marker-end="url(#fig2-d4-arr)"/>
-                                <rect
-                                    class="d-box"
-                                    x="26"
-                                    y="92"
-                                    width="262"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="157"
-                                    y="110"
-                                    text-anchor="middle"
-                                >Corporate IdP</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="157"
-                                    y="126"
-                                    text-anchor="middle"
-                                >signs in; hands over to Cognito</text>
-                                <path class="d-arrow" d="M157 136 L157 156" marker-end="url(#fig2-d4-arr)"/>
-                                <text class="d-text d-small" x="165" y="151">federated in</text>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="26"
-                                    y="158"
-                                    width="262"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="157"
-                                    y="176"
-                                    text-anchor="middle"
-                                >Amazon Cognito</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="157"
-                                    y="192"
-                                    text-anchor="middle"
-                                >issues the token; cannot exchange one</text>
-                                <path class="d-arrow" d="M157 202 L157 222" marker-end="url(#fig2-d4-arr)"/>
-                                <text class="d-text d-small" x="165" y="217">token</text>
-                                <rect
-                                    class="d-box d-platform"
-                                    x="26"
-                                    y="224"
-                                    width="262"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="157"
-                                    y="242"
-                                    text-anchor="middle"
-                                >Platform UI and API</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="157"
-                                    y="286"
-                                    text-anchor="middle"
-                                >one issuer · no RFC 8693 exchange</text>
-                                <text class="d-text d-title" x="347" y="24">B · Keycloak, self-hosted</text>
-                                <rect
-                                    class="d-box d-account d-ours d-glow"
-                                    x="337"
-                                    y="34"
-                                    width="290"
-                                    height="230"
-                                />
-                                <rect
-                                    x="521"
-                                    y="12"
-                                    width="106"
-                                    height="20"
-                                    rx="10"
-                                    fill="#ffe3b3"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="574"
-                                    y="26"
-                                    text-anchor="middle"
-                                    style="font-size:11.5px;font-weight:700;fill:#6b3d00"
-                                >this workshop</text>
-                                <rect
-                                    class="d-box d-people"
-                                    x="351"
-                                    y="46"
-                                    width="262"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="482"
-                                    y="64"
-                                    text-anchor="middle"
-                                >Employee alex.rivera</text>
-                                <path class="d-arrow" d="M482 74 L482 90" marker-end="url(#fig2-d4-arr)"/>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="351"
-                                    y="92"
-                                    width="262"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="482"
-                                    y="110"
-                                    text-anchor="middle"
-                                >API Gateway HTTP API</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="482"
-                                    y="126"
-                                    text-anchor="middle"
-                                >the HTTPS door, free certificate</text>
-                                <path class="d-arrow" d="M482 136 L482 156" marker-end="url(#fig2-d4-arr)"/>
-                                <rect
-                                    class="d-box d-account"
-                                    x="351"
-                                    y="158"
-                                    width="262"
-                                    height="96"
-                                />
-                                <text
-                                    class="d-text d-small"
-                                    x="482"
-                                    y="174"
-                                    text-anchor="middle"
-                                >own VPC, outside the landing zone</text>
-                                <rect
-                                    class="d-box"
-                                    x="365"
-                                    y="182"
-                                    width="234"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="482"
-                                    y="200"
-                                    text-anchor="middle"
-                                >Keycloak 26.8.1 · one Fargate task</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="482"
-                                    y="216"
-                                    text-anchor="middle"
-                                >realm anycompany · token exchange on</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="482"
-                                    y="244"
-                                    text-anchor="middle"
-                                >behind an internal load balancer</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="482"
-                                    y="286"
-                                    text-anchor="middle"
-                                >a real exchange · yours to run · dev mode</text>
-                                <text class="d-text d-title" x="672" y="24">C · SaaS identity provider</text>
-                                <rect
-                                    class="d-box d-account"
-                                    x="662"
-                                    y="34"
-                                    width="290"
-                                    height="230"
-                                />
-                                <rect
-                                    class="d-box d-people"
-                                    x="676"
-                                    y="46"
-                                    width="262"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="807"
-                                    y="64"
-                                    text-anchor="middle"
-                                >Employees</text>
-                                <path class="d-arrow" d="M807 74 L807 90" marker-end="url(#fig2-d4-arr)"/>
-                                <rect
-                                    class="d-box"
-                                    x="676"
-                                    y="92"
-                                    width="262"
-                                    height="58"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="807"
-                                    y="110"
-                                    text-anchor="middle"
-                                >Okta · Entra ID · Auth0 · PingFederate</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="807"
-                                    y="126"
-                                    text-anchor="middle"
-                                >token exchange on</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="807"
-                                    y="140"
-                                    text-anchor="middle"
-                                >MFA, lifecycle and audit included</text>
-                                <path class="d-arrow" d="M807 150 L807 170" marker-end="url(#fig2-d4-arr)"/>
-                                <text class="d-text d-small" x="815" y="165">tokens</text>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="676"
-                                    y="172"
-                                    width="262"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="807"
-                                    y="190"
-                                    text-anchor="middle"
-                                >Harness · gateway · HR API</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="807"
-                                    y="206"
-                                    text-anchor="middle"
-                                >trust the tenant's tokens</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="807"
-                                    y="286"
-                                    text-anchor="middle"
-                                >production path · needs a tenant</text>
-                            </svg>
-                            <figcaption>Three places for the employees' login. A: the corporate IdP federated into Cognito; one issuer, but Cognito cannot exchange a token. B (ours): Keycloak on one Fargate task in its own VPC outside the landing zone, reached over HTTPS through API Gateway. C: a SaaS IdP, where most companies already are.</figcaption>
-                        </figure>
-                        <table class="options">
-                            <thead>
-                                <tr>
-                                    <th>Option</th>
-                                    <th>Pros</th>
-                                    <th>Cons</th>
-                                    <th>Choose when</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Cognito only, with the corporate IdP federated in (brokered)</td>
-                                    <td class="good">one issuer for the platform and its users; no server to run</td>
-                                    <td class="bad">no RFC 8693: Cognito's token endpoint knows authorization code, refresh token and client credentials only, so no on-behalf-of chain</td>
-                                    <td class="when">employees only need the platform UI; tools see a service identity</td>
-                                </tr>
-                                <tr class="ours">
-                                    <td>Keycloak, self-hosted</td>
-                                    <td class="good">a real token exchange you can watch; every setting is yours; a realm file makes it reproducible; free</td>
-                                    <td class="bad">a server to run, patch and back up; in the lab one task in development mode</td>
-                                    <td class="when">a lab, a pilot, or a company that already runs Keycloak</td>
+                                <tr class="ours rec">
+                                    <td><span class="opt-tag rec">Recommended where the person matters</span><span class="opt-tag ws">This workshop · on-behalf-of twin</span><br>A · On-behalf-of token exchange: a new token for the same person at every door (RFC 8693)</td>
+                                    <td class="good">each door receives a token addressed to it alone; the identity provider decides and records every exchange; no user interaction</td>
+                                    <td class="bad">an identity provider that implements RFC 8693; a credential provider per hop; two more round trips per tool call</td>
+                                    <td class="when">the person must reach the tool: HR, finance, ticketing</td>
                                 </tr>
                                 <tr>
-                                    <td>A SaaS identity provider (Okta, Entra ID, Auth0, PingFederate)</td>
-                                    <td class="good">the company login that already exists; token exchange, MFA, lifecycle and audit included</td>
-                                    <td class="bad">a tenant and an administrator you rarely have in a lab account; a licence; its own vocabulary</td>
-                                    <td class="when">production, almost always</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div class="ours-box">
-                            <p><strong>This workshop.</strong> Personas keep signing in at Cognito (2.1). Employees get a second login, <strong>Keycloak 26.8.1</strong>, run by us: the point is a real RFC 8693 token exchange, which Cognito cannot do, and a lab account has no SaaS tenant. It has <strong>three parts</strong>:</p>
-<ul class="concept-list">
-  <li><strong>Task:</strong> one Fargate task in a small public VPC of its own, outside the private landing zone, where a corporate IdP always is.</li>
-  <li><strong>Door:</strong> an internal load balancer, exposed over HTTPS by an API Gateway HTTP API: a free certificate, no domain, a stable issuer.</li>
-  <li><strong>Realm:</strong> <code>anycompany</code>, imported from <code>foundation/keycloak/realm.json</code> at every start.</li>
-</ul>
-                            <p class="also">The realm has <strong>four clients</strong>:</p>
-<ul class="concept-list">
-  <li><code>hr-portal</code>: public, password grant; the HR portal's login. Its tokens carry the audience <code>hr-agent</code>.</li>
-  <li><code>hr-agent</code>: confidential, token exchange on; an audience mapper lets it mint tokens for <code>hr-obo-gateway</code>.</li>
-  <li><code>hr-obo-gateway</code>: confidential, token exchange on; its mapper mints tokens for <code>hr-tools-api</code>.</li>
-  <li><code>hr-tools-api</code>: an audience only.</li>
-</ul>
-                            <p class="also">The audience mappers are the rule book: a token can only be exchanged by a client named in its <code>aud</code>, and a client can only ask for audiences its own mappers mint. Every exchanged token keeps <code>sub</code> and <code>employee_id</code>, gets a new <code>aud</code>, and names the asking client in <code>azp</code>.</p>
-                            <p class="also"><strong>Shortcut:</strong> Keycloak runs in development mode and keeps its data in the task. After a task restart the realm comes back from the file but the employee does not; run <code>workshop apply 2</code> again.</p>
-                            <p class="prod"><strong>Production path.</strong> Okta or Entra ID as the employees' issuer, with MFA and lifecycle owned by the identity team. The chain stays the same: the credential providers point at another discovery URL, and the audiences keep their names.</p>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h4 class="q" id="d2-5">
-                            <span class="id">2.5</span>How does the employee's identity reach the tools?
-                        </h4>
-                        <figure style="margin:0 0 10px">
-                            <svg viewBox="0 0 960 340" role="img" aria-labelledby="fig2-d5-title">
-                                <title id="fig2-d5-title">How the employee's identity reaches the tools: a token exchanged at every door, against the same token passed through every door</title>
-                                <defs>
-                                    <marker
-                                        id="fig2-d5-arr"
-                                        viewBox="0 0 10 10"
-                                        refX="9"
-                                        refY="5"
-                                        markerWidth="7"
-                                        markerHeight="7"
-                                        orient="auto-start-reverse"
-                                    >
-                                        <path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/>
-                                    </marker>
-                                    <marker
-                                        id="fig2-d5-deny"
-                                        viewBox="0 0 10 10"
-                                        refX="9"
-                                        refY="5"
-                                        markerWidth="7"
-                                        markerHeight="7"
-                                        orient="auto-start-reverse"
-                                    >
-                                        <path d="M0 0 L10 5 L0 10 z" fill="#b4471f"/>
-                                    </marker>
-                                </defs>
-                                <text class="d-text d-title" x="22" y="24">A · On-behalf-of token exchange at every door</text>
-                                <rect
-                                    x="826"
-                                    y="12"
-                                    width="106"
-                                    height="20"
-                                    rx="10"
-                                    fill="#ffe3b3"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="879"
-                                    y="26"
-                                    text-anchor="middle"
-                                    style="font-size:11.5px;font-weight:700;fill:#6b3d00"
-                                >this workshop</text>
-                                <rect
-                                    class="d-box d-account d-ours d-glow"
-                                    x="12"
-                                    y="34"
-                                    width="936"
-                                    height="206"
-                                />
-                                <rect
-                                    class="d-box d-aws"
-                                    x="216"
-                                    y="46"
-                                    width="444"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="438"
-                                    y="64"
-                                    text-anchor="middle"
-                                >AgentCore Identity · kc-hr-agent · kc-hr-obo-gateway</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="438"
-                                    y="80"
-                                    text-anchor="middle"
-                                >holds the client secrets · submits each exchange</text>
-                                <path class="d-arrow" d="M660 68 L708 68" marker-end="url(#fig2-d5-arr)"/>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="684"
-                                    y="60"
-                                    text-anchor="middle"
-                                >RFC 8693</text>
-                                <rect
-                                    class="d-box"
-                                    x="710"
-                                    y="46"
-                                    width="228"
-                                    height="44"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="824"
-                                    y="64"
-                                    text-anchor="middle"
-                                >Keycloak · realm anycompany</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="824"
-                                    y="80"
-                                    text-anchor="middle"
-                                >decides every exchange; keeps a record</text>
-                                <rect
-                                    class="d-box d-people"
-                                    x="18"
-                                    y="150"
-                                    width="84"
-                                    height="58"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="60"
-                                    y="172"
-                                    text-anchor="middle"
-                                >Employee</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="60"
-                                    y="188"
-                                    text-anchor="middle"
-                                >alex.rivera</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="60"
-                                    y="201"
-                                    text-anchor="middle"
-                                >E1001</text>
-                                <path class="d-arrow" d="M102 179 L120 179" marker-end="url(#fig2-d5-arr)"/>
-                                <rect
-                                    class="d-box d-blue"
-                                    x="122"
-                                    y="150"
-                                    width="112"
-                                    height="58"
-                                />
-                                <text
-                                    class="d-text d-strong"
-                                    x="178"
-                                    y="168"
-                                    text-anchor="middle"
-                                >T0</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="178"
-                                    y="184"
-                                    text-anchor="middle"
-                                >aud hr-agent</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="178"
-                                    y="198"
-                                    text-anchor="middle"
-                                >azp hr-portal</text>
-                                <path class="d-arrow" d="M234 179 L252 179" marker-end="url(#fig2-d5-arr)"/>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="254"
-                                    y="150"
-                                    width="124"
-                                    height="58"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="316"
-                                    y="172"
-                                    text-anchor="middle"
-                                >Harness</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="316"
-                                    y="188"
-                                    text-anchor="middle"
-                                >hr_assistant_dev_obo</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="316"
-                                    y="201"
-                                    text-anchor="middle"
-                                >lets aud hr-agent in</text>
-                                <path class="d-arrow d-dash" d="M316 150 L316 92" marker-end="url(#fig2-d5-arr)"/>
-                                <text class="d-text d-tiny" x="322" y="122">exchange T0 for T1</text>
-                                <path class="d-arrow" d="M378 179 L396 179" marker-end="url(#fig2-d5-arr)"/>
-                                <rect
-                                    class="d-box d-blue"
-                                    x="398"
-                                    y="150"
-                                    width="112"
-                                    height="58"
-                                />
-                                <text
-                                    class="d-text d-strong"
-                                    x="454"
-                                    y="168"
-                                    text-anchor="middle"
-                                >T1</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="454"
-                                    y="184"
-                                    text-anchor="middle"
-                                >aud hr-obo-gateway</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="454"
-                                    y="198"
-                                    text-anchor="middle"
-                                >azp hr-agent</text>
-                                <path class="d-arrow" d="M510 179 L528 179" marker-end="url(#fig2-d5-arr)"/>
-                                <rect
-                                    class="d-box d-platform"
-                                    x="530"
-                                    y="150"
-                                    width="130"
-                                    height="58"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="595"
-                                    y="172"
-                                    text-anchor="middle"
-                                >Gateway</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="595"
-                                    y="188"
-                                    text-anchor="middle"
-                                >hr-assistant-dev-gw-obo</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="595"
-                                    y="201"
-                                    text-anchor="middle"
-                                >target hrapi · OpenAPI</text>
-                                <path class="d-arrow d-dash" d="M595 150 L595 92" marker-end="url(#fig2-d5-arr)"/>
-                                <text class="d-text d-tiny" x="601" y="122">exchange T1 for T2</text>
-                                <path class="d-arrow" d="M660 179 L678 179" marker-end="url(#fig2-d5-arr)"/>
-                                <rect
-                                    class="d-box d-blue"
-                                    x="680"
-                                    y="150"
-                                    width="112"
-                                    height="58"
-                                />
-                                <text
-                                    class="d-text d-strong"
-                                    x="736"
-                                    y="168"
-                                    text-anchor="middle"
-                                >T2</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="736"
-                                    y="184"
-                                    text-anchor="middle"
-                                >aud hr-tools-api</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="736"
-                                    y="198"
-                                    text-anchor="middle"
-                                >azp hr-obo-gateway</text>
-                                <path class="d-arrow" d="M792 179 L810 179" marker-end="url(#fig2-d5-arr)"/>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="812"
-                                    y="150"
-                                    width="130"
-                                    height="58"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="877"
-                                    y="172"
-                                    text-anchor="middle"
-                                >HR API</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="877"
-                                    y="188"
-                                    text-anchor="middle"
-                                >JWT authorizer · Lambda</text>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="877"
-                                    y="201"
-                                    text-anchor="middle"
-                                >logs the claims it got</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="480"
-                                    y="228"
-                                    text-anchor="middle"
-                                >sub and employee_id identical at every hop · the audience changes at every door · azp names the client that asked</text>
-                                <text class="d-text d-title" x="22" y="270">B · Token passthrough: one note through every door</text>
-                                <rect
-                                    class="d-box d-account"
-                                    x="12"
-                                    y="252"
-                                    width="936"
-                                    height="80"
-                                />
-                                <rect
-                                    class="d-box d-people"
-                                    x="28"
-                                    y="282"
-                                    width="100"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="78"
-                                    y="300"
-                                    text-anchor="middle"
-                                >Employee</text>
-                                <path class="d-arrow" d="M128 296 L166 296" marker-end="url(#fig2-d5-arr)"/>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="147"
-                                    y="290"
-                                    text-anchor="middle"
-                                >T0</text>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="168"
-                                    y="282"
-                                    width="100"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="218"
-                                    y="300"
-                                    text-anchor="middle"
-                                >Agent</text>
-                                <path class="d-arrow" d="M268 296 L306 296" marker-end="url(#fig2-d5-arr)"/>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="287"
-                                    y="290"
-                                    text-anchor="middle"
-                                >T0</text>
-                                <rect
-                                    class="d-box d-platform"
-                                    x="308"
-                                    y="282"
-                                    width="100"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="358"
-                                    y="300"
-                                    text-anchor="middle"
-                                >Gateway</text>
-                                <path class="d-arrow" d="M408 296 L446 296" marker-end="url(#fig2-d5-arr)"/>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="427"
-                                    y="290"
-                                    text-anchor="middle"
-                                >T0</text>
-                                <rect
-                                    class="d-box d-aws"
-                                    x="448"
-                                    y="282"
-                                    width="100"
-                                    height="28"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="498"
-                                    y="300"
-                                    text-anchor="middle"
-                                >Tool</text>
-                                <path class="d-arrow d-deny" d="M548 296 L586 296" marker-end="url(#fig2-d5-deny)"/>
-                                <text
-                                    class="d-text d-tiny"
-                                    x="567"
-                                    y="290"
-                                    text-anchor="middle"
-                                >T0</text>
-                                <rect
-                                    class="d-box"
-                                    x="588"
-                                    y="282"
-                                    width="250"
-                                    height="28"
-                                    style="fill:#fdf1ec;stroke:#b4471f"
-                                />
-                                <text
-                                    class="d-text"
-                                    x="713"
-                                    y="300"
-                                    text-anchor="middle"
-                                    style="fill:#7a2e12"
-                                >any other service the employee may use</text>
-                                <text
-                                    class="d-text d-small"
-                                    x="480"
-                                    y="324"
-                                    text-anchor="middle"
-                                >the same token opens every door, the confused deputy · the MCP specification forbids token passthrough</text>
-                            </svg>
-                            <figcaption>A (ours): every door receives its own token for the same person. T0 is addressed to the agent; AgentCore Identity exchanges it at Keycloak for T1 (the gateway) and again for T2 (the HR API). sub and employee_id never change; aud changes at every door; azp records who asked. B: the same token through every door, the confused deputy, which the MCP specification forbids.</figcaption>
-                        </figure>
-                        <table class="options">
-                            <thead>
-                                <tr>
-                                    <th>Option</th>
-                                    <th>Pros</th>
-                                    <th>Cons</th>
-                                    <th>Choose when</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>A service identity only: the tool sees the agent's role</td>
-                                    <td class="good">no token plumbing; one IAM boundary</td>
-                                    <td class="bad">the tool must trust the employee_id argument; it cannot tell who asked</td>
-                                    <td class="when">internal tools where the person does not matter; the Dev and Prod agents</td>
-                                </tr>
-                                <tr>
-                                    <td>Token passthrough: the agent forwards the employee's own token to every tool</td>
+                                    <td>B · Token passthrough: the agent forwards the employee's own token to every tool</td>
                                     <td class="good">nothing to exchange</td>
-                                    <td class="bad">one note opens every door: a tool can replay the token against any other service the employee may use (the confused deputy); the tool cannot tell whether the agent or the person called; forbidden by the MCP specification</td>
+                                    <td class="bad">one token opens every door: a tool can replay it against any other service the employee may use (the confused deputy); forbidden by the MCP specification</td>
                                     <td class="when">never; a local test at most</td>
                                 </tr>
                                 <tr class="ours">
-                                    <td>On-behalf-of token exchange: a new token for the same person at every door (RFC 8693)</td>
-                                    <td class="good">each door receives a token addressed to it alone; the identity provider decides and records every exchange; no user interaction</td>
-                                    <td class="bad">an identity provider that implements RFC 8693; a credential provider per hop; two more round trips to the identity provider per tool call</td>
-                                    <td class="when">the person must reach the tool: HR, finance, ticketing</td>
+                                    <td><span class="opt-tag ws">This workshop · Dev and Prod agents</span><br>C · A service identity only: the tool sees the gateway role</td>
+                                    <td class="good">no token plumbing; one IAM boundary</td>
+                                    <td class="bad">the tool must trust the <code>employee_id</code> argument; it cannot tell who asked</td>
+                                    <td class="when">internal tools where the person does not matter</td>
                                 </tr>
                             </tbody>
                         </table>
                         <div class="ours-box">
-                            <p><strong>This workshop.</strong> The token is exchanged at every door, and <strong>AgentCore Identity</strong> is the broker. The chain has <strong>three tokens</strong>:</p>
+                            <p><strong>This workshop.</strong> The Dev and Prod agents use C. The on-behalf-of twin uses A: the token is exchanged at every door, and <strong>AgentCore Identity</strong> is the broker. The chain has <strong>three tokens</strong>:</p>
 <ol class="concept-list">
   <li><strong>T0:</strong> the employee signs in at Keycloak through <code>hr-portal</code>: sub Alex, employee_id E1001, aud hr-agent, azp hr-portal.</li>
   <li><strong>T1:</strong> the on-behalf-of harness (module 6) accepts T0 and, before its first tool call, has AgentCore Identity exchange it through the provider kc-hr-agent: same sub and employee_id, aud hr-obo-gateway, azp hr-agent.</li>
@@ -2115,7 +598,7 @@
 </ol>
                             <p class="also">Keycloak decides each exchange: the asking client must be named in the token's audience and may only request audiences its mappers mint. Each credential provider is a CustomOauth2 provider with the realm's discovery URL, a client id and secret, and on-behalf-of mode TOKEN_EXCHANGE without an actor token. Two parameters go with every exchange. The first, the subject token type <code>access_token</code>, is there because Keycloak accepts no other kind of subject token and AgentCore Identity would otherwise send <code>jwt</code>. The second, the <code>audience</code>, is optional for Keycloak: it names the door the new token is for, and Keycloak checks it against the audiences the asking client's mappers may mint. The agent code and the gateway never see a secret; they name a provider.</p>
                             <p class="also"><code>workshop obo</code> performs the first exchange by hand so you can read T0 and T1 side by side. The gateway hop and the harness hop join it in modules 4 and 6.</p>
-                            <p class="prod"><strong>Production path.</strong> The exchange is production-grade; the gap is what the tool does with the identity. The HR tool still reads the <code>employee_id</code> argument. Read it from the token instead, or let a Cedar rule at the gateway compare token and argument: row-level security, decision 4.5. Replace Keycloak with Okta or Entra ID; nothing else in the chain changes.</p>
+                            <p class="prod"><strong>Production path.</strong> The exchange at every door is the production pattern; the gap is what the tool does with the identity. The HR tool still reads the <code>employee_id</code> argument. Read it from the token instead, or attach the on-behalf-of gateway to a policy engine and let a Cedar rule compare token and argument: row-level security, see <a href="module-4-rev.html#tool-receives-token">module 4</a>. No layer checks an OAuth scope today: each token is bound by its audience only. Replacing Keycloak with Okta or Entra ID needs the same validation as above: RFC 8693 and grant support, exchange permissions per client, and the claims, audiences and scopes each hop receives.</p>
                         </div>
                     </div>
                     <h3>Your design record, module 2</h3>
@@ -2123,11 +606,10 @@
   <span class="in">inputs</span>:                                       <span class="c"># read by: workshop apply 2 and workshop obo</span>
     <span class="in">employee</span>: <span class="s">E1001</span>                             <span class="c"># the employee who signs in at the corporate IdP; the on-behalf-of chain acts for this person</span>
   <span class="k">decisions</span>:
-    <span class="k">people</span>:        {<span class="k">workshop</span>: <span class="s">cognito-groups</span>,       <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># three groups are the three personas</span>
-    <span class="k">agents</span>:        {<span class="k">workshop</span>: <span class="s">iam-sigv4</span>,            <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># one role pair per project and environment</span>
-    <span class="k">secrets</span>:       {<span class="k">workshop</span>: <span class="s">token-vault</span>,          <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># one key per agent, environment, model</span>
-    <span class="k">corporate_idp</span>: {<span class="k">workshop</span>: <span class="s">keycloak-self-hosted</span>, <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># one realm on Fargate, HTTPS through API Gateway; Okta or Entra in production</span>
-    <span class="k">user_identity</span>: {<span class="k">workshop</span>: <span class="s">obo-token-exchange</span>,   <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># RFC 8693 at each hop, brokered by AgentCore Identity</span></code></pre>
+    <span class="k">people</span>:        {<span class="k">workshop</span>: <span class="s">cognito-groups</span>}        <span class="c"># 2.1: three groups are the three personas; reference: corporate IdP brokered</span>
+    <span class="k">agents</span>:        {<span class="k">workshop</span>: <span class="s">iam-sigv4 + obo-jwt</span>}   <span class="c"># 2.2: SigV4 for Dev and Prod; a realm token for the on-behalf-of twin</span>
+    <span class="k">secrets</span>:       {<span class="k">workshop</span>: <span class="s">token-vault</span>}           <span class="c"># 2.3: API key per agent, environment and model; OAuth2 providers for the exchange</span>
+    <span class="k">user_identity</span>: {<span class="k">workshop</span>: <span class="s">obo-token-exchange</span>}    <span class="c"># 2.4: RFC 8693 at each hop through Keycloak, brokered by AgentCore Identity</span></code></pre>
                     <p class="caption"><strong>Bold keys are apply inputs.</strong> The employee is the one input of this module: any id from <code>scenario/data/employees.json</code> works, and the examples on this page assume the default, E1001, Alex Rivera.</p>
                 </section>
                 <section id="hands-on">
@@ -2143,7 +625,7 @@
                             <li><div><span class="pill tag screen">screen</span>Use <code>uv run python scripts/doctor.py --show-passwords</code> to see the passwords (three personas and the employee). Sign in once, then use <strong>Switch persona</strong> (top-right user menu) to try all three roles.</div></li>
                             <li><div><span class="pill tag screen">screen</span>As Agent developer, <strong>Create domain</strong> and <strong>Governance</strong> are hidden. The apply command also tests the API: developer <code>POST /domains</code> returns 403 FORBIDDEN. Module 6 shows the release-approval restriction.</div></li>
                             <li><div><span class="pill tag file">file</span>Open the SDK's <code>templates/agent_role.json</code>. Find the gateway name pattern.</div></li>
-                            <li><div><span class="pill tag record">record</span>Write your five module 2 decisions in <code>design-record.yaml</code>.</div></li>
+                            <li><div><span class="pill tag record">record</span>Read the module 2 record entries in <code>design-record.yaml</code> and compare each with the option marked <span class="opt-tag rec">Recommended</span> on this page.</div></li>
                         </ol>
 <pre class="code-dark"><code><span class="c"># workshop apply 2: the realm as Keycloak imported it, the employee, the two credential providers (lines shortened)</span>
 client hr-portal        public, direct access grants   -&gt; aud ['hr-agent']
@@ -2197,7 +679,7 @@ OK   the employee's token can be exchanged on alex.rivera's behalf; nothing down
                         <figcaption><strong>Changed:</strong> Amazon Cognito (three groups and three users); AgentCore Identity (the two OAuth2 credential providers <code>kc-hr-agent</code> and <code>kc-hr-obo-gateway</code>; the model keys follow in module 5); at the bottom of the figure, the IdP stack: Keycloak and its load balancer in a small VPC of their own behind an API Gateway door, and the HR API with its Lambda in the resource layer (neither sits in a VPC). The API maps token groups to platform roles; employees sign in at Keycloak. Dev and Prod agents use IAM and vault credentials; module 6's on-behalf-of agent presents the employee's token instead. Click to open full size.</figcaption>
                     </figure>
                 </section>
-            
+
         <section id="glossary">
           <h2>Glossary</h2>
           <div class="glossary">
@@ -2276,7 +758,7 @@ OK   the employee's token can be exchanged on alex.rivera's behalf; nothing down
                     <a href="module-5-rev.html">5 · Model gateway
                         <span class="d">40 min</span>
                     </a>
-                    <a href="module-6-rev.html">6 · AgentOps
+                    <a href="module-6-rev.html">6 · Project blueprints and delivery
                         <span class="d">40 min</span>
                     </a>
                     <a href="module-7-rev.html">7 · Operate and observe

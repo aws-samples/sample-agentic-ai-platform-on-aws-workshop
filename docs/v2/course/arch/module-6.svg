@@ -173,11 +173,11 @@
 <use href="#sym-lambda" x="322" y="302" width="56" height="56"/>
 <text x="350.0" y="374" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">Lambda · agent-platform-api</text>
 <text x="350.0" y="389" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">routes · validation · roles</text>
-<rect x="485.0" y="294" width="190" height="103" rx="10" fill="#fff3e0" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
+<rect x="485.0" y="294" width="190" height="103" rx="10" fill="#fff8ea" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
 <use href="#sym-lambda" x="552" y="302" width="56" height="56"/>
 <text x="580.0" y="374" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">Lambda · agent-platform-worker</text>
 <text x="580.0" y="389" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">jobs: deploy · promote · ask</text>
-<rect x="725.0" y="294" width="170" height="133" rx="10" fill="#fff3e0" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
+<rect x="725.0" y="294" width="170" height="133" rx="10" fill="#fff8ea" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
 <use href="#sym-dynamodb" x="782" y="302" width="56" height="56"/>
 <text x="810.0" y="374" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">Amazon DynamoDB</text>
 <text x="810.0" y="389" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">agent-platform</text>
@@ -197,7 +197,7 @@
 <use href="#sym-res-alb" x="316" y="570" width="48" height="48"/>
 <text x="340.0" y="634" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">Internal ALB</text>
 <text x="340.0" y="649" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">HTTPS · private IPs</text>
-<rect x="442.0" y="562" width="176" height="125" rx="10" fill="#fff3e0" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
+<rect x="442.0" y="562" width="176" height="125" rx="10" fill="#fff8ea" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
 <use href="#sym-res-eni" x="506" y="570" width="48" height="48"/>
 <text x="530.0" y="634" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">Network interfaces (ENI)</text>
 <text x="530.0" y="649" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">AgentCore Runtime · VPC mode</text>
@@ -222,17 +222,17 @@
 <use href="#sym-res-endpoints" x="506" y="966" width="48" height="48"/>
 <text x="530.0" y="1030" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">S3 gateway endpoint</text>
 <text x="530.0" y="1045" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">config.yaml · image layers</text>
-<rect x="665.0" y="496" width="150" height="118" rx="10" fill="#fff3e0" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
+<rect x="665.0" y="496" width="150" height="118" rx="10" fill="#fff8ea" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
 <use href="#sym-agentcore" x="712" y="504" width="56" height="56"/>
 <text x="740.0" y="576" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">AgentCore Runtime</text>
 <text x="740.0" y="591" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">Dev + Prod harnesses</text>
 <text x="740.0" y="606" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">managed · not in the VPC</text>
-<rect x="817.0" y="496" width="150" height="118" rx="10" fill="#fff3e0" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
+<rect x="817.0" y="496" width="150" height="118" rx="10" fill="#fff8ea" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
 <use href="#sym-agentcore" x="864" y="504" width="56" height="56"/>
 <text x="892.0" y="576" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">AgentCore Memory</text>
 <text x="892.0" y="591" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">hr_assistant_dev_memory</text>
 <text x="892.0" y="606" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">hr_assistant_prod_memory</text>
-<rect x="969.0" y="496" width="150" height="118" rx="10" fill="#fff3e0" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
+<rect x="969.0" y="496" width="150" height="118" rx="10" fill="#fff8ea" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
 <use href="#sym-agentcore" x="1016" y="504" width="56" height="56"/>
 <text x="1044.0" y="576" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">AgentCore Evaluations</text>
 <text x="1044.0" y="591" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">dataset run · release gate</text>
@@ -361,7 +361,7 @@
 <text x="968" y="1227" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#545b64" text-anchor="middle">token validated · proxy</text>
 <text x="1560" y="44" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="16" font-weight="bold" fill="#c7254e" text-anchor="end">Module 6 · one agent in Dev and Prod, plus its on-behalf-of twin</text>
 <text x="1316" y="1030" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="start">Key</text>
-<rect x="1316" y="1042" width="18" height="13" rx="3" style="fill:#fff3e0;stroke:#ff9900;stroke-width:2"/>
+<rect x="1316" y="1042" width="18" height="13" rx="3" style="fill:#fff8ea;stroke:#ff9900;stroke-width:2"/>
 <text x="1342" y="1053" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#3a4452" text-anchor="start">added or changed in this module</text>
 <rect x="1316" y="1062" width="18" height="13" rx="3" style="fill:#fff;stroke:#232f3e;stroke-width:1"/>
 <text x="1342" y="1073" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#3a4452" text-anchor="start">already there</text>

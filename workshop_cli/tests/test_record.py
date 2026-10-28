@@ -66,3 +66,21 @@ def test_describe_marks_origin():
 
 def test_missing_file_is_empty(tmp_path):
     assert record.load(tmp_path / "nope.yaml") == {}
+
+
+def test_shipped_template_has_no_free_text_calls():
+    path = Path(__file__).resolve().parents[2] / "design-record.yaml"
+    assert "my_call" not in path.read_text()
+    document = record.load(path)
+    for module in range(1, 8):
+        for key, value in record.decisions(document, module).items():
+            assert set(value) == {"workshop"}, (module, key, value)
+
+
+def test_older_records_with_my_call_still_load():
+    document = {"module_3": {"decisions": {"tenancy": {"workshop": "templates", "my_call": "a private note"}}}}
+    assert record.validate(document) == []
+    assert record.decisions(document, 3)["tenancy"]["workshop"] == "templates"
+    text = record.describe(document)
+    assert "decision tenancy" in text and "templates" in text
+    assert "my_call" not in text and "a private note" not in text
