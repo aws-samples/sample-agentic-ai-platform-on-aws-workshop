@@ -115,6 +115,16 @@ table.options tr.ours td:last-child::after { border-right: 2px solid var(--orang
 .ours-box p { margin: 2px 0; }
 .ours-box .prod { color: var(--gray); font-size: 13.5px; }
 .ours-box .also { color: #3a4452; font-size: 13.5px; }
+/* the reference recommendation and the workshop's choice are labelled separately: they can be different rows */
+.opt-tag { display: inline-block; margin: 0 4px 3px 0; padding: 1px 7px; border-radius: 999px; font-size: 11.5px; font-weight: 700; line-height: 1.4; white-space: nowrap; }
+.opt-tag.rec { background: #e3f4e1; color: #1d5b14; }
+.opt-tag.ws { background: #ffe3b3; color: #6b3d00; }
+table.options tr.rec td:first-child { box-shadow: inset 4px 0 0 var(--green); }
+/* what kind of decision: one choice, patterns that combine, or no universal winner */
+.kind { display: inline-block; margin: 0 0 10px; padding: 2px 9px; border-radius: 6px; font-size: 12.5px; font-weight: 600; }
+.kind.choose { background: #eef3fb; color: #0b4a8b; }
+.kind.combine { background: #eef8ec; color: #1d5b14; }
+.kind.context { background: #f2f3f3; color: #3a4452; }
 
 /* plain tables */
 table.plain { width: 100%; border-collapse: collapse; margin: 8px 0 0; }
@@ -209,6 +219,7 @@ nav.toc .toc-sub .t { min-width: 0; }
   table.options td:first-child { width: auto; min-width: 9em; }
   figure { overflow-x: auto; }
   figure svg { min-width: 720px; }
+  figure img.diagram { min-width: 720px; }
   .glossary dl { grid-template-columns: 1fr; }
 }
 @media print { .toc-disclosure, .to-top, .pager { display: none !important; } }

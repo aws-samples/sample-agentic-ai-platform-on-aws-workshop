@@ -1,4 +1,4 @@
-"""design-record.yaml: the learner's file. `inputs` are read by `workshop apply`; `decisions` are the learner's notes.
+"""design-record.yaml: the learner's file. `inputs` are read by `workshop apply`; `decisions` name what the workshop chose.
 
     module_3:
       inputs:                       # read by: workshop apply 3
@@ -6,9 +6,10 @@
         project: hr-assistant
         ...
       decisions:
-        tenancy: {workshop: templates, my_call: "..."}
+        tenancy: {workshop: templates}
 
-Missing inputs fall back to the workshop defaults below, so an empty record still builds the reference platform.
+Missing inputs fall back to the workshop defaults below, so an empty record still builds the reference platform. Decisions are
+never sent anywhere; extra fields in older records (such as a free-text `my_call`) still load and are not printed.
 """
 
 from __future__ import annotations
@@ -113,7 +114,7 @@ def decisions(record: dict, module: int) -> dict:
 
 
 def validate(record: dict) -> list[str]:
-    """Problems with the record's inputs (empty list = usable). Only inputs are checked; decisions are free text."""
+    """Problems with the record's inputs (empty list = usable). Only inputs are checked; decisions are notes."""
     problems: list[str] = []
     m3 = inputs(record, 3)
     for key in ("domain", "project"):
@@ -180,7 +181,7 @@ def validate(record: dict) -> list[str]:
 
 
 def describe(record: dict) -> str:
-    """A compact printout of every module's effective inputs (defaults applied) and recorded calls."""
+    """A compact printout of every module's effective inputs (defaults applied) and the workshop's choices."""
     lines = []
     for module in range(1, 8):
         block = record.get(f"module_{module}") or {}
@@ -199,6 +200,5 @@ def describe(record: dict) -> str:
             lines.append(f"  input    {NO_INPUT_NOTES.get(module, 'none')}")
         for key, value in decisions(record, module).items():
             workshop = value.get("workshop") if isinstance(value, dict) else value
-            my_call = value.get("my_call") if isinstance(value, dict) else None
-            lines.append(f"  decision {key:<20} workshop {workshop!s:<28} my_call {my_call!s}")
+            lines.append(f"  decision {key:<20} workshop {workshop!s}")
     return "\n".join(lines)

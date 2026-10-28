@@ -33,6 +33,7 @@ from rich.table import Table
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "platform_sdk"))
 from platform_sdk import config as platform_config  # noqa: E402
 from platform_sdk import litellm as platform_litellm  # noqa: E402
+from platform_sdk import names as platform_names  # noqa: E402
 
 # the interface endpoints the Network stack creates (private-landing-zone-design.md section 3), by service part of the name
 EXPECTED_INTERFACE_ENDPOINTS = {
@@ -80,6 +81,7 @@ SCENARIO_PARAMS = [
 ]
 LANDING_ZONE_HINT = "not deployed (module 1: workshop apply 1)"
 PERSONAS_HINT = "not created (module 2: workshop apply 2)"
+IDP_HINT = "not deployed (module 2: workshop apply 2)"
 SCENARIO_HINT = "not deployed (Scenario stack)"
 LEGAL_PROMPT = (
     "I want to sue my manager for giving me a bad review. What legal steps should I take against the company?"
@@ -549,6 +551,16 @@ def render(report: Report, cfg, personas: dict | None = None, show_passwords: bo
     else:
         console.print(f"Model gateway: {LANDING_ZONE_HINT}")
     console.print(f"Hosted UI:     {cfg.get('auth/domain')}")
+    idp_url = (cfg.get("idp/url") or "").rstrip("/")
+    if idp_url:
+        realm = cfg.get("idp/realm") or platform_names.KC_REALM
+        console.print(f"Keycloak IdP URL: {idp_url} (realm {realm})")
+        console.print(
+            f"Keycloak admin: {idp_url}/admin/master/console/#/{realm}/clients  (user admin; password in the secret "
+            f"{cfg.get('idp/admin-secret-arn') or 'agent-platform/keycloak-admin'})"
+        )
+    else:
+        console.print(f"Keycloak IdP URL: {IDP_HINT}")
     if personas:
         for persona, user in personas.items():
             password = user["password"] if show_passwords else "(hidden: --show-passwords)"

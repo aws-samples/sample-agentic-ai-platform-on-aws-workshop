@@ -13,8 +13,8 @@
       .ours-box .concept-list + p { margin-top: 12px; }
       .start-now { margin: 0 0 18px; }
       .start-now p { margin: 6px 0 0; }
-      details.reference { margin: 14px 0; padding: 12px 14px; border: 1px solid #d5dce5; border-radius: 8px; }
-      details.reference > summary { cursor: pointer; font-weight: 700; color: #25364a; }
+      details.reference { margin: 14px 0; padding: 12px 14px; border: 1px solid #d5dbdb; border-radius: 8px; }
+      details.reference > summary { cursor: pointer; font-weight: 700; color: #232f3e; }
       details.reference[open] > summary { margin-bottom: 12px; }
       #glossary .glossary { margin-top: 0; }
     </style>
@@ -40,62 +40,58 @@
   <li><strong>Evidence:</strong> what happened on each call.</li>
 </ol>
 
-          
+
 
           <figure>
             <svg viewBox="0 0 960 190" role="img" aria-labelledby="fig4b-title">
               <title id="fig4b-title">A tool call through the gateway and its policy engine</title>
               <defs><marker id="arr4b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker><marker id="arr4d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b4471f"/></marker></defs>
               <rect class="d-box d-aws" x="20" y="60" width="150" height="48"/>
-              <text class="d-text" x="95" y="79" text-anchor="middle">HR Dev agent</text>
-              <text class="d-text d-small" x="95" y="97" text-anchor="middle">signs with its role</text>
+              <text class="d-text" x="95" y="88" text-anchor="middle">HR agent</text>
               <path class="d-arrow" d="M170 84 L238 84" marker-end="url(#arr4b)"/>
               <text class="d-text d-small" x="204" y="76" text-anchor="middle">SigV4</text>
               <rect class="d-box d-platform d-ours" x="240" y="60" width="170" height="48"/>
-              <text class="d-text" x="325" y="79" text-anchor="middle">Gateway</text>
-              <text class="d-text d-small" x="325" y="97" text-anchor="middle">hr-assistant-dev-gw</text>
+              <text class="d-text" x="325" y="88" text-anchor="middle">Gateway</text>
               <path class="d-arrow" d="M410 84 L468 84" marker-end="url(#arr4b)"/>
               <rect class="d-box d-blue d-ours" x="470" y="50" width="220" height="68"/>
-              <text class="d-text" x="580" y="72" text-anchor="middle">Policy engine</text>
-              <text class="d-text d-small" x="580" y="90" text-anchor="middle">permit tools · deny leave over 10 days</text>
-              <text class="d-text d-small" x="580" y="106" text-anchor="middle">LOG_ONLY logs · ENFORCE blocks</text>
+              <text class="d-text" x="580" y="82" text-anchor="middle">Policy engine</text>
+              <text class="d-text d-small" x="580" y="100" text-anchor="middle">e.g. deny leave request > 10 days</text>
               <path class="d-arrow" d="M690 72 L738 50" marker-end="url(#arr4b)"/>
               <text class="d-text d-small" x="704" y="52" text-anchor="middle">allow</text>
               <rect class="d-box d-aws" x="740" y="24" width="200" height="44"/>
               <text class="d-text" x="840" y="42" text-anchor="middle">Lambda tools</text>
-              <text class="d-text d-small" x="840" y="59" text-anchor="middle">hrtools___get_leave_balance</text>
+              <text class="d-text d-small" x="840" y="59" text-anchor="middle">Tool = Get leave balance</text>
               <path class="d-arrow" d="M690 84 L738 96" marker-end="url(#arr4b)"/>
               <rect class="d-box d-aws" x="740" y="78" width="200" height="44"/>
               <text class="d-text" x="840" y="96" text-anchor="middle">Knowledge base</text>
-              <text class="d-text d-small" x="840" y="113" text-anchor="middle">filter department = HR, pinned here</text>
+              <text class="d-text d-small" x="840" y="113" text-anchor="middle">KB filter = HR domain</text>
               <path class="d-arrow d-deny" d="M580 118 L580 150" marker-end="url(#arr4d)"/>
               <rect class="d-box" x="475" y="152" width="210" height="30" style="fill:#fdf1ec;stroke:#b4471f"/>
-              <text class="d-text" x="580" y="171" text-anchor="middle" style="fill:#7a2e12">deny: JSON-RPC error -32002</text>
+              <text class="d-text" x="580" y="171" text-anchor="middle" style="fill:#b4471f">Deny</text>
               <text class="d-text d-small" x="20" y="150">A Finance agent calling this gateway:</text>
               <text class="d-text d-small" x="20" y="166">HTTP 403 from IAM, before any policy</text>
             </svg>
-            <figcaption>Three layers: IAM checks gateway access; Cedar checks tools and arguments; the target scopes data. The <code>workshop call</code> probes assume the agent roles; running agents arrive in module 6. Target names prefix tools, for example <code>hrtools___get_leave_balance</code>.</figcaption>
           </figure>
 
-          <h3 id="door-that-knows-who-asked">The door that knows who asked</h3>
-          <p>Everything above describes the gateway the Dev and Prod agents use, where the caller is an IAM role. Module 2 ended with a question that gateway cannot answer: how does a tool learn which employee is asking? This module builds the answer as a second door beside the first. The gateway hr-assistant-dev-gw-obo is the on-behalf-of twin of HR Dev. Its inbound authorizer is CUSTOM_JWT rather than IAM: it fetches the signing keys from the realm's discovery URL and admits a token only if the signature is valid and the audience is hr-obo-gateway, which is exactly the token T1 that module 2 minted by hand. Behind it sits one target, hrapi, and that target is where the second exchange happens. hrapi is an OpenAPI target: the HR API, described by an OpenAPI document generated from the same schema as the Lambda tools. Its outbound credentials are OAuth with the grant type TOKEN_EXCHANGE through the provider kc-hr-obo-gateway. Before every call to the HR API, the gateway asks AgentCore Identity to exchange the caller's token for one addressed to hr-tools-api, and it sends that token, T2, in the Authorization header. The new gateway runs under the same execution role as HR Dev, <code>agent-platform-proj-hr-assistant-dev-gateway</code>; no new role is stamped, and the name hr-assistant-dev-gw-obo was chosen to fall inside the <code>hr-assistant-dev-gw*</code> pattern the role templates already use. The gateway needs none of that role's existing permissions, since its only target is neither a Lambda function nor a knowledge base. What it does need arrives as one inline policy, <code>obo-token-exchange</code>: the gateway may fetch its own workload token, read the client secret that the provider kc-hr-obo-gateway keeps in Secrets Manager, and ask AgentCore Identity for the exchange through that provider, and nothing else. The line <code>agent-platform-proj-hr-assistant-dev-gateway: inline policy obo-token-exchange (gateway -&gt; kc-hr-obo-gateway)</code> in the output of <code>workshop apply 4</code> is that policy being written; it is printed just before the gateway's own line.</p>
-          <p>Why not simply hand the Lambda target the token? Because a Lambda target cannot carry it. The gateway invokes a Lambda function under its own IAM role, the way it does for hrtools, and the function receives the tool arguments and nothing about the caller. Only OpenAPI and MCP server targets have an outbound OAuth configuration, and that is why the HR API exists at all: an API Gateway HTTP API with the route POST /tools/{tool}, a JWT authorizer whose issuer is the realm and whose audience is hr-tools-api, and behind it the same HR tool code. API Gateway validates the signature, the issuer, the audience and the expiry before the Lambda runs. A small adapter, <code>scenario/tools/hr/http_handler.py</code>, unwraps the HTTP call, writes one log line with the claims it received (sub, employee_id, aud, azp) and calls the unchanged handler. That log line is the evidence of the whole chain, and the hands-on reads it back.</p>
-          <p>One more thing changes at this door, and it matters for the policy engine. When a caller arrives with an IAM role, Cedar sees the principal <code>AgentCore::IamEntity</code>, the role. When a caller arrives with a token, Cedar sees <code>AgentCore::OAuthUser</code>, the sub of the token, which is the person. A rule on this gateway could therefore compare the token's employee_id with the employee_id argument the agent passes and forbid the call when they differ. The workshop stops short of that: the on-behalf-of gateway is not attached to the policy engine, and the HR tool still reads the argument, because the demonstration proves the identity chain and not row-level security. Decision 4.5 discusses both.</p>
+
+
+          <h4 id="tool-receives-token">How a tool receives the employee's token: both routes are used</h4>
+
           <table class="plain">
-            <thead><tr><th></th><th>hr-assistant-dev-gw</th><th>hr-assistant-dev-gw-obo</th></tr></thead>
+            <thead><tr><th>Route</th><th>Used here</th><th>What the tool learns</th><th>Use it when</th></tr></thead>
             <tbody>
-              <tr><td>Who may call</td><td>the Dev agent role, with a SigV4 signature</td><td>a token from the realm anycompany with the audience hr-obo-gateway</td></tr>
-              <tr><td>Execution role</td><td><code>agent-platform-proj-hr-assistant-dev-gateway</code></td><td>the same role, plus the inline policy <code>obo-token-exchange</code></td></tr>
-              <tr><td>Cedar would see</td><td><code>AgentCore::IamEntity</code>, the role</td><td><code>AgentCore::OAuthUser</code>, the person's sub</td></tr>
-              <tr><td>Targets</td><td>hrtools (Lambda), hrkb (knowledge base, published as the tool <code>hrkb___Retrieve</code>)</td><td>hrapi (OpenAPI: the HR API behind API Gateway)</td></tr>
-              <tr><td>What the tool receives</td><td>the arguments, under the gateway's role</td><td>the arguments and a token for hr-tools-api: sub, employee_id, aud, azp</td></tr>
-              <tr><td>Policy engine</td><td>attached; LOG_ONLY, then ENFORCE</td><td>not attached: the demonstration proves identity, not row-level security</td></tr>
+              <tr><td>Lambda target under the gateway's role, reached with IAM SigV4</td><td><span class="opt-tag ws">This workshop · Dev and Prod</span><br>hrtools, hrkb, fintools</td><td>the arguments only; it must trust them</td><td>internal tools where a service identity is enough</td></tr>
+              <tr><td>OpenAPI or MCP server target with OAuth token exchange (on behalf of)</td><td><span class="opt-tag ws">This workshop · on-behalf-of gateway</span><br>hrapi</td><td>the arguments and a token for it alone: <code>sub</code>, <code>employee_id</code>, <code>aud</code>, <code>azp</code></td><td>the person matters: HR, finance, ticketing</td></tr>
+              <tr><td>Token passthrough on an HTTP target</td><td>never</td><td>a token that opens every door it was not meant for (the confused deputy); forbidden by the MCP specification</td><td>a local test at most</td></tr>
             </tbody>
           </table>
+          <div class="ours-box">
+            <p class="prod"><strong>Production path.</strong> Row-level security is the next step, and there are two places to put it. Either the tool reads the person from the token and ignores the argument, or a Cedar rule at the gateway forbids a call whose employee_id argument differs from the token's employee_id. Either way, attach the on-behalf-of gateway to the policy engine, start in LOG_ONLY as in decision 4.3, and keep the evidence line in the tool's log, because it is the record of who was really served.</p>
+          </div>
         </section>
 
         <section id="decisions">
-          <h2>Five decisions <span class="time">Design · 10 min</span></h2>
+          <h2>Decisions <span class="time">Design · 10 min</span></h2>
           <aside class="hands-on start-now" aria-label="Start the tool-plane deployment">
   <strong>Start now · about 5–6 minutes</strong>
   <p>Set <code>knowledge_filter</code> and <code>max_leave_days</code> in your record. Keep <code>gateway_mode: LOG_ONLY</code>, then run <code>workshop apply 4</code> while you discuss the decisions. The catalogue registry alone takes about a minute to become READY, and the on-behalf-of gateway at the end adds about 20 seconds.</p>
@@ -107,41 +103,63 @@
             <svg viewBox="0 -18 960 290" role="img" aria-labelledby="fig4a-title">
               <title id="fig4a-title">Four gateway layouts</title>
               <defs><marker id="arr4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
-              <!-- A -->
-              <text class="d-text d-title" x="12" y="22">A · One platform gateway</text>
-              <rect class="d-box d-aws" x="12" y="40" width="60" height="30"/><text class="d-text d-small" x="42" y="59" text-anchor="middle" style="fill:#16191f">agent</text>
-              <rect class="d-box d-aws" x="12" y="80" width="60" height="30"/><text class="d-text d-small" x="42" y="99" text-anchor="middle" style="fill:#16191f">agent</text>
-              <rect class="d-box d-aws" x="12" y="120" width="60" height="30"/><text class="d-text d-small" x="42" y="139" text-anchor="middle" style="fill:#16191f">agent</text>
-              <path class="d-arrow" d="M72 55 L108 90" marker-end="url(#arr4a)"/><path class="d-arrow" d="M72 95 L108 95" marker-end="url(#arr4a)"/><path class="d-arrow" d="M72 135 L108 100" marker-end="url(#arr4a)"/>
-              <rect class="d-box d-platform" x="110" y="70" width="60" height="50"/><text class="d-text d-small" x="140" y="98" text-anchor="middle" style="fill:#16191f">gateway</text>
-              <path class="d-arrow" d="M170 95 L206 95" marker-end="url(#arr4a)"/>
-              <rect class="d-box" x="208" y="60" width="26" height="70" style="fill:#f7f7f7"/><text class="d-text d-small" x="221" y="100" text-anchor="middle" transform="rotate(-90 221 100)" style="fill:#16191f">all tools</text>
-              <text class="d-text d-small" x="124" y="170" text-anchor="middle">simple; one blast radius</text>
-
-              <!-- B this workshop -->
+              <g transform="translate(-230 0)">
+              <!-- A per project: this workshop -->
                <rect class="d-box d-account d-ours d-glow" x="242" y="4" width="290" height="215"/>
-              <text class="d-text d-title" x="252" y="22">B · Per project and environment</text>
+              <text class="d-text d-title" x="252" y="22">A · Per project</text>
               <rect x="432" y="-16" width="90" height="18" rx="9" fill="#ffe3b3"/><text class="d-text" x="477" y="-3" text-anchor="middle" style="font-size:11px;font-weight:700;fill:#6b3d00">this workshop</text>
-              
+
               <rect class="d-box d-account" x="252" y="36" width="130" height="120"/>
               <text class="d-text d-small" x="262" y="52">hr-assistant · dev</text>
               <rect class="d-box d-aws" x="262" y="60" width="50" height="28"/><text class="d-text d-small" x="287" y="78" text-anchor="middle" style="fill:#16191f">agent</text>
               <path class="d-arrow" d="M312 74 L326 74" marker-end="url(#arr4a)"/>
               <rect class="d-box d-platform d-ours" x="328" y="60" width="46" height="28"/><text class="d-text d-small" x="351" y="78" text-anchor="middle" style="fill:#16191f">gw</text>
-              <rect class="d-box" x="262" y="108" width="112" height="22" style="fill:#f7f7f7"/><text class="d-text d-small" x="318" y="123" text-anchor="middle" style="fill:#16191f">tools · knowledge</text>
+              <rect class="d-box" x="262" y="108" width="112" height="22" style="fill:#f2f3f3"/><text class="d-text d-small" x="318" y="123" text-anchor="middle" style="fill:#16191f">tools · knowledge</text>
               <path class="d-arrow" d="M351 88 L351 106" marker-end="url(#arr4a)"/>
               <rect class="d-box d-account" x="392" y="36" width="130" height="120"/>
               <text class="d-text d-small" x="402" y="52">hr-assistant · prod</text>
               <rect class="d-box d-aws" x="402" y="60" width="50" height="28"/><text class="d-text d-small" x="427" y="78" text-anchor="middle" style="fill:#16191f">agent</text>
               <path class="d-arrow" d="M452 74 L466 74" marker-end="url(#arr4a)"/>
               <rect class="d-box d-platform d-ours" x="468" y="60" width="46" height="28"/><text class="d-text d-small" x="491" y="78" text-anchor="middle" style="fill:#16191f">gw</text>
-              <rect class="d-box" x="402" y="108" width="112" height="22" style="fill:#f7f7f7"/><text class="d-text d-small" x="458" y="123" text-anchor="middle" style="fill:#16191f">tools · knowledge</text>
+              <rect class="d-box" x="402" y="108" width="112" height="22" style="fill:#f2f3f3"/><text class="d-text d-small" x="458" y="123" text-anchor="middle" style="fill:#16191f">tools · knowledge</text>
               <path class="d-arrow" d="M491 88 L491 106" marker-end="url(#arr4a)"/>
               <rect class="d-box d-blue" x="252" y="166" width="270" height="22"/><text class="d-text d-small" x="387" y="181" text-anchor="middle" style="fill:#16191f">one shared policy engine</text>
               <text class="d-text d-small" x="387" y="206" text-anchor="middle">an IAM boundary per project and environment</text>
-
-              <!-- C -->
-              <text class="d-text d-title" x="546" y="22">C · Shared + domain gateways</text>
+              </g>
+              <g transform="translate(-446 0)">
+              <!-- B per domain -->
+              <text class="d-text d-title" x="762" y="22">B · Per domain</text>
+              <rect class="d-box d-account" x="762" y="36" width="90" height="150"/>
+              <text class="d-text d-small" x="770" y="52">HR domain</text>
+              <rect class="d-box d-aws" x="770" y="60" width="74" height="24"/><text class="d-text d-small" x="807" y="76" text-anchor="middle" style="fill:#16191f">agents</text>
+              <path class="d-arrow" d="M807 84 L807 100" marker-end="url(#arr4a)"/>
+              <rect class="d-box d-platform" x="770" y="102" width="74" height="26"/><text class="d-text d-small" x="807" y="119" text-anchor="middle" style="fill:#16191f">gateway</text>
+              <path class="d-arrow" d="M807 128 L807 144" marker-end="url(#arr4a)"/>
+              <rect class="d-box" x="770" y="146" width="74" height="22" style="fill:#f2f3f3"/><text class="d-text d-small" x="807" y="161" text-anchor="middle" style="fill:#16191f">HR tools</text>
+              <rect class="d-box d-account" x="860" y="36" width="90" height="150"/>
+              <text class="d-text d-small" x="868" y="52">Finance</text>
+              <rect class="d-box d-aws" x="868" y="60" width="74" height="24"/><text class="d-text d-small" x="905" y="76" text-anchor="middle" style="fill:#16191f">agents</text>
+              <path class="d-arrow" d="M905 84 L905 100" marker-end="url(#arr4a)"/>
+              <rect class="d-box d-platform" x="868" y="102" width="74" height="26"/><text class="d-text d-small" x="905" y="119" text-anchor="middle" style="fill:#16191f">gateway</text>
+              <path class="d-arrow" d="M905 128 L905 144" marker-end="url(#arr4a)"/>
+              <rect class="d-box" x="868" y="146" width="74" height="22" style="fill:#f2f3f3"/><text class="d-text d-small" x="905" y="161" text-anchor="middle" style="fill:#16191f">Finance tools</text>
+              <text class="d-text d-small" x="856" y="206" text-anchor="middle">org-shaped; one door per domain</text>
+              </g>
+              <g transform="translate(506 0)">
+              <!-- C platform -->
+              <text class="d-text d-title" x="12" y="22">C · One platform gateway</text>
+              <rect class="d-box d-aws" x="12" y="40" width="60" height="30"/><text class="d-text d-small" x="42" y="59" text-anchor="middle" style="fill:#16191f">agent</text>
+              <rect class="d-box d-aws" x="12" y="80" width="60" height="30"/><text class="d-text d-small" x="42" y="99" text-anchor="middle" style="fill:#16191f">agent</text>
+              <rect class="d-box d-aws" x="12" y="120" width="60" height="30"/><text class="d-text d-small" x="42" y="139" text-anchor="middle" style="fill:#16191f">agent</text>
+              <path class="d-arrow" d="M72 55 L108 90" marker-end="url(#arr4a)"/><path class="d-arrow" d="M72 95 L108 95" marker-end="url(#arr4a)"/><path class="d-arrow" d="M72 135 L108 100" marker-end="url(#arr4a)"/>
+              <rect class="d-box d-platform" x="110" y="70" width="60" height="50"/><text class="d-text d-small" x="140" y="98" text-anchor="middle" style="fill:#16191f">gateway</text>
+              <path class="d-arrow" d="M170 95 L206 95" marker-end="url(#arr4a)"/>
+              <rect class="d-box" x="208" y="60" width="26" height="70" style="fill:#f2f3f3"/><text class="d-text d-small" x="221" y="100" text-anchor="middle" transform="rotate(-90 221 100)" style="fill:#16191f">all tools</text>
+              <text class="d-text d-small" x="124" y="170" text-anchor="middle">simple; one blast radius</text>
+              </g>
+              <g transform="translate(208 0)">
+              <!-- D platform + domain -->
+              <text class="d-text d-title" x="546" y="22">D · Platform + domain</text>
               <rect class="d-box d-platform" x="546" y="40" width="190" height="30"/><text class="d-text d-small" x="641" y="59" text-anchor="middle" style="fill:#16191f">platform gateway · shared tools</text>
               <rect class="d-box d-platform" x="546" y="110" width="74" height="30"/><text class="d-text d-small" x="583" y="129" text-anchor="middle" style="fill:#16191f">HR gw</text>
               <rect class="d-box d-platform" x="662" y="110" width="74" height="30"/><text class="d-text d-small" x="699" y="129" text-anchor="middle" style="fill:#16191f">Finance gw</text>
@@ -150,178 +168,47 @@
               <path class="d-arrow" d="M583 150 L583 142" marker-end="url(#arr4a)"/><path class="d-arrow" d="M699 150 L699 142" marker-end="url(#arr4a)"/>
               <path class="d-arrow d-dash" d="M628 150 L628 72" marker-end="url(#arr4a)"/><path class="d-arrow d-dash" d="M654 150 L654 72" marker-end="url(#arr4a)"/>
               <text class="d-text d-small" x="641" y="206" text-anchor="middle">shared tools once; domain tools apart</text>
-
-              <!-- D -->
-              <text class="d-text d-title" x="762" y="22">D · One per domain</text>
-              <rect class="d-box d-account" x="762" y="36" width="90" height="150"/>
-              <text class="d-text d-small" x="770" y="52">HR domain</text>
-              <rect class="d-box d-aws" x="770" y="60" width="74" height="24"/><text class="d-text d-small" x="807" y="76" text-anchor="middle" style="fill:#16191f">dev + prod</text>
-              <path class="d-arrow" d="M807 84 L807 100" marker-end="url(#arr4a)"/>
-              <rect class="d-box d-platform" x="770" y="102" width="74" height="26"/><text class="d-text d-small" x="807" y="119" text-anchor="middle" style="fill:#16191f">gateway</text>
-              <path class="d-arrow" d="M807 128 L807 144" marker-end="url(#arr4a)"/>
-              <rect class="d-box" x="770" y="146" width="74" height="22" style="fill:#f7f7f7"/><text class="d-text d-small" x="807" y="161" text-anchor="middle" style="fill:#16191f">HR tools</text>
-              <rect class="d-box d-account" x="860" y="36" width="90" height="150"/>
-              <text class="d-text d-small" x="868" y="52">Finance</text>
-              <rect class="d-box d-aws" x="868" y="60" width="74" height="24"/><text class="d-text d-small" x="905" y="76" text-anchor="middle" style="fill:#16191f">dev + prod</text>
-              <path class="d-arrow" d="M905 84 L905 100" marker-end="url(#arr4a)"/>
-              <rect class="d-box d-platform" x="868" y="102" width="74" height="26"/><text class="d-text d-small" x="905" y="119" text-anchor="middle" style="fill:#16191f">gateway</text>
-              <path class="d-arrow" d="M905 128 L905 144" marker-end="url(#arr4a)"/>
-              <rect class="d-box" x="868" y="146" width="74" height="22" style="fill:#f7f7f7"/><text class="d-text d-small" x="905" y="161" text-anchor="middle" style="fill:#16191f">Finance tools</text>
-              <text class="d-text d-small" x="856" y="206" text-anchor="middle">org-shaped; Dev and Prod mixed</text>
+              </g>
             </svg>
-            <figcaption>Four layouts: one platform gateway; one per project and environment; shared plus domain gateways; one per domain. We choose separate project and environment boundaries.</figcaption>
+            <figcaption>Four topologies, by who owns the door: A per project, B per domain, C one for the platform, D a platform gateway for shared tools plus domain gateways. They are not exclusive. This workshop uses A, with each project gateway built once per environment.</figcaption>
             </figure>
             <table class="options">
               <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
               <tbody>
-                <tr><td>A · One platform gateway</td><td class="good">one catalogue; fewest objects</td><td class="bad">one mistake affects everyone; name collisions; no IAM boundary per project</td><td class="when">one team</td></tr>
-                <tr class="ours"><td>B · One gateway per project and environment</td><td class="good">an IAM boundary per project and environment; Dev never touches Prod tools</td><td class="bad">more objects; a naming convention to keep</td><td class="when">many projects, Dev and Prod apart</td></tr>
-                <tr><td>C · A platform gateway for shared tools, plus domain gateways</td><td class="good">shared enterprise tools once; domain tools apart</td><td class="bad">two places to govern; agents call two doors; something must pick the right door per project</td><td class="when">shared enterprise systems plus domain tools</td></tr>
-                <tr><td>D · One gateway per domain</td><td class="good">matches the organisation</td><td class="bad">Dev and Prod traffic mixed</td><td class="when">domains own their tools and have one environment</td></tr>
+                <tr class="ours"><td><span class="opt-tag ws">This workshop</span><br>A · One gateway per project</td><td class="good">an IAM boundary per project; a project's tools stay its own</td><td class="bad">more objects; a naming convention to keep; shared tools repeated per project</td><td class="when">many projects with private tools</td></tr>
+                <tr><td>B · One gateway per domain</td><td class="good">matches the organisation; a domain governs its own tools</td><td class="bad">projects of one domain share a boundary</td><td class="when">domains own their tools</td></tr>
+                <tr><td>C · One platform gateway</td><td class="good">one catalogue; fewest objects</td><td class="bad">one mistake affects everyone; name collisions; no IAM boundary per project</td><td class="when">one team</td></tr>
+                <tr><td>D · A platform gateway for shared tools, plus domain gateways</td><td class="good">shared enterprise tools once; domain tools apart</td><td class="bad">two places to govern; agents call two doors; something must pick the right door per project</td><td class="when">shared enterprise systems plus domain tools</td></tr>
               </tbody>
             </table>
             <div class="ours-box">
-              <p><strong>This workshop.</strong> Layout B creates <strong>three gateways</strong>:</p>
+              <p><strong>This workshop.</strong> Topology A, built once per environment, creates <strong>three gateways</strong>:</p>
 <ul class="concept-list">
   <li><strong>HR Dev</strong> and <strong>HR Prod</strong>: separate environment access.</li>
   <li><strong>Finance Dev</strong>: the caller used to test isolation.</li>
-</ul><p>Each agent signs with IAM. All three gateways share one policy engine. Gateway ownership and target-account placement are separate decisions. A fourth gateway, hr-assistant-dev-gw-obo, stands beside HR Dev for callers with a token from the corporate IdP (4.5); it does not change the layout question.</p>
-              <p class="prod"><strong>Production path.</strong> Add a gateway for shared tools, then domain gateways. Keep project gateways for private tools. All still share the account's quotas.</p>
+</ul><p>Each agent signs with IAM. All three gateways share one policy engine. Gateway ownership and target-account placement are separate decisions. A fourth gateway, hr-assistant-dev-gw-obo, stands beside HR Dev for callers with a token from the corporate IdP (<a href="#tool-receives-token">explained above</a>); it does not change the layout question.</p>
+              <p class="prod"><strong>Production path.</strong> Combine the topologies: a platform gateway for shared tools, domain gateways, and project gateways for private tools. Specialist agents can later become gateway targets themselves; carry identity and apply policy at every hop. All gateways still share the account's quotas.</p>
             </div>
+            <p><strong>Environment isolation</strong> is the second dimension, and it applies to every topology above:</p>
+            <table class="plain">
+              <thead><tr><th>Environment pattern</th><th>What separates Dev from Prod</th><th>Where it fits</th></tr></thead>
+              <tbody>
+                <tr><td>A gateway per environment (this workshop: Dev and Prod)</td><td>the gateway name in the agent role's IAM pattern; Dev's role cannot invoke Prod's gateway</td><td>environments in one account (decision 1.1, layout B)</td></tr>
+                <tr><td>An account per environment</td><td>the account wall; the same gateway names in each account</td><td>Prod behind an account boundary</td></tr>
+                <tr><td>One gateway for every environment</td><td>nothing at the door; only targets and policies</td><td>not recommended: Dev traffic reaches Prod tools</td></tr>
+              </tbody>
+            </table>
+            <p class="note">The workshop builds two environments, Dev and Prod. There is no staging environment.</p>
             <p class="note">Quotas apply at <strong>two levels</strong> (limits at writing):</p>
 <ul class="concept-list">
   <li><strong>Gateway:</strong> 100 targets; 200 tool calls or lists per second.</li>
-  <li><strong>Account:</strong> the same 200-per-second ceiling across gateways. Four gateways, the three of layout B and the on-behalf-of twin, do not make it 800; a 250-per-second forecast needs a quota increase.</li>
+  <li><strong>Account:</strong> the same 200-per-second ceiling across gateways. Four gateways, the three above and the on-behalf-of twin, do not make it 800; a 250-per-second forecast needs a quota increase.</li>
 </ul>
           </div>
 
-          <div class="card">
-            <h4 class="q" id="d4-2"><span class="id">4.2</span>Single layer or multi-layer: tools only, or agents behind gateways too?</h4>
-            <figure style="margin:0 0 10px">
-              <svg viewBox="0 0 960 120" role="img" aria-labelledby="fig4c-title">
-                <title id="fig4c-title">Single layer against multi-layer</title>
-                <defs><marker id="arr4c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
-                <text class="d-text d-title" x="20" y="22">Single layer</text>
-                <rect class="d-box d-aws" x="20" y="50" width="90" height="30"/><text class="d-text d-small" x="65" y="69" text-anchor="middle" style="fill:#16191f">agent</text>
-                <path class="d-arrow" d="M110 65 L146 65" marker-end="url(#arr4c)"/>
-                <rect class="d-box d-platform d-ours" x="148" y="50" width="90" height="30"/><text class="d-text d-small" x="193" y="69" text-anchor="middle" style="fill:#16191f">gateway</text>
-                <path class="d-arrow" d="M238 65 L274 65" marker-end="url(#arr4c)"/>
-                <rect class="d-box" x="276" y="50" width="90" height="30" style="fill:#f7f7f7"/><text class="d-text d-small" x="321" y="69" text-anchor="middle" style="fill:#16191f">tools</text>
-                <text class="d-text d-small" x="193" y="106" text-anchor="middle">one hop · one identity · one policy check</text>
-
-                <text class="d-text d-title" x="470" y="22">Multi-layer</text>
-                <rect class="d-box d-aws" x="470" y="50" width="90" height="30"/><text class="d-text d-small" x="515" y="69" text-anchor="middle" style="fill:#16191f">supervisor</text>
-                <path class="d-arrow" d="M560 65 L596 65" marker-end="url(#arr4c)"/>
-                <rect class="d-box d-platform" x="598" y="50" width="70" height="30"/><text class="d-text d-small" x="633" y="69" text-anchor="middle" style="fill:#16191f">gateway</text>
-                <path class="d-arrow" d="M668 65 L704 65" marker-end="url(#arr4c)"/>
-                <rect class="d-box d-aws" x="706" y="50" width="80" height="30"/><text class="d-text d-small" x="746" y="69" text-anchor="middle" style="fill:#16191f">specialist</text>
-                <path class="d-arrow" d="M786 65 L822 65" marker-end="url(#arr4c)"/>
-                <rect class="d-box d-platform" x="824" y="50" width="60" height="30"/><text class="d-text d-small" x="854" y="69" text-anchor="middle" style="fill:#16191f">gw</text>
-                <path class="d-arrow" d="M884 65 L906 65" marker-end="url(#arr4c)"/>
-                <rect class="d-box" x="908" y="50" width="42" height="30" style="fill:#f7f7f7"/><text class="d-text d-small" x="929" y="69" text-anchor="middle" style="fill:#16191f">tools</text>
-                <text class="d-text d-small" x="633" y="106" text-anchor="middle">hop 1</text>
-                <text class="d-text d-small" x="854" y="106" text-anchor="middle">hop 2: identity and policy again</text>
-              </svg>
-            </figure>
-            <table class="options">
-              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
-              <tbody>
-                <tr class="ours"><td>Single layer: only tools behind a gateway</td><td class="good">one hop; one identity; one policy check; easy to trace</td><td class="bad">no reuse of specialist agents across teams</td><td class="when">one agent per use case</td></tr>
-                <tr><td>Multi-layer: agents exposed as gateway targets; they call their own gateways</td><td class="good">specialists reused; each keeps its own tools and limits</td><td class="bad">identity and policy at every hop; latency per hop; loops; harder to debug and to bill</td><td class="when">shared specialist agents; teams of agents</td></tr>
-              </tbody>
-            </table>
-            <div class="ours-box">
-              <p><strong>This workshop.</strong> One layer: HR assistant → gateway → tools and knowledge base. One hop and one service identity keep tracing simple.</p>
-              <p class="also">AgentCore Runtime agents can also become gateway targets, so adding specialist agents later does not require a new platform.</p>
-              <p class="prod"><strong>Production path.</strong> A supervisor calls specialists, each with its own gateway. Carry identity and apply policy at every hop.</p>
-            </div>
-          </div>
 
           <div class="card">
-            <h4 class="q" id="d4-3"><span class="id">4.3</span>How do tools and knowledge get in, and how is access bounded?</h4>
-            <figure style="margin:0 0 10px">
-              <svg viewBox="0 0 960 264" role="img" aria-labelledby="fig4-d3-title">
-                <title id="fig4-d3-title">One gateway, three kinds of target: a tool call passes IAM at the gateway, Cedar in the policy engine, then the target that owns the data</title>
-                <defs><marker id="fig4-d3-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
-                <!-- the call path -->
-                <rect class="d-box d-aws" x="12" y="16" width="120" height="44"/>
-                <text class="d-text" x="72" y="34" text-anchor="middle">HR Dev agent</text>
-                <text class="d-text d-small" x="72" y="50" text-anchor="middle">its role</text>
-                <path class="d-arrow" d="M132 38 L168 38" marker-end="url(#fig4-d3-arr)"/>
-                <rect class="d-box d-platform" x="170" y="16" width="210" height="44"/>
-                <text class="d-text" x="275" y="34" text-anchor="middle">Gateway hr-assistant-dev-gw</text>
-                <text class="d-text d-small" x="275" y="50" text-anchor="middle">IAM at the door</text>
-                <path class="d-arrow" d="M380 38 L416 38" marker-end="url(#fig4-d3-arr)"/>
-                <rect class="d-box d-blue" x="418" y="16" width="240" height="44"/>
-                <text class="d-text" x="538" y="34" text-anchor="middle">Policy engine</text>
-                <text class="d-text d-small" x="538" y="50" text-anchor="middle">Cedar: which tool, which arguments</text>
-                <path class="d-arrow d-dash" d="M658 38 L694 38" marker-end="url(#fig4-d3-arr)"/>
-                <rect class="d-box d-ghost" x="696" y="16" width="252" height="44"/>
-                <text class="d-text d-small d-ghost-text" x="822" y="34" text-anchor="middle">a tool in your VPC</text>
-                <text class="d-text d-small d-ghost-text" x="822" y="50" text-anchor="middle">private endpoint through VPC Lattice</text>
-                <!-- the three target kinds -->
-                <path class="d-arrow" d="M478 60 L478 84 L157 84 L157 116" marker-end="url(#fig4-d3-arr)"/>
-                <path class="d-arrow" d="M538 60 L538 116" marker-end="url(#fig4-d3-arr)"/>
-                <path class="d-arrow" d="M598 60 L598 84 L807 84 L807 116" marker-end="url(#fig4-d3-arr)"/>
-                <rect class="d-box d-aws d-ours" x="12" y="118" width="290" height="88"/>
-                <rect x="192" y="96" width="106" height="20" rx="10" fill="#ffe3b3"/><text class="d-text" x="245" y="110" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
-                <text class="d-text d-title" x="157" y="138" text-anchor="middle">A · Lambda target</text>
-                <text class="d-text d-small" x="157" y="156" text-anchor="middle" style="fill:#16191f">inline schema</text>
-                <text class="d-text d-small" x="157" y="172" text-anchor="middle" style="fill:#16191f">agent-platform-hr-tools</text>
-                <text class="d-text d-small" x="157" y="188" text-anchor="middle" style="fill:#16191f">hrtools___get_leave_balance …</text>
-                <text class="d-text d-small" x="157" y="224" text-anchor="middle">full control; cheap · you write the adapter</text>
-                <rect class="d-box" x="337" y="118" width="290" height="88"/>
-                <text class="d-text d-title" x="482" y="138" text-anchor="middle">B · OpenAPI or MCP-server target</text>
-                <text class="d-text d-small" x="482" y="156" text-anchor="middle" style="fill:#16191f">SaaS or partner API, e.g. an HR system</text>
-                <text class="d-text d-small" x="482" y="172" text-anchor="middle" style="fill:#16191f">OAuth outbound</text>
-                <text class="d-text d-small" x="482" y="188" text-anchor="middle" style="fill:#16191f">credentials from the token vault</text>
-                <text class="d-text d-small" x="482" y="224" text-anchor="middle">reuse existing APIs · on-behalf-of to design</text>
-                <rect class="d-box d-aws d-ours" x="662" y="118" width="290" height="88"/>
-                <rect x="842" y="96" width="106" height="20" rx="10" fill="#ffe3b3"/><text class="d-text" x="895" y="110" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
-                <text class="d-text d-title" x="807" y="138" text-anchor="middle">C · Connector target</text>
-                <text class="d-text d-small" x="807" y="156" text-anchor="middle" style="fill:#16191f">managed knowledge base</text>
-                <text class="d-text d-small" x="807" y="172" text-anchor="middle" style="fill:#16191f">filter department = HR</text>
-                <text class="d-text d-small" x="807" y="188" text-anchor="middle" style="fill:#16191f">pinned at the target</text>
-                <text class="d-text d-small" x="807" y="224" text-anchor="middle">no code · the connector's feature set</text>
-                <text class="d-text" x="480" y="252" text-anchor="middle">Three layers on one call: IAM says who may reach the door, Cedar says which tool and which arguments, the target says which data.</text>
-              </svg>
-              <figcaption>We use two target types on the Dev and Prod gateways: Lambda tools and a managed knowledge base. An OpenAPI target with OAuth outbound is how the on-behalf-of gateway reaches the HR API (4.5); VPC Lattice private targets are a production option.</figcaption>
-            </figure>
-            <table class="options">
-              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
-              <tbody>
-                <tr class="ours"><td>Lambda targets with an inline schema</td><td class="good">full control; cheap</td><td class="bad">you write the adapter</td><td class="when">internal data and systems</td></tr>
-                <tr><td>OpenAPI or MCP-server targets with OAuth outbound</td><td class="good">reuse existing APIs and SaaS</td><td class="bad">credentials and on-behalf-of to design</td><td class="when">SaaS and partner APIs, such as an HR system</td></tr>
-                <tr class="ours"><td>Connectors, such as a managed knowledge base</td><td class="good">no code; a filter pinned at the target</td><td class="bad">the connector's feature set</td><td class="when">retrieval over documents</td></tr>
-              </tbody>
-            </table>
-            <div class="ours-box">
-              <p><strong>This workshop.</strong> Data access has <strong>two controls</strong>:</p>
-<ul class="concept-list">
-  <li><strong>Project allow-list:</strong> admin selects tools and knowledge; the gateway role is scoped to that list.</li>
-  <li><strong>Knowledge filter:</strong> <code>department = HR</code> is pinned at the target. A prompt or caller argument cannot change it.</li>
-</ul>
-              <p class="also"><strong>Remaining gap:</strong> Lambda tools trust the supplied <code>employee_id</code>. Decision 4.5 closes half of it: on the on-behalf-of gateway the HR API knows who asked, from a token it can verify. The other half is row-level security, the production step: the handler reads <code>employee_id</code> from the token, or a Cedar rule compares the token's <code>employee_id</code> with the argument. Caller arguments alone do not authorise data access.</p>
-              <p class="prod"><strong>Production path.</strong> Add OAuth for OpenAPI/MCP SaaS tools, retrieval scoped to user permissions and VPC Lattice private endpoints for VPC targets.</p>
-            </div>
-            <details class="reference">
-  <summary>Reference · Five target connectivity patterns</summary>
-  <table class="plain">
-    <thead><tr><th>Target location</th><th>Connection</th><th>Constraint</th></tr></thead>
-    <tbody>
-      <tr><td>Private MCP server or REST API</td><td>VPC Lattice target endpoint: gateway-managed in the same account; self-managed with a RAM-shared resource configuration across accounts</td><td>IAM or JWT inbound; private CA can be registered</td></tr>
-      <tr><td>Private API Gateway REST API</td><td>OpenAPI export + target private endpoint routed through the API's VPC endpoint</td><td>Schema server URL must match TLS. Native API Gateway targets require public types, same account and Region</td></tr>
-      <tr><td>Regional API Gateway REST API</td><td>Native target; IAM or API-key outbound; resource policy scoped to gateway ARN</td><td>Public endpoint, AWS backbone traffic</td></tr>
-      <tr><td>Lambda, as here</td><td>Gateway role invokes only the target function</td><td>Lambda's VPC access is configured separately</td></tr>
-      <tr><td>Other VPC, on premises or cloud</td><td>Private endpoint + peering, Transit Gateway or VPN; authenticated HTTPS where permitted</td><td>Verify target/account support. Assign DNS, TLS and routing owners; a route alone is insufficient</td></tr>
-    </tbody>
-  </table>
-</details>
-            <p class="note">Check <strong>two properties</strong>: is the endpoint private, and does traffic stay on the AWS backbone? Authentication or a private backend proves neither by itself.</p>
-          </div>
-
-          <div class="card">
-            <h4 class="q" id="d4-4"><span class="id">4.4</span>How are tool policies rolled out?</h4>
+            <h4 class="q" id="d4-2"><span class="id">4.2</span>How are tool policies rolled out?</h4>
             <figure style="margin:0 0 10px">
               <svg viewBox="0 0 960 248" role="img" aria-labelledby="fig4-d4-title">
                 <title id="fig4-d4-title">Two ways to roll out tool policies: LOG_ONLY first and then ENFORCE, or ENFORCE from day one</title>
@@ -347,8 +234,8 @@
                 <text class="d-text d-small" x="658" y="76" text-anchor="middle" style="fill:#16191f">admin toggle</text>
                 <path class="d-arrow d-deny" d="M728 64 L756 64" marker-end="url(#fig4-d4-deny)"/>
                 <rect class="d-box" x="758" y="42" width="160" height="44" style="fill:#fdf1ec;stroke:#b4471f"/>
-                <text class="d-text d-small" x="838" y="60" text-anchor="middle" style="fill:#7a2e12">a deny blocks</text>
-                <text class="d-text d-small" x="838" y="76" text-anchor="middle" style="fill:#7a2e12">JSON-RPC error -32002</text>
+                <text class="d-text d-small" x="838" y="60" text-anchor="middle" style="fill:#b4471f">a deny blocks</text>
+                <text class="d-text d-small" x="838" y="76" text-anchor="middle" style="fill:#b4471f">JSON-RPC error -32002</text>
                 <text class="d-text d-small" x="473" y="106" text-anchor="middle">evidence before blocking · someone must read the metrics</text>
                 <!-- B -->
                 <rect class="d-box d-account" x="12" y="128" width="936" height="108"/>
@@ -358,8 +245,8 @@
                 <text class="d-text d-small" x="98" y="196" text-anchor="middle" style="fill:#16191f">in ENFORCE</text>
                 <path class="d-arrow d-deny" d="M168 184 L196 184" marker-end="url(#fig4-d4-deny)"/>
                 <rect class="d-box" x="198" y="162" width="170" height="44" style="fill:#fdf1ec;stroke:#b4471f"/>
-                <text class="d-text d-small" x="283" y="180" text-anchor="middle" style="fill:#7a2e12">agents whose tools</text>
-                <text class="d-text d-small" x="283" y="196" text-anchor="middle" style="fill:#7a2e12">lack a permit break</text>
+                <text class="d-text d-small" x="283" y="180" text-anchor="middle" style="fill:#b4471f">agents whose tools</text>
+                <text class="d-text d-small" x="283" y="196" text-anchor="middle" style="fill:#b4471f">lack a permit break</text>
                 <text class="d-text d-small" x="392" y="188">default is deny: a tool with no permit is invisible once the gateway enforces</text>
                 <text class="d-text d-small" x="473" y="226" text-anchor="middle">strict · tiny, well-known tool sets only</text>
               </svg>
@@ -368,7 +255,7 @@
             <table class="options">
               <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
               <tbody>
-                <tr class="ours"><td>LOG_ONLY first, then ENFORCE</td><td class="good">evidence before blocking</td><td class="bad">someone must read the metrics</td><td class="when">new policies, always</td></tr>
+                <tr class="ours rec"><td><span class="opt-tag rec">Recommended</span><span class="opt-tag ws">This workshop</span><br>LOG_ONLY during development and testing, then ENFORCE in production</td><td class="good">evidence before blocking</td><td class="bad">someone must read the metrics</td><td class="when">new policies, always</td></tr>
                 <tr><td>ENFORCE from day one</td><td class="good">strict</td><td class="bad">breaks agents whose tools lack a permit</td><td class="when">tiny, well-known tool sets</td></tr>
               </tbody>
             </table>
@@ -386,77 +273,8 @@
   <li><strong>Data scope:</strong> the KB filter is pinned; employee-ID checks remain a gap in Lambda tools.</li>
   <li><strong>Actual refusal:</strong> step 7 executes <code>tools/call</code>. READY or <code>tools/list</code> alone does not prove enforcement.</li>
 </ul>
-              <p class="prod"><strong>Production path.</strong> Give policy-owning domains their own engines. Review changes as code before attaching them to gateways.</p>
-            </div>
-          </div>
-
-          <div class="card">
-            <h4 class="q" id="d4-5"><span class="id">4.5</span>How does a tool receive the employee's token?</h4>
-            <figure style="margin:0 0 10px">
-              <svg viewBox="0 0 960 280" role="img" aria-labelledby="fig4-d5-title">
-                <title id="fig4-d5-title">How a tool receives the employee's token: a Lambda target under the gateway's role, an OpenAPI target with outbound token exchange, or token passthrough</title>
-                <defs><marker id="fig4-d5-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker><marker id="fig4-d5-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b4471f"/></marker></defs>
-                <!-- A -->
-                <text class="d-text d-title" x="22" y="24">A · Lambda target, the gateway's role</text>
-                <rect class="d-box d-account" x="12" y="34" width="290" height="212"/>
-                <rect class="d-box d-platform" x="26" y="46" width="262" height="32"/>
-                <text class="d-text" x="157" y="67" text-anchor="middle">Gateway hr-assistant-dev-gw</text>
-                <path class="d-arrow" d="M157 78 L157 118" marker-end="url(#fig4-d5-arr)"/>
-                <text class="d-text d-small" x="165" y="96">its own role</text>
-                <text class="d-text d-small" x="165" y="110">arguments only</text>
-                <rect class="d-box d-aws" x="26" y="120" width="262" height="44"/>
-                <text class="d-text" x="157" y="138" text-anchor="middle">Lambda agent-platform-hr-tools</text>
-                <text class="d-text d-small" x="157" y="154" text-anchor="middle">sees a service; trusts employee_id</text>
-                <rect class="d-box d-ghost" x="26" y="184" width="262" height="28"/>
-                <text class="d-text d-small d-ghost-text" x="157" y="202" text-anchor="middle">the employee is not in this call</text>
-                <text class="d-text d-small" x="157" y="268" text-anchor="middle">no token plumbing · trusts the argument</text>
-                <!-- B this workshop -->
-                <text class="d-text d-title" x="347" y="24">B · Token exchange target</text>
-                <rect class="d-box d-account d-ours d-glow" x="337" y="34" width="290" height="212"/>
-                <rect x="533" y="12" width="94" height="20" rx="10" fill="#ffe3b3"/><text class="d-text" x="580" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
-                <rect class="d-box d-platform" x="351" y="46" width="262" height="32"/>
-                <text class="d-text" x="482" y="67" text-anchor="middle">Gateway hr-assistant-dev-gw-obo</text>
-                <path class="d-arrow" d="M482 78 L482 90" marker-end="url(#fig4-d5-arr)"/>
-                <rect class="d-box d-blue" x="351" y="92" width="262" height="32"/>
-                <text class="d-text" x="482" y="113" text-anchor="middle">exchange T1 → T2 via kc-hr-obo-gateway</text>
-                <path class="d-arrow" d="M482 124 L482 136" marker-end="url(#fig4-d5-arr)"/>
-                <rect class="d-box d-aws" x="351" y="138" width="262" height="40"/>
-                <text class="d-text" x="482" y="154" text-anchor="middle">API Gateway · JWT authorizer</text>
-                <text class="d-text d-small" x="482" y="170" text-anchor="middle">issuer = the realm · aud hr-tools-api</text>
-                <path class="d-arrow" d="M482 178 L482 190" marker-end="url(#fig4-d5-arr)"/>
-                <rect class="d-box d-aws" x="351" y="192" width="262" height="40"/>
-                <text class="d-text" x="482" y="208" text-anchor="middle">Lambda agent-platform-hr-api</text>
-                <text class="d-text d-small" x="482" y="224" text-anchor="middle">http_handler.py → the same handler.py</text>
-                <text class="d-text d-small" x="482" y="268" text-anchor="middle">the tool knows who asked · a door to run</text>
-                <!-- C -->
-                <text class="d-text d-title" x="672" y="24">C · Token passthrough</text>
-                <rect class="d-box d-account" x="662" y="34" width="290" height="212"/>
-                <rect class="d-box d-platform" x="676" y="46" width="262" height="32"/>
-                <text class="d-text" x="807" y="67" text-anchor="middle">Gateway with an HTTP target</text>
-                <path class="d-arrow d-deny" d="M807 78 L807 118" marker-end="url(#fig4-d5-deny)"/>
-                <text class="d-text d-small" x="815" y="96">the employee's</text>
-                <text class="d-text d-small" x="815" y="110">own token, as is</text>
-                <rect class="d-box" x="676" y="120" width="262" height="44" style="fill:#fdf1ec;stroke:#b4471f"/>
-                <text class="d-text" x="807" y="138" text-anchor="middle" style="fill:#7a2e12">the tool holds a token for every door</text>
-                <text class="d-text d-small" x="807" y="154" text-anchor="middle" style="fill:#7a2e12">and can replay it against any other service</text>
-                <rect class="d-box d-ghost" x="676" y="184" width="262" height="28"/>
-                <text class="d-text d-small d-ghost-text" x="807" y="202" text-anchor="middle">forbidden by the MCP specification</text>
-                <text class="d-text d-small" x="807" y="268" text-anchor="middle">nothing to exchange · the confused deputy</text>
-              </svg>
-              <figcaption>Three ways a tool can be reached from the gateway. In A, the Lambda target of the Dev and Prod gateways, the gateway invokes the function under its own role and passes the arguments; nothing about the caller travels with them. In B, this workshop's choice for the on-behalf-of gateway, the HR API is an OpenAPI target whose outbound credentials are an OAuth token exchange: the gateway's token T1 becomes T2, addressed to hr-tools-api, and API Gateway's JWT authorizer checks it before the same tool code runs. In C the gateway would forward the employee's own token unchanged, which the MCP specification forbids.</figcaption>
-            </figure>
-            <table class="options">
-              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
-              <tbody>
-                <tr><td>Lambda target under the gateway's role</td><td class="good">no token plumbing; cheap; the gateway role may invoke that one function only</td><td class="bad">the tool sees the service, never the person, and must trust the arguments</td><td class="when">internal tools where a service identity is enough; the Dev and Prod gateways</td></tr>
-                <tr class="ours"><td>OpenAPI or MCP server target with OAuth token exchange</td><td class="good">the tool receives a token for the person, addressed to it alone; the identity provider decides and records each exchange</td><td class="bad">an HTTP door in front of the tool (here API Gateway with a JWT authorizer); a credential provider; one more round trip per call</td><td class="when">the person matters: HR, finance, ticketing</td></tr>
-                <tr><td>Token passthrough on an HTTP target</td><td class="good">nothing to exchange</td><td class="bad">one token opens every door, and the tool can replay it elsewhere (the confused deputy); forbidden by the MCP specification</td><td class="when">a local test; never production</td></tr>
-              </tbody>
-            </table>
-            <div class="ours-box">
-              <p><strong>This workshop.</strong> The on-behalf-of gateway has one target, hrapi, and it is an OpenAPI target. Its document is generated from the same schema as the Lambda tools, so the tool names are the same with a different prefix: hrapi___get_leave_balance instead of hrtools___get_leave_balance. Its outbound credentials are OAuth with the grant type TOKEN_EXCHANGE through the credential provider kc-hr-obo-gateway, and the parameters of the exchange name the subject token type, access_token, and the audience, hr-tools-api. Before each call the gateway hands the caller's token T1 to AgentCore Identity, receives T2 and puts it in the Authorization header of the request to the HR API. The HR API is an API Gateway HTTP API with one route, POST /tools/{tool}, and a JWT authorizer whose issuer is the realm anycompany and whose audience is hr-tools-api. API Gateway checks the signature, the issuer, the audience and the expiry before the Lambda runs. The Lambda, agent-platform-hr-api, is the same code directory as the HR tools with one adapter in front, <code>scenario/tools/hr/http_handler.py</code>: it unwraps the HTTP event, writes one log line with the claims it received (sub, employee_id, aud, azp) and calls the unchanged handler. That log line is the evidence the hands-on reads.</p>
-              <p class="also">We also kept the Lambda logic as it is, and you should know what that means. A Lambda target could not have carried the token at all: the gateway invokes Lambda functions under its own role, and a Lambda target has no outbound credential configuration, which is why the HR API exists. But the HR API's handler still answers for the employee_id in the arguments, not for the sub in the token, so the demonstration proves the identity chain and not row-level security. The gateway can see the difference, though. When a caller arrives with a token, the policy engine's principal is <code>AgentCore::OAuthUser</code>, the token's sub, rather than <code>AgentCore::IamEntity</code>, the role, and a Cedar rule could compare the token's employee_id with the argument. The on-behalf-of gateway is not attached to the policy engine today.</p>
-              <p class="prod"><strong>Production path.</strong> Row-level security is the next step, and there are two places to put it. Either the tool reads the person from the token and ignores the argument, or a Cedar rule at the gateway forbids a call whose employee_id argument differs from the token's employee_id. Either way, attach the on-behalf-of gateway to the policy engine, start in LOG_ONLY as in decision 4.4, and keep the evidence line in the tool's log, because it is the record of who was really served.</p>
+              <p class="also"><strong>Mode today:</strong> <code>workshop apply 4</code> sets the record's one <code>gateway_mode</code>, LOG_ONLY by default, on all three IAM gateways, HR Prod included, and a re-run sets them back to it. You flip HR Dev to ENFORCE; <code>workshop apply 6</code> requires that, because its dataset expects the leave-days deny. HR Prod stays in LOG_ONLY unless you flip it on the Governance screen. The lab has Dev and Prod only, no staging.</p>
+              <p class="prod"><strong>Production path.</strong> Run Prod gateways in ENFORCE, and set the mode per environment rather than once for all. Give policy-owning domains their own engines. Review changes as code before attaching them to gateways.</p>
             </div>
           </div>
 
@@ -465,13 +283,12 @@
   <span class="in">inputs</span>:                                     <span class="c"># read by: workshop apply 4</span>
     <span class="in">knowledge_filter</span>: <span class="s">{department: HR}</span>        <span class="c"># pinned at the knowledge base target</span>
     <span class="in">max_leave_days</span>:   <span class="s">10</span>                      <span class="c"># the argument rule in Cedar</span>
-    <span class="in">gateway_mode</span>:     <span class="s">LOG_ONLY</span>                <span class="c"># where the gateways start; you flip ENFORCE on the screen</span>
+    <span class="in">gateway_mode</span>:     <span class="s">LOG_ONLY</span>                <span class="c"># where every gateway starts; you flip HR Dev to ENFORCE on the screen</span>
   <span class="k">decisions</span>:
-    <span class="k">layout</span>:     {<span class="k">workshop</span>: <span class="s">per-project-env</span>,    <span class="k">my_call</span>: <span class="s">"..."</span>}
-    <span class="k">layers</span>:     {<span class="k">workshop</span>: <span class="s">single</span>,             <span class="k">my_call</span>: <span class="s">"..."</span>}
-    <span class="k">targets</span>:    {<span class="k">workshop</span>: <span class="s">lambda + kb</span>,        <span class="k">my_call</span>: <span class="s">"..."</span>}
-    <span class="k">rollout</span>:    {<span class="k">workshop</span>: <span class="s">log-then-enforce</span>,   <span class="k">my_call</span>: <span class="s">"..."</span>}
-    <span class="k">user_tools</span>: {<span class="k">workshop</span>: <span class="s">openapi-jwt-target</span>, <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># API Gateway JWT authorizer in front of the unchanged Lambda</span></code></pre>
+    <span class="k">topology</span>:     {<span class="k">workshop</span>: <span class="s">per-project</span>}                  <span class="c"># 4.1: one gateway set per project</span>
+    <span class="k">environments</span>: {<span class="k">workshop</span>: <span class="s">dev-prod-gateways</span>}            <span class="c"># 4.1: each project gateway exists once per environment</span>
+    <span class="k">tool_access</span>:  {<span class="k">workshop</span>: <span class="s">audience-check + cedar-iam</span>}   <span class="c"># 4.2: the IdP issues tokens per audience; each authorizer checks it; Cedar on the IAM route only</span>
+    <span class="k">rollout</span>:      {<span class="k">workshop</span>: <span class="s">log-then-enforce</span>}             <span class="c"># 4.3</span></code></pre>
         </section>
 
         <section id="hands-on">
@@ -489,7 +306,7 @@
               <li><div><span class="pill tag command">command</span><code>workshop call --as hr-dev submit_leave_request E1001 15</code> → JSON-RPC error -32002. Policy blocks before the tool runs.</div></li>
               <li><div><span class="pill tag file">file</span>Inspect <code>platform_sdk/platform_sdk/templates/agent_role.json</code>: <code>InvokeGateway</code> on the project's gateways in its own environment only (the pattern <code>hr-assistant-dev-gw*</code>; it also matches hr-assistant-dev-gw-obo, though that door admits realm tokens, not IAM roles), no <code>lambda:InvokeFunction</code> and no <code>bedrock:InvokeModel</code>. This is a permissions inspection, not a call.</div></li>
               <li><div><span class="pill tag command">command</span><code>workshop obo</code>: two hops now. Steps 1 and 2 of its output repeat module 2 (T0, then T1 by hand). Step 3 calls <code>hrapi___get_leave_balance</code> on hr-assistant-dev-gw-obo with <code>Authorization: Bearer T1</code>; the gateway exchanges T1 for T2 and calls the HR API, which answers with the tool's JSON. Step 4 reads the evidence from the HR API log: <code>tool get_leave_balance: sub (same as T0), employee_id E1001, aud ['hr-tools-api'], azp hr-obo-gateway</code>. Compare the tokens: the sub never changed, the audience changed at every door, azp names the client that asked.</div></li>
-              <li><div><span class="pill tag record">record</span>Write your five module 4 decisions.</div></li>
+              <li><div><span class="pill tag record">record</span>Read the module 4 record entries in <code>design-record.yaml</code> and compare each with the option marked <span class="opt-tag rec">Recommended</span> on this page, where there is one.</div></li>
             </ol>
 <pre class="code-dark"><code><span class="c">// the rule that blocked step 7, as the engine stores it (ARNs shortened)</span>
 <span class="k">forbid</span>(principal is AgentCore::IamEntity,
@@ -529,7 +346,7 @@ OK   on behalf of alex.rivera: the HR API saw sub identical to T0, audience ['hr
             <figcaption><strong>Changed:</strong> AgentCore Gateway (including the on-behalf-of gateway and its OpenAPI target), Policy, Agent Registry, Lambda tools and CloudWatch. The on-behalf-of gateway admits realm tokens instead of IAM roles and is not attached to the policy engine. The KB filter stays at its target. The diagram shows HR Dev after the enforcement test. Click to open full size.</figcaption>
           </figure>
         </section>
-      
+
         <section id="glossary">
           <h2>Glossary</h2>
           <div class="glossary">
@@ -546,7 +363,7 @@ OK   on behalf of alex.rivera: the HR API saw sub identical to T0, audience ['hr
               <dt>Quota</dt><dd>A service limit. Tool-call limits apply both per gateway and per account.</dd>
               <dt>OpenAPI target</dt><dd>A target described by an OpenAPI document; each operation becomes a tool, and the gateway calls the HTTP API behind it.</dd>
               <dt>JWT authorizer</dt><dd>A door that checks a token's signature, issuer, audience and expiry before a call passes. AgentCore Gateway has one for inbound calls; API Gateway has one in front of the HR API.</dd>
-              <dt>Outbound token exchange</dt><dd>Before calling a target, AgentCore Identity exchanges the caller's token for one addressed to that target (RFC 8693, decision 2.5).</dd>
+              <dt>Outbound token exchange</dt><dd>Before calling a target, AgentCore Identity exchanges the caller's token for one addressed to that target (RFC 8693, decision 2.4).</dd>
               <dt>OAuthUser</dt><dd>The policy engine's principal for a caller with a token rather than an IAM role: AgentCore::OAuthUser, the token's sub, which is the person.</dd>
             </dl>
           </div>
@@ -568,7 +385,7 @@ OK   on behalf of alex.rivera: the HR API saw sub identical to T0, audience ['hr
           <a href="module-3-rev.html">3 · Control plane and governance <span class="d">40 min</span></a>
           <a href="module-4-rev.html">4 · Tool plane <span class="d">40 min</span></a>
           <a href="module-5-rev.html">5 · Model gateway <span class="d">40 min</span></a>
-          <a href="module-6-rev.html">6 · AgentOps <span class="d">40 min</span></a>
+          <a href="module-6-rev.html">6 · Project blueprints and delivery <span class="d">40 min</span></a>
           <a href="module-7-rev.html">7 · Operate and observe <span class="d">40 min</span></a>
           <a href="cleanup.html">Clean up <span class="d">35 min</span></a>
         </nav>

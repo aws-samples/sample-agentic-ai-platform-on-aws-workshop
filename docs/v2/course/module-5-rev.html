@@ -13,8 +13,8 @@
       .ours-box .concept-list + p { margin-top: 12px; }
       .start-now { margin: 0 0 18px; }
       .start-now p { margin: 6px 0 0; }
-      details.reference { margin: 14px 0; padding: 12px 14px; border: 1px solid #d5dce5; border-radius: 8px; }
-      details.reference > summary { cursor: pointer; font-weight: 700; color: #25364a; }
+      details.reference { margin: 14px 0; padding: 12px 14px; border: 1px solid #d5dbdb; border-radius: 8px; }
+      details.reference > summary { cursor: pointer; font-weight: 700; color: #232f3e; }
       details.reference[open] > summary { margin-bottom: 12px; }
       #glossary .glossary { margin-top: 0; }
     </style>
@@ -29,7 +29,7 @@
     </header>
 
     <div class="wrap">
-      <nav class="pager"><a href="module-4-rev.html">←&nbsp;Module 4 · Tool plane</a><a href="module-6-rev.html">Module 6 · AgentOps&nbsp;→</a></nav>
+      <nav class="pager"><a href="module-4-rev.html">←&nbsp;Module 4 · Tool plane</a><a href="module-6-rev.html">Module 6 · Project blueprints and&nbsp;delivery&nbsp;→</a></nav>
       <main>
         <section id="explain">
           <h2>One door for every model <span class="time">Explain · 10 min</span></h2>
@@ -86,16 +86,17 @@
         </section>
 
         <section id="decisions">
-          <h2>Four decisions <span class="time">Design · 10 min</span></h2>
+          <h2>Decisions <span class="time">Design · 10 min</span></h2>
 
           <div class="card">
             <h4 class="q" id="d5-1"><span class="id">5.1</span>How do agents reach models?</h4>
             <figure style="margin:0 0 10px">
               <svg viewBox="0 0 960 296" role="img" aria-labelledby="fig5-d1-title">
-                <title id="fig5-d1-title">Three ways for an agent to reach a model: direct Bedrock under an IAM allow-list, with an optional application inference profile for cost tags; AgentCore Gateway inference targets, the built-in LLM gateway; a model gateway product such as LiteLLM</title>
+                <title id="fig5-d1-title">Two ways for an agent to reach a model: direct Bedrock under an IAM allow-list, with an optional application inference profile for cost tags, or a model gateway product with keys, dollar caps and a guardrail per alias</title>
                 <defs><marker id="fig5-d1-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker></defs>
 
-                <text class="d-text d-title" x="22" y="24">A · Direct Bedrock</text>
+                <g transform="translate(498 0)">
+                <text class="d-text d-title" x="22" y="24">B · Direct Bedrock</text>
                 <rect class="d-box d-account" x="12" y="34" width="290" height="222"/>
                 <rect class="d-box d-aws" x="26" y="46" width="262" height="58"/>
                 <text class="d-text" x="157" y="64" text-anchor="middle">Agent role</text>
@@ -112,28 +113,13 @@
                 <text class="d-text d-tiny" x="157" y="233" text-anchor="middle">the profile wraps a model or a cross-Region profile</text>
                 <text class="d-text d-small" x="157" y="272" text-anchor="middle">no extra component · tags attribute cost</text>
                 <text class="d-text d-small" x="157" y="286" text-anchor="middle">no dollar caps</text>
-
-                <text class="d-text d-title" x="347" y="24">B · Gateway inference targets</text>
-                <rect class="d-box d-account" x="337" y="34" width="290" height="222"/>
-                <rect class="d-box d-aws" x="351" y="46" width="262" height="44"/>
-                <text class="d-text" x="482" y="64" text-anchor="middle">Agent</text>
-                <text class="d-text d-small" x="482" y="80" text-anchor="middle">OpenAI or Anthropic SDK, gateway base URL</text>
-                <path class="d-arrow" d="M482 90 L482 102" marker-end="url(#fig5-d1-arr)"/>
-                <rect class="d-box d-aws" x="351" y="104" width="262" height="72"/>
-                <text class="d-text" x="482" y="122" text-anchor="middle">AgentCore Gateway</text>
-                <text class="d-text d-small" x="482" y="136" text-anchor="middle">inference target · the built-in LLM gateway</text>
-                <text class="d-text d-small" x="482" y="150" text-anchor="middle">token rate limits · policy engine</text>
-                <text class="d-text d-small" x="482" y="164" text-anchor="middle">guardrails as policy conditions</text>
-                <path class="d-arrow" d="M482 176 L482 188" marker-end="url(#fig5-d1-arr)"/>
-                <rect class="d-box d-aws" x="351" y="190" width="262" height="28"/>
-                <text class="d-text" x="482" y="209" text-anchor="middle">Amazon Bedrock</text>
-                <text class="d-text d-tiny" x="482" y="233" text-anchor="middle">can also route to OpenAI and Anthropic</text>
-                <text class="d-text d-small" x="482" y="272" text-anchor="middle">managed · rate limits fail open by default</text>
-                <text class="d-text d-small" x="482" y="286" text-anchor="middle">no dollar budgets · no per-call Bedrock Guardrail</text>
-
-                <text class="d-text d-title" x="672" y="24">C · Gateway product</text>
-                <rect x="842" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
-                <text class="d-text" x="895" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
+                </g>
+                <g transform="translate(-497 0)">
+                <text class="d-text d-title" x="672" y="24">A · Gateway</text>
+                <rect x="758" y="12" width="90" height="20" rx="10" fill="#e3f4e1"/>
+                <text class="d-text" x="803" y="26" text-anchor="middle" style="font-size:11px;font-weight:700;fill:#1d5b14">recommended</text>
+                <rect x="852" y="12" width="96" height="20" rx="10" fill="#ffe3b3"/>
+                <text class="d-text" x="900" y="26" text-anchor="middle" style="font-size:11px;font-weight:700;fill:#6b3d00">this workshop</text>
                 <rect class="d-box d-account d-ours d-glow" x="662" y="34" width="290" height="222"/>
                 <rect class="d-box d-aws" x="676" y="46" width="262" height="44"/>
                 <text class="d-text" x="807" y="64" text-anchor="middle">Agent</text>
@@ -151,18 +137,18 @@
                 <text class="d-text d-tiny" x="807" y="246" text-anchor="middle">the door is the only way</text>
                 <text class="d-text d-small" x="807" y="272" text-anchor="middle">hard budgets · one more service</text>
                 <text class="d-text d-small" x="807" y="286" text-anchor="middle">about 0.1 USD per hour</text>
+                </g>
               </svg>
-              <figcaption>Three model-access patterns. In A the agent role calls Bedrock itself; an application inference profile only adds cost tags to that call, so it is an attribution add-on, not a different door. In B the AgentCore Gateway stands in front of the model with token rate limits and policy checks. Neither A nor B caps spend in dollars. In C a model gateway product does: LiteLLM adds dollar caps and a guardrail per alias, and the agent role cannot invoke Bedrock directly, so all model calls use the gateway.</figcaption>
+              <figcaption>Two model-access patterns. In A a model gateway product stands between agents and models: LiteLLM adds dollar caps and a guardrail per alias, and the agent role cannot invoke Bedrock directly, so all model calls use the gateway. In B the agent role calls Bedrock itself; an application inference profile only adds cost tags to that call, so it is an attribution add-on, not a different door, and nothing caps spend in dollars. A is the recommended reference for a shared platform and this workshop's choice.</figcaption>
             </figure>
             <table class="options">
               <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
               <tbody>
-                <tr><td>A · Direct Bedrock with an IAM allow-list; an application inference profile adds cost tags per project</td><td class="good">no extra component; cost allocation by tag</td><td class="bad">no dollar caps: the profile attributes spend, it does not limit it</td><td class="when">one team, trusted developers; add the profile when attribution is the goal</td></tr>
-                <tr><td>B · Gateway inference targets: AgentCore Gateway's built-in LLM gateway</td><td class="good">managed; OpenAI- and Anthropic-compatible APIs; token rate limits; one endpoint that routes to Bedrock, OpenAI or Anthropic models</td><td class="bad">no dollar budgets; rate limits fail open by default; guardrails only as policy conditions (content filter, prompt attack, sensitive information), not a full Bedrock Guardrail attached per call</td><td class="when">rate limits suffice</td></tr>
-                <tr class="ours"><td>C · A model gateway product (LiteLLM, this workshop)</td><td class="good">teams and keys; dollar caps with resets; spend logs; a guardrail per alias</td><td class="bad">one more service to run, about 0.1 USD per hour here; a master key to protect</td><td class="when">hard budgets per team and agent; a self-hosted product when model traffic must stay inside your VPC</td></tr>
+                <tr class="ours rec"><td><span class="opt-tag rec">Recommended</span><span class="opt-tag ws">This workshop</span><br>A · A model gateway product (LiteLLM)</td><td class="good">teams and keys; dollar caps with resets; spend logs; a guardrail per alias</td><td class="bad">one more service to run, about 0.1 USD per hour here; a master key to protect</td><td class="when">hard budgets per team and agent; a self-hosted product when model traffic must stay inside your VPC</td></tr>
+                                <tr><td>B · Direct Bedrock with an IAM allow-list; an application inference profile adds cost tags per project</td><td class="good">no extra component; cost allocation by tag</td><td class="bad">no dollar caps: the profile attributes spend, it does not limit it</td><td class="when">one team, trusted developers; add the profile when attribution is the goal</td></tr>
               </tbody>
             </table>
-            <p class="note">Option C is a product category rather than one product. Self-hosted gateways such as LiteLLM, used here, or Portkey's open-source gateway run inside your VPC and keep model traffic on the private path of decision 1.2; hosted routers such as OpenRouter or Portkey's hosted service can reach Bedrock, but they do so from outside your account over the public internet, so they do not fit an endpoints-only network. Anthropic's Claude apps gateway is the same idea for developer tooling: it sits between developers' Claude Code clients and the model provider, and has no service-token flow for unattended workloads, so it is not a path for agents.</p>
+            <p class="note">Option A is a product category rather than one product. Self-hosted gateways such as LiteLLM, used here, or Portkey's open-source gateway run inside your VPC and keep model traffic on the private path of decision 1.2; hosted routers such as OpenRouter or Portkey's hosted service can reach Bedrock, but they do so from outside your account over the public internet, so they do not fit an endpoints-only network. Anthropic's Claude apps gateway is the same idea for developer tooling: it sits between developers' Claude Code clients and the model provider, and has no service-token flow for unattended workloads, so it is not a path for agents.</p>
             <div class="ours-box">
               <p><strong>This workshop.</strong> LiteLLM runs on ECS Express Mode with RDS for keys and spend records. Its <strong>ten configured aliases</strong> (see <code>MODEL_CATALOG.md</code> in the repository), from three vendors (Anthropic, OpenAI and Amazon), inherit the baseline guardrail; the HR project's team may use two of them, <code>claude-sonnet-5</code> and <code>gpt-6-1-sol</code>, and its Dev key one.</p>
               <p class="also">LiteLLM is a proxy server: it receives each model request and passes it on to Bedrock. Model gateway, LiteLLM and proxy therefore name one service. The proxy is private and has <strong>two access paths</strong>:</p>
@@ -197,7 +183,7 @@
                 <text class="d-text d-small" x="176" y="122" text-anchor="middle" style="fill:#16191f">Key hr-assistant-dev-claude-sonnet-5</text>
                 <text class="d-text d-small" x="176" y="138" text-anchor="middle">cap 1 USD / 7 d</text>
                 <path class="d-arrow d-deny" d="M312 126 L358 126" marker-end="url(#fig5-d2-deny)"/>
-                <rect class="d-box" x="360" y="96" width="226" height="58" style="stroke:#b4471f;fill:#fcf1ec"/>
+                <rect class="d-box" x="360" y="96" width="226" height="58" style="stroke:#b4471f;fill:#fdf1ec"/>
                 <text class="d-text d-small" x="473" y="114" text-anchor="middle" style="fill:#16191f">cap reached →</text>
                 <text class="d-text d-small" x="473" y="130" text-anchor="middle" style="fill:#16191f">BUDGET_EXCEEDED, graceful</text>
                 <text class="d-text d-small" x="473" y="144" text-anchor="middle">the admin raises it in the Keys tab</text>
@@ -214,7 +200,7 @@
                 <text class="d-text d-small" x="306" y="270" text-anchor="middle">enforceable · an agent can be stopped mid-task</text>
 
                 <text class="d-text d-title" x="630" y="24">B · Quotas and rate limits</text>
-                <rect class="d-box d-account" x="620" y="34" width="328" height="76"/>
+                <rect class="d-box d-account d-ours d-glow" x="620" y="34" width="328" height="76"/>
                 <rect class="d-box" x="634" y="46" width="300" height="44"/>
                 <text class="d-text" x="784" y="64" text-anchor="middle">tokens and requests per minute</text>
                 <text class="d-text d-small" x="784" y="80" text-anchor="middle">protects capacity</text>
@@ -232,8 +218,8 @@
             <table class="options">
               <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
               <tbody>
-                <tr class="ours"><td>Hard caps with automatic reset</td><td class="good">enforceable</td><td class="bad">an agent can be stopped mid-task</td><td class="when">budgets are real limits</td></tr>
-                <tr><td>Quotas and rate limits</td><td class="good">protects capacity</td><td class="bad">not money</td><td class="when">throttling is the goal</td></tr>
+                <tr class="ours"><td><span class="opt-tag ws">This workshop</span><br>Hard caps with automatic reset</td><td class="good">enforceable</td><td class="bad">an agent can be stopped mid-task</td><td class="when">budgets are real limits</td></tr>
+                <tr class="ours"><td><span class="opt-tag ws">This workshop · team tpm, rpm</span><br>Quotas and rate limits</td><td class="good">protects capacity</td><td class="bad">not money</td><td class="when">throttling is the goal</td></tr>
                 <tr><td>Alerts only</td><td class="good">cheapest; no agent is ever blocked</td><td class="bad">spend can run away</td><td class="when">low risk, mature teams</td></tr>
               </tbody>
             </table>
@@ -252,6 +238,10 @@
 </ol>
               <p class="prod"><strong>Production path.</strong> Alert before caps are reached. Add per-user enforcement with LiteLLM Enterprise where needed; AWS Budgets by tag provides alerts, not model-call caps.</p>
             </div>
+            <figure>
+              <img class="diagram" src="arch/budget-layers.svg" alt="Budget scopes and enforced caps: on the left, design scopes nested inside each other, a project cost envelope containing an agent budget containing model usage; on the right, outlined as this workshop, the LiteLLM team cap for the project and one capped key per agent, environment and model, for Dev and for Prod; below, a note that memory, knowledge base, runtime and other service costs are under no hard cap" style="width:100%" />
+              <figcaption>Budget <strong>scopes</strong> to design for (left) are not the same as the <strong>controls</strong> this workshop enforces (right). A project's full cost envelope, its agents' spend across runs and model usage are design scopes. The lab enforces two model-spend levels in LiteLLM: the project's team cap and a capped key per agent, environment and model; each call counts against both. No cap covers a project's other services, such as memory, knowledge bases or runtime. <a href="arch/budget-layers.drawio">Editable diagram</a>.</figcaption>
+            </figure>
             <table class="options">
               <thead><tr><th>If the budget store is down</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
               <tbody>
@@ -262,83 +252,12 @@
             <p class="note">Outage behaviour must be chosen and tested:</p>
 <ul class="concept-list">
   <li><strong>LiteLLM:</strong> default fail closed on database loss, except cached keys; <code>allow_requests_on_db_unavailable</code> changes this.</li>
-  <li><strong>AgentCore Gateway:</strong> rate limits fail open.</li>
   <li><strong>Claude apps gateway:</strong> developer-tool gateway; default fail open, with a fail-closed option.</li>
 </ul><p class="note">The workshop uses LiteLLM's default. Database-outage behaviour is not tested here.</p>
           </div>
 
           <div class="card">
-            <h4 class="q" id="d5-3"><span class="id">5.3</span>Where does the catalogue live?</h4>
-            <figure style="margin:0 0 10px">
-              <svg viewBox="0 0 960 286" role="img" aria-labelledby="fig5-d3-title">
-                <title id="fig5-d3-title">Where the catalogue lives: the platform's own database, or AWS Agent Registry</title>
-                <defs>
-                  <marker id="fig5-d3-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4a5a70"/></marker>
-                  <marker id="fig5-d3-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b4471f"/></marker>
-                </defs>
-
-                <text class="d-text d-title" x="22" y="24">A · The platform's own database</text>
-                <rect class="d-box d-account" x="12" y="34" width="460" height="220"/>
-                <rect class="d-group" x="26" y="70" width="236" height="96"/>
-                <text class="d-text d-small" x="36" y="86">the platform</text>
-                <rect class="d-box d-aws" x="40" y="96" width="208" height="58"/>
-                <text class="d-text" x="144" y="114" text-anchor="middle">DynamoDB table</text>
-                <text class="d-text d-small" x="144" y="130" text-anchor="middle">a list of tools,</text>
-                <text class="d-text d-small" x="144" y="144" text-anchor="middle">knowledge and models</text>
-                <rect class="d-box d-ghost" x="338" y="96" width="120" height="44"/>
-                <text class="d-text d-small d-ghost-text" x="398" y="114" text-anchor="middle">other accounts,</text>
-                <text class="d-text d-small d-ghost-text" x="398" y="130" text-anchor="middle">other tools</text>
-                <path class="d-arrow d-dash d-deny" d="M338 118 L264 118" marker-end="url(#fig5-d3-deny)"/>
-                <text class="d-text d-small" x="242" y="200" text-anchor="middle">external discovery needs a custom API</text>
-                <text class="d-text d-small" x="242" y="272" text-anchor="middle">simple · one platform</text>
-
-                <text class="d-text d-title" x="498" y="24">B · AWS Agent Registry</text>
-                <rect x="842" y="12" width="106" height="20" rx="10" fill="#ffe3b3"/>
-                <text class="d-text" x="895" y="26" text-anchor="middle" style="font-size:11.5px;font-weight:700;fill:#6b3d00">this workshop</text>
-                <rect class="d-box d-account d-ours d-glow" x="488" y="34" width="460" height="220"/>
-                <rect class="d-box d-aws" x="502" y="46" width="432" height="104"/>
-                <text class="d-text d-strong" x="512" y="64">registry agent_platform_catalogue</text>
-                <rect class="d-box" x="516" y="76" width="70" height="28"/>
-                <text class="d-text" x="551" y="95" text-anchor="middle">DRAFT</text>
-                <path class="d-arrow" d="M586 90 L612 90" marker-end="url(#fig5-d3-arr)"/>
-                <rect class="d-box" x="614" y="76" width="156" height="28"/>
-                <text class="d-text" x="692" y="95" text-anchor="middle">PENDING_APPROVAL</text>
-                <path class="d-arrow" d="M770 90 L796 90" marker-end="url(#fig5-d3-arr)"/>
-                <rect class="d-box" x="798" y="76" width="94" height="28"/>
-                <text class="d-text" x="845" y="95" text-anchor="middle">APPROVED</text>
-                <text class="d-text d-tiny" x="516" y="130">other states:</text>
-                <rect class="d-box d-ghost" x="584" y="112" width="180" height="26"/>
-                <text class="d-text d-small d-ghost-text" x="674" y="130" text-anchor="middle">REJECTED · DEPRECATED</text>
-                <path class="d-arrow" d="M607 150 L607 162" marker-end="url(#fig5-d3-arr)"/>
-                <rect class="d-box d-blue" x="502" y="164" width="210" height="44"/>
-                <text class="d-text" x="607" y="182" text-anchor="middle">EventBridge</text>
-                <text class="d-text d-small" x="607" y="198" text-anchor="middle">an event on every state change</text>
-                <path class="d-arrow" d="M829 150 L829 162" marker-end="url(#fig5-d3-arr)"/>
-                <rect class="d-box" x="724" y="164" width="210" height="44"/>
-                <text class="d-text" x="829" y="182" text-anchor="middle">other accounts and tools</text>
-                <text class="d-text d-small" x="829" y="198" text-anchor="middle">can read it</text>
-                <text class="d-text d-small" x="718" y="228" text-anchor="middle">approval is a label today;</text>
-                <text class="d-text d-small" x="718" y="242" text-anchor="middle">a project still needs its allow-list to use the tool</text>
-                <text class="d-text d-small" x="718" y="272" text-anchor="middle">shared beyond one platform · a new service to learn</text>
-              </svg>
-              <figcaption>Agent Registry provides approval states, change events and discovery beyond the platform. A private catalogue table needs a custom API for external discovery.</figcaption>
-            </figure>
-            <table class="options">
-              <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
-              <tbody>
-                <tr><td>The platform's own database</td><td class="good">simple</td><td class="bad">custom API needed for external discovery</td><td class="when">one platform</td></tr>
-                <tr class="ours"><td>AWS Agent Registry: records, approval states, events</td><td class="good">shared across accounts and tools; an event on every state change</td><td class="bad">a new service to learn</td><td class="when">sharing beyond one platform</td></tr>
-              </tbody>
-            </table>
-            <div class="ours-box">
-              <p><strong>This workshop.</strong> Admin approves the three Agent Registry records. Every persona can read them; invoking a tool still requires the project's allow-list and gateway permissions.</p>
-              <p class="also">Approval is a visible label today. It does not block deployment or invocation.</p>
-              <p class="prod"><strong>Production path.</strong> Allow deployment only with approved references. The record's domain owner approves.</p>
-            </div>
-          </div>
-
-          <div class="card">
-            <h4 class="q" id="d5-4"><span class="id">5.4</span>Where may a model request be processed?</h4>
+            <h4 class="q" id="d5-3"><span class="id">5.3</span>Where may a model request be processed, and how does capacity grow?</h4>
             <figure style="margin:0 0 10px">
               <svg viewBox="0 0 960 292" role="img" aria-labelledby="fig5-d4-title">
                 <title id="fig5-d4-title">Where a model request may be processed: one Region, a geography, or any commercial Region</title>
@@ -397,13 +316,13 @@
 
                 <text class="d-text d-small" x="480" y="286" text-anchor="middle">Evidence of where a request ran: CloudTrail's inferenceRegion field in the source Region. A Region-deny SCP fails the request; it does not shrink the route (3.2).</text>
               </svg>
-              <figcaption>Three routes: one Region, a geography or global. We use <code>us.</code> profiles; all possible destinations need permission.</figcaption>
+              <figcaption>Three routes: one Region, a geography or global. This workshop uses <code>us.</code> profiles; all possible destinations need permission.</figcaption>
             </figure>
             <table class="options">
               <thead><tr><th>Option</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead>
               <tbody>
                 <tr><td>Regional: the model id without a profile</td><td class="good">processed in the Region that received the call</td><td class="bad">one Region's capacity; some models exist only behind a profile</td><td class="when">processing must stay in one Region</td></tr>
-                <tr class="ours"><td>Geographic cross-Region profile: <code>us.</code>, <code>eu.</code>, <code>apac.</code></td><td class="good">more capacity; stays inside the geography</td><td class="bad">a geography is not a country; every destination Region must be allowed by IAM and by the SCPs</td><td class="when">residency by geography</td></tr>
+                <tr class="ours"><td><span class="opt-tag ws">This workshop</span><br>Geographic cross-Region profile: <code>us.</code>, <code>eu.</code>, <code>apac.</code></td><td class="good">more capacity; stays inside the geography</td><td class="bad">a geography is not a country; every destination Region must be allowed by IAM and by the SCPs</td><td class="when">residency by geography</td></tr>
                 <tr><td>Global cross-Region profile: <code>global.</code></td><td class="good">the most capacity; about 10 % cheaper than geographic</td><td class="bad">any commercial Region may process the request; a Region-deny SCP must learn <code>unspecified</code></td><td class="when">no residency requirement</td></tr>
               </tbody>
             </table>
@@ -417,6 +336,17 @@
 </ul>
               <p class="prod"><strong>Production path.</strong> Define processing locations per data class. Use <code>bedrock:InferenceProfileArn</code> for SCP profile exceptions. An alias names a route; CloudTrail's <code>inferenceRegion</code> proves where processing occurred.</p>
             </div>
+            <h4 id="model-fanout">Capacity and resilience across accounts: LiteLLM fan-out (production pattern, not deployed)</h4>
+            <figure>
+              <img class="diagram" src="arch/model-fanout.svg" alt="Cross-account model routing through LiteLLM, a reference pattern that is not deployed: agent workloads call a private LiteLLM gateway in the platform account, which routes one alias to scoped invocation roles and Amazon Bedrock in model accounts A and B; bands below list what the pattern requires and its caveats" style="width:100%" />
+              <figcaption>A conceptual production pattern for capacity and resilience; this workshop does not deploy it. <a href="arch/model-fanout.drawio">Editable diagram</a>.</figcaption>
+            </figure>
+            <p>Account quotas for model tokens and requests apply per account and Region. A platform that outgrows one account can give one LiteLLM alias several deployments, each calling Bedrock through a scoped role in a different model account, and let the router balance and fall back between them. It can add usable capacity and a second account-level failure domain once each account's quotas, model access and failure domains are validated; adding an account alone guarantees neither capacity nor resilience.</p>
+            <ul class="concept-list">
+              <li><strong>What it needs:</strong> cross-account trust for each invocation role, private access from the gateway, model access and quotas in every account, retry and fallback rules, and spend attributed back to the calling key.</li>
+              <li><strong>What it does not do:</strong> it does not change where a request may be processed. Each deployment still uses its inference profile, so the geography rules above, IAM and the SCPs apply in every account. It does not guarantee failover when the shared Region or the model provider is degraded.</li>
+              <li><strong>In this workshop:</strong> one account and one deployment per alias. The configuration has no router fallbacks, and the gateway's task role may invoke Bedrock only in its own account.</li>
+            </ul>
           </div>
 
           <div class="ours-box" style="margin-top:16px">
@@ -428,10 +358,9 @@
   <span class="in">inputs</span>:                                     <span class="c"># read by: workshop apply 5</span>
     <span class="in">key_cap</span>: <span class="s">{usd: 1.00, period: 7d}</span>           <span class="c"># the Dev key for the agent's model</span>
   <span class="k">decisions</span>:
-    <span class="k">model_access</span>:        {<span class="k">workshop</span>: <span class="s">model-gateway</span>,       <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># LiteLLM</span>
-    <span class="k">spend_control</span>:       {<span class="k">workshop</span>: <span class="s">hard-caps</span>,           <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># team budget + key caps</span>
-    <span class="k">catalogue</span>:           {<span class="k">workshop</span>: <span class="s">agent-registry</span>,      <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># manual approval, a label</span>
-    <span class="k">processing_location</span>: {<span class="k">workshop</span>: <span class="s">geographic-profiles</span>, <span class="k">my_call</span>: <span class="s">"..."</span>}   <span class="c"># us. profiles; the SCP side is 3.2</span></code></pre>
+    <span class="k">model_access</span>:        {<span class="k">workshop</span>: <span class="s">model-gateway</span>}            <span class="c"># 5.1: LiteLLM</span>
+    <span class="k">spend_control</span>:       {<span class="k">workshop</span>: <span class="s">team-budget + key-caps</span>}   <span class="c"># 5.2: project team budget + one capped key per agent, environment and model</span>
+    <span class="k">processing_location</span>: {<span class="k">workshop</span>: <span class="s">geographic-profiles</span>}      <span class="c"># 5.3: us. profiles; the SCP side is 3.2</span></code></pre>
         </section>
 
         <section id="hands-on">
@@ -445,7 +374,7 @@
               <li><div><span class="pill tag command">command</span><code>workshop cap --dev low</code>: as the Platform admin it lowers the Dev key's cap to half of what the key has spent so far (never more than 0.01 USD; 0.01 when no spend is recorded yet) and makes one more call through the proxy, which refuses it before any model runs: <code>OK BUDGET_EXCEEDED, gracefully: HTTP 422, Budget has been exceeded! Key=… Current cost: …, Max budget: …</code>. The text after the comma is LiteLLM's own wording (its error type is the lower-case <code>budget_exceeded</code>); <code>BUDGET_EXCEEDED</code> is the platform's code for the same refusal, which <code>workshop ask</code> prints and the Playground shows as its "Spending cap reached" alert from module 6 on. If the call still passes, the spend the command read had not been written yet (the proxy writes spend in batches every 10 seconds), so the cap it set is still above the real spend: run the command once more. Then <code>workshop cap --dev restore</code> writes your record's cap back before module 6.</div></li>
               <li><div><span class="pill tag screen">screen</span>Switch to Platform admin: every persona can read the catalogue, but only the admin may change a record's status. In <strong>Catalogue</strong>, filter on <em>Pending approval</em> and approve the three records that <code>workshop apply 4</code> submitted: <code>hr-assistant-tools</code> (the MCP server of the HR Dev gateway), <code>kb-hr-policies</code> (the HR policy knowledge base) and <code>model-claude-sonnet-5</code> (the model alias named in your record). Approved records become searchable. If the screen is unavailable, <code>workshop approve catalogue</code> approves every pending record from the command line.</div></li>
               <li><div><span class="pill tag command">command</span><code>workshop inventory</code>: verify the shared platform resources.</div></li>
-              <li><div><span class="pill tag record">record</span>Write your four module 5 decisions.</div></li>
+              <li><div><span class="pill tag record">record</span>Read the module 5 record entries in <code>design-record.yaml</code> and compare each with the option marked <span class="opt-tag rec">Recommended</span> on this page, where there is one.</div></li>
             </ol>
 <pre class="code-dark"><code><span class="c"># workshop apply 5, first run (lines shortened; numbers vary)</span>
 == governance: approved models, guardrail, engine, gateways
@@ -515,7 +444,7 @@ next: `workshop cap --dev low` (the cap drops below the spend and one more call 
           </div>
         </section>
       </main>
-      <nav class="pager"><a href="module-4-rev.html">←&nbsp;Module 4 · Tool plane</a><a href="module-6-rev.html">Module 6 · AgentOps&nbsp;→</a></nav>
+      <nav class="pager"><a href="module-4-rev.html">←&nbsp;Module 4 · Tool plane</a><a href="module-6-rev.html">Module 6 · Project blueprints and&nbsp;delivery&nbsp;→</a></nav>
 
       <details class="toc-disclosure" id="course-contents">
         <summary class="toc-toggle" aria-label="Table of contents" title="Table of contents" aria-controls="contents-navigation">
@@ -531,7 +460,7 @@ next: `workshop cap --dev low` (the cap drops below the spend and one more call 
           <a href="module-3-rev.html">3 · Control plane and governance <span class="d">40 min</span></a>
           <a href="module-4-rev.html">4 · Tool plane <span class="d">40 min</span></a>
           <a href="module-5-rev.html">5 · Model gateway <span class="d">40 min</span></a>
-          <a href="module-6-rev.html">6 · AgentOps <span class="d">40 min</span></a>
+          <a href="module-6-rev.html">6 · Project blueprints and delivery <span class="d">40 min</span></a>
           <a href="module-7-rev.html">7 · Operate and observe <span class="d">40 min</span></a>
           <a href="cleanup.html">Clean up <span class="d">35 min</span></a>
         </nav>

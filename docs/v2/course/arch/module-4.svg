@@ -232,13 +232,13 @@
 <use href="#sym-res-documents" x="1168" y="504" width="56" height="56" opacity="0.3"/>
 <text x="1196.0" y="576" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#9aa5b3" text-anchor="middle">Exported code · option</text>
 <text x="1196.0" y="591" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#9aa5b3" text-anchor="middle">module 6</text>
-<rect x="665.0" y="698" width="160" height="133" rx="10" fill="#fff3e0" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
+<rect x="665.0" y="698" width="160" height="133" rx="10" fill="#fff8ea" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
 <use href="#sym-agentcore" x="717" y="706" width="56" height="56"/>
 <text x="745.0" y="778" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">AgentCore Gateway</text>
 <text x="745.0" y="793" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">hr dev · hr prod · finance dev</text>
 <text x="745.0" y="808" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">MCP · IAM inbound</text>
 <text x="745.0" y="823" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">+ hr dev obo · JWT inbound</text>
-<rect x="830.0" y="698" width="150" height="118" rx="10" fill="#fff3e0" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
+<rect x="830.0" y="698" width="150" height="118" rx="10" fill="#fff8ea" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
 <use href="#sym-agentcore" x="877" y="706" width="56" height="56"/>
 <text x="905.0" y="778" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">AgentCore Policy</text>
 <text x="905.0" y="793" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">one engine · Cedar</text>
@@ -246,12 +246,12 @@
 <use href="#sym-agentcore" x="1042" y="706" width="56" height="56"/>
 <text x="1070.0" y="778" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">AgentCore Identity</text>
 <text x="1070.0" y="793" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">2 OAuth2 providers · OBO</text>
-<rect x="1160.0" y="698" width="110" height="118" rx="10" fill="#fff3e0" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
+<rect x="1160.0" y="698" width="110" height="118" rx="10" fill="#fff8ea" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
 <use href="#sym-agentcore" x="1187" y="706" width="56" height="56"/>
 <text x="1215.0" y="778" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">Agent Registry</text>
 <text x="1215.0" y="793" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">AWS · the catalogue</text>
 <text x="1215.0" y="808" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">3 records pending</text>
-<rect x="667.0" y="916" width="156" height="118" rx="10" fill="#fff3e0" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
+<rect x="667.0" y="916" width="156" height="118" rx="10" fill="#fff8ea" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
 <use href="#sym-lambda" x="717" y="924" width="56" height="56"/>
 <text x="745.0" y="996" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">Lambda tools</text>
 <text x="745.0" y="1011" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">agent-platform-hr-tools</text>
@@ -286,7 +286,7 @@
 <text x="550.0" y="1298" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">API Gateway · HTTPS door</text>
 <text x="550.0" y="1313" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">VPC link · free TLS</text>
 <text x="550.0" y="1328" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">issuer …/realms/anycompany</text>
-<rect x="711.0" y="1199" width="210" height="118" rx="10" fill="#fff3e0" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
+<rect x="711.0" y="1199" width="210" height="118" rx="10" fill="#fff8ea" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
 <use href="#sym-api-gateway" x="788" y="1207" width="56" height="56"/>
 <text x="816.0" y="1279" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">HR API · HTTP API</text>
 <text x="816.0" y="1294" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">JWT authorizer · aud hr-tools-api</text>
@@ -295,7 +295,7 @@
 <text x="1120.0" y="1279" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">Lambda · agent-platform-hr-api</text>
 <text x="1120.0" y="1294" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">http_handler → the HR tools</text>
 <text x="1120.0" y="1309" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">logs sub · aud · azp · employee_id</text>
-<rect x="1312.0" y="142" width="240" height="118" rx="10" fill="#fff3e0" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
+<rect x="1312.0" y="142" width="240" height="118" rx="10" fill="#fff8ea" stroke="#ff9900" stroke-width="2" opacity="0.7"/>
 <use href="#sym-cloudwatch" x="1404" y="150" width="56" height="56"/>
 <text x="1432.0" y="222" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="middle">Amazon CloudWatch</text>
 <text x="1432.0" y="237" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#3a4452" text-anchor="middle">Transaction Search · stack SharedServices</text>
@@ -353,7 +353,7 @@
 <text x="968" y="1227" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="normal" fill="#545b64" text-anchor="middle">token validated · proxy</text>
 <text x="1560" y="44" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="16" font-weight="bold" fill="#c7254e" text-anchor="end">Module 4 · the tool plane</text>
 <text x="1316" y="1030" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="bold" fill="#16191f" text-anchor="start">Key</text>
-<rect x="1316" y="1042" width="18" height="13" rx="3" style="fill:#fff3e0;stroke:#ff9900;stroke-width:2"/>
+<rect x="1316" y="1042" width="18" height="13" rx="3" style="fill:#fff8ea;stroke:#ff9900;stroke-width:2"/>
 <text x="1342" y="1053" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#3a4452" text-anchor="start">added or changed in this module</text>
 <rect x="1316" y="1062" width="18" height="13" rx="3" style="fill:#fff;stroke:#232f3e;stroke-width:1"/>
 <text x="1342" y="1073" font-family="'Amazon Ember', 'Helvetica Neue', Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#3a4452" text-anchor="start">already there</text>

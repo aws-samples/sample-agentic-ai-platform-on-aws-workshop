@@ -793,10 +793,10 @@
             This is a complete run-through from a fresh AWS account to the cleaned-up one. A facilitator uses it to rehearse what an attendee experiences through the workshop.
             <br/>
             The document outlines short steps, exact commands, where to look in the UI. The detailed explanations live in the course pages:
-            <a href="v2/course/index.html">docs/v2/course</a> (the learning path, the Introduction, five module pages, handoff and clean up).
+            <a href="v2/course/index.html">docs/v2/course</a> (the introduction with the learning path and Get started, seven module pages and clean up). What to say in each module is in the <a href="v2/course/talking-points.md">talking points</a>.
           </p>
           <p class="note">
-            Teach the five-module sequence in the learning path. This command-by-command rehearsal keeps the seven CLI build phases, so a build phase number matches <code>workshop apply N</code> and the <code>module_N</code> block in <code>design-record.yaml</code>. The course returns to those phases as each design needs them; the <a href="v2/course/intro.html#setup-workspace-order">command-order table</a> maps them to the five modules.
+            The course has seven modules, and build phase N is Module N: it runs <code>workshop apply N</code> and reads the <code>module_N</code> block of <code>design-record.yaml</code>. The introduction's <a href="v2/course/index.html#build-path">build path</a> lists the seven commands in order.
           </p>
 
           <div class="key">
@@ -887,7 +887,7 @@
                   >Open the course once:
                   <a href="v2/course/index.html">v2/course/index.html</a> (the
                   path, the <a href="v2/course/index.html#agenda">agenda</a>,
-                  <a href="v2/course/intro.html#setup-workspace">Get started</a>) and
+                  <a href="v2/course/index.html#start">Get started</a>) and
                   <a href="workshop-guide.html">workshop-guide.html</a>
                   (architecture, services). Keep Get started open: its six steps
                   are what every learner does before build phase 1.</span
@@ -1061,7 +1061,14 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                   and goes straight to its checks. <code>workshop apply 2</code>
                   finds the personas but still deploys
                   <code>AgentPlatform-Idp</code> (about 7 min) unless
-                  <code>scripts/deploy.sh --idp</code> ran as well.</span
+                  <code>scripts/deploy.sh --idp</code> ran as well. To take the 20-minute landing-zone deployment out of the day, a
+                  facilitator can also run <code>workshop deploy landing-zone</code>
+                  in each account before the event; learners then run
+                  <code>workshop apply 1 --no-deploy</code>, which inspects the
+                  stacks and runs the doctor. The standard event provisioning
+                  deploys the four pre-day stacks only: pre-provisioning the landing
+                  zone for every event account is an outstanding change to the event
+                  infrastructure, outside this repository.</span
                 >
               </div>
             </li>
@@ -1069,9 +1076,11 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
               <div>
                 <label class="tick"><input type="checkbox" id="s9" />done</label
                 ><span class="text"
-                  >Read the doctor. The landing-zone rows read not deployed and
-                  the personas not created: expected before build phases 1 and 2, and
-                  the doctor does not fail on it. Passwords exist only after
+                  >Read the doctor. The landing-zone rows read not deployed, the
+                  personas not created and <code>Keycloak IdP URL</code> not deployed:
+                  expected before build phases 1 and 2, and the doctor does not fail on
+                  it. After <code>workshop apply 2</code> the doctor prints the Keycloak
+                  URL and its admin console link (no password). Passwords exist only after
                   <code>workshop apply 2</code>.
                   <pre
                     class="code-dark"
@@ -1120,10 +1129,10 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
             <code>module_3.inputs</code>) and is idempotent: a re-run says
             <code>exists</code>. Start the long deployments as the phase begins
             (the Start now boxes on the course pages). Pages:
-            <a href="v2/course/m1.html#m1-overview">build phase 1</a> ·
-            <a href="v2/course/m2.html#m2-1">build phase 2</a> ·
-            <a href="v2/course/m2.html#m2-4">build phase 3</a> ·
-            <a href="v2/course/m2.html#m2-3-2">build phase 4</a>.
+            <a href="v2/course/module-1-rev.html">build phase 1</a> ·
+            <a href="v2/course/module-2-rev.html">build phase 2</a> ·
+            <a href="v2/course/module-3-rev.html">build phase 3</a> ·
+            <a href="v2/course/module-4-rev.html">build phase 4</a>.
           </p>
           <div class="table-scroll">
             <table>
@@ -1162,7 +1171,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                     CloudFormation console: three new stacks beside the four
                     pre-deployed; VPC console: one VPC, six subnets, no internet
                     or NAT gateway, nine interface endpoints + S3 gateway
-                    endpoint. Record: four <code>my_call</code> entries.
+                    endpoint. Record: read the module 1 record entries; <code>workshop record</code> checks the file.
                   </td>
                 </tr>
                 <tr>
@@ -1232,7 +1241,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                     bedrock:InvokeModel, no lambda:InvokeFunction; only
                     bedrock-agentcore:InvokeGateway on
                     <code>hr-assistant-dev-gw*</code>) and
-                    <code>-dev-gateway</code>. Record: four decisions.
+                    <code>-dev-gateway</code>. Record: read the module 3 record entries.
                   </td>
                 </tr>
                 <tr>
@@ -1286,8 +1295,8 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                     <span class="pill ui">Governance</span>: engine and gateway
                     modes (the on-behalf-of gateway is not listed);
                     <span class="pill ui">Overview</span>: Allow / Deny counts,
-                    <span class="pill wait">up to 4 min</span>. Record: five
-                    decisions.
+                    <span class="pill wait">up to 4 min</span>. Record: read the
+                    module 4 record entries.
                   </td>
                 </tr>
               </tbody>
@@ -1303,7 +1312,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
               <li>Eight resources on the projects' Resources tabs</li>
               <li>A Deny count on the Overview after the <code>-32002</code> call (up to four minutes)</li>
             </ol>
-            In this command-only rehearsal, catalogue approval and the Dev key are build phase 5. In the five-module course, approve the HR gateway record during Module 2's coding-client activity, then approve the remaining records and create the key in Module 4. The state file
+            Catalogue approval and the Dev key are build phase 5, in Module 5's hands-on; the catalogue decision itself is taught in Module 3 (decision 3.3). The state file
             <code>.workshop/state/hr-assistant.json</code> holds what the applies created.
           </div>
         </section>
@@ -1314,9 +1323,9 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
             >
           </h2>
           <p class="lead">
-            Pages: <a href="v2/course/m4.html#m4-2">build phase 5</a> ·
-            <a href="v2/course/m4.html#m4-4">build phase 6</a> ·
-            <a href="v2/course/m5.html">build phase 7</a>. Build phase 6 is two
+            Pages: <a href="v2/course/module-5-rev.html">build phase 5</a> ·
+            <a href="v2/course/module-6-rev.html">build phase 6</a> ·
+            <a href="v2/course/module-7-rev.html">build phase 7</a>. Build phase 6 is two
             runs of <code>workshop apply 6</code>; start run 1 as the module
             begins.
           </p>
@@ -1361,7 +1370,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                     <span class="pill ui">Catalogue</span>: 3 APPROVED;
                     <span class="pill ui">Governance</span>: the model gateway
                     URL, username <code>admin</code>, masked password. Record:
-                    four decisions.
+                    read the module 5 record entries.
                   </td>
                 </tr>
               </tbody>
@@ -1392,7 +1401,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
               </thead>
               <tbody>
                 <tr>
-                  <td>6 AgentOps · run 1</td>
+                  <td>6 Project blueprints and delivery · run 1</td>
                   <td><span class="pill persona">Agent developer</span></td>
                   <td>
                     Check the Dev cap is restored. Record
@@ -1427,7 +1436,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                   </td>
                 </tr>
                 <tr>
-                  <td>6 AgentOps · run 2</td>
+                  <td>6 Project blueprints and delivery · run 2</td>
                   <td><span class="pill persona">Agent developer</span></td>
                   <td>
                     Record <code>prompt_version: v2</code>.
@@ -1444,7 +1453,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                   </td>
                 </tr>
                 <tr>
-                  <td>6 AgentOps · approve, promote, Prod</td>
+                  <td>6 Project blueprints and delivery · approve, promote, Prod</td>
                   <td>
                     <span class="pill persona">Domain approver</span>
                     <span class="pill persona">Agent developer</span>
@@ -1476,7 +1485,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                     <span class="pill ui">Releases</span>: Approve, Promote;
                     afterwards release 2 PROMOTED, version history, Prod
                     endpoint; <span class="pill ui">Playground</span> Prod.
-                    Record: three decisions.
+                    Record: read the module 6 record entries.
                   </td>
                 </tr>
                 <tr>
@@ -1692,7 +1701,7 @@ workshop status             <span class="c"># every row reads not deployed; Clou
                 </tr>
                 <tr>
                   <td>13:55</td>
-                  <td>Build phase 6 - AgentOps</td>
+                  <td>Build phase 6 - Project blueprints and delivery</td>
                   <td>40</td>
                   <td>
                     <span class="pill persona">Agent developer</span>
@@ -2277,8 +2286,9 @@ workshop deploy pre-day</code></pre>
           <h3>More</h3>
           <div class="docs">
             <a href="v2/course/index.html#agenda">Course and agenda</a
-            ><a href="v2/course/intro.html#setup-workspace">Get started</a
+            ><a href="v2/course/index.html#start">Get started</a
             ><a href="v2/course/cleanup.html">Clean up</a
+            ><a href="v2/course/talking-points.md">Talking points</a
             ><a href="workshop-guide.html">Workshop guide</a
             ><a href="../workshop_cli/README.md">The workshop command</a>
           </div>
