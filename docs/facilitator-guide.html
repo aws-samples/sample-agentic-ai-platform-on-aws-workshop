@@ -1125,7 +1125,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
           <p class="lead">
             Every module: Explain 10 min · Design 10 min · Hands-on 20 min.
             <code>workshop apply N</code> reads <code>design-record.yaml</code>
-            (<code>model: claude-sonnet-5</code> under
+            (<code>model: claude-opus-5</code> under
             <code>module_3.inputs</code>) and is idempotent: a re-run says
             <code>exists</code>. Start the long deployments as the phase begins
             (the Start now boxes on the course pages). Pages:
@@ -1134,6 +1134,19 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
             <a href="v2/course/module-3-rev.html">build phase 3</a> ·
             <a href="v2/course/module-4-rev.html">build phase 4</a>.
           </p>
+          <div class="callout warn">
+            <b>An event that already ran with another model</b>
+            Changing <code>model</code> in the record switches nothing that
+            already exists, and nothing is deleted. Run
+            <code>workshop apply 3</code> (adds the alias to the project),
+            <code>workshop apply 4</code> then approve the new
+            <code>model-&lt;alias&gt;</code> record,
+            <code>workshop apply 5</code> (new Dev key; earlier keys and
+            credential providers stay active and share the project budget) and
+            <code>workshop apply 6</code>; Prod keeps the promoted release until
+            the new one is approved and promoted. See <code>MODEL_CATALOG.md</code>
+            in the repository, "Switch an existing deployment".
+          </div>
           <div class="table-scroll">
             <table>
               <thead>
@@ -1221,7 +1234,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                     Record: domain <code>people-ops</code>, project
                     <code>hr-assistant</code>, owner
                     <code>margaret.chen@anycompany.example</code>, models
-                    claude-sonnet-5 + gpt-6-1-sol, budget 5 USD/7d,
+                    claude-opus-5 + gpt-6-1-sol, budget 5 USD/7d,
                     200 000 tpm, 200 rpm. <code>workshop record</code> validates
                     (no AWS). <code>workshop apply 3</code>,
                     <span class="pill wait">under 1 min</span>: domains
@@ -1348,7 +1361,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                     <code>workshop apply 5</code>: the governance summary
                     (aliases claude-opus-5, claude-sonnet-5, gpt-6-1-sol, nova-2-lite,
                     each with hr-baseline; team spend against budget); creates
-                    the Dev key <code>hr-assistant-dev-claude-sonnet-5</code>
+                    the Dev key <code>hr-assistant-dev-claude-opus-5</code>
                     (cap 1 USD/7d, one model) and makes three raw-key calls: a
                     normal answer with the <code>x-litellm-response-cost</code>
                     header, the guardrail's
@@ -1360,7 +1373,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                     proxy writes spend every 10 s, run it once more); then
                     <code>workshop cap --dev restore</code> before build phase 6.
                     Catalogue: filter Pending approval, approve
-                    hr-assistant-tools, kb-hr-policies, model-claude-sonnet-5
+                    hr-assistant-tools, kb-hr-policies, model-claude-opus-5
                     (fallback <code>workshop approve catalogue</code>).
                     <code>workshop inventory</code> ends with "platform
                     complete".
@@ -1382,7 +1395,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
               <li>Catalogue <code>agent_platform_catalogue</code> with three APPROVED records</li>
               <li>Policy engine with its Cedar policies; four gateways: HR Dev, HR Prod, Finance Dev and <code>hr-assistant-dev-gw-obo</code></li>
               <li>An agent and gateway role pair per project and environment; the model-gateway team with its caps</li>
-              <li>The Dev key <code>hr-assistant-dev-claude-sonnet-5</code> in the token vault and on the Keys tab, cap restored to 1 USD/7d</li>
+              <li>The Dev key <code>hr-assistant-dev-claude-opus-5</code> in the token vault and on the Keys tab, cap restored to 1 USD/7d</li>
               <li>Three credential providers in AgentCore Identity: the Dev key's API-key provider, <code>kc-hr-agent</code>, <code>kc-hr-obo-gateway</code></li>
             </ol>
             Check: <code>workshop inventory</code> ends with
@@ -1425,7 +1438,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                     0.7 (&ge; 0.9), TrajectoryInOrderMatch 0.625 (&ge; 0.9),
                     Harmfulness harm rate 0.0 (&le; 0.0). Scores from the 8 Oct
                     2026 dry runs with the previous aliases Claude Sonnet 5.5 /
-                    Haiku 4.5; the rehearsal with claude-sonnet-5 is pending.
+                    Haiku 4.5. Inspect the actual scores for the selected model.
                   </td>
                   <td>
                     <span class="pill ui">Releases</span>: release 1 BLOCKED
@@ -1464,7 +1477,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
                     <code>workshop approve release</code> then
                     <code>workshop promote</code>; developer and admin get 403).
                     The worker creates the Prod key
-                    <code>hr-assistant-prod-claude-sonnet-5</code>, the Prod
+                    <code>hr-assistant-prod-claude-opus-5</code>, the Prod
                     harness (its <code>DEFAULT</code> endpoint follows it) and registers
                     <code>hr_assistant_prod_online_eval</code>; the first Prod
                     deployment can take minutes. Playground · Prod: cold start
@@ -1528,7 +1541,7 @@ scripts/deploy.sh --pre-day             <span class="c"># Web, Auth, Platform, S
               <li>Dev harness <code>hr_assistant_dev</code> with versions v1 and v2; the on-behalf-of twin <code>hr_assistant_dev_obo</code></li>
               <li>Prod harness <code>hr_assistant_prod</code> on the approved v2 (<code>DEFAULT</code> endpoint)</li>
               <li>Two releases: release 1 BLOCKED, release 2 PROMOTED</li>
-              <li>Prod key <code>hr-assistant-prod-claude-sonnet-5</code> (created at promotion) and online evaluation <code>hr_assistant_prod_online_eval</code></li>
+              <li>Prod key <code>hr-assistant-prod-claude-opus-5</code> (created at promotion) and online evaluation <code>hr_assistant_prod_online_eval</code></li>
               <li>Overview (Prod): the three seeded plus ten conversations, one thumbs-up, online scores 8-11 min after the traffic</li>
               <li>Spend reading: Prod key spend &divide; answered conversations is the unit cost</li>
               <li><code>design-record.yaml</code>: every module's decisions and the backlog filled in</li>

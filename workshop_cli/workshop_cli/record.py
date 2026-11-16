@@ -39,8 +39,8 @@ DEFAULTS: dict[str, dict[str, Any]] = {
         "domain_description": "HR services for AnyCompany employees",
         "project": "hr-assistant",
         "owner": "margaret.chen@anycompany.example",
-        "models": ["claude-sonnet-5", "gpt-6-1-sol"],
-        "model": "claude-sonnet-5",
+        "models": ["claude-opus-5", "gpt-6-1-sol"],
+        "model": "claude-opus-5",
         "budget": {"usd": 5, "period": "7d", "tpm": 200000, "rpm": 200},
     },
     "module_4": {

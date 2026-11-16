@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Scripted project lifecycle against the deployed platform API (Phase 2A exit criterion), with its own AgentCore resources.
 
-Project `lt-hr-assistant` in domain `lt-ops` (never `hr-assistant`: the learning path owns that one), model `claude-sonnet-5`:
+Project `lt-hr-assistant` in domain `lt-ops` (never `hr-assistant`: the learning path owns that one), model `claude-opus-5`:
 
   1. domain + project through the API (LiteLLM team + four roles)        module 3
   2. gateways lt-hr-assistant-{dev,prod}-gw with hrtools + hrkb targets,
@@ -761,7 +761,7 @@ def run(ctx: Context) -> None:
 # ---- main ------------------------------------------------------------------------------------------------------------
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--model", default="claude-sonnet-5", help="approved model alias (default: claude-sonnet-5)")
+    parser.add_argument("--model", default="claude-opus-5", help="approved model alias (default: claude-opus-5)")
     parser.add_argument("--keep", action="store_true", help="leave everything running (skip the cleanup)")
     parser.add_argument("--only-cleanup", action="store_true", help="delete what an earlier run left and exit")
     parser.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS_DIR, help="where the run record is written")

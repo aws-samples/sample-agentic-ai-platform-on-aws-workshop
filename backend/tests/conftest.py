@@ -144,7 +144,7 @@ def ready(fakes, monkeypatch, pipeline, dataset_run):
             "projectId": "hr-assistant",
             "domainId": "people-ops",
             "name": "HR Assistant",
-            "models": ["claude-sonnet-5", "gpt-6-1-sol"],
+            "models": ["claude-opus-5", "gpt-6-1-sol"],  # the HR reference selection (scenario/blueprint)
             "allowedToolArns": [HR_LAMBDA],
             "knowledgeBaseIds": ["KB123"],
         },
