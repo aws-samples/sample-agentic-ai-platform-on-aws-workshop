@@ -330,14 +330,14 @@
     <span class="in">domain</span>:  <span class="s">people-ops</span>
     <span class="in">project</span>: <span class="s">hr-assistant</span>
     <span class="in">owner</span>:   <span class="s">margaret.chen@anycompany.example</span>
-    <span class="in">models</span>:  <span class="s">[claude-sonnet-5, gpt-6-1-sol]</span>         <span class="c"># two vendors; claude-opus-5 and nova-2-lite stay approved, not allowed here</span>
-    <span class="in">model</span>:   <span class="s">claude-sonnet-5</span>                        <span class="c"># the alias the agent uses (one of models)</span>
+    <span class="in">models</span>:  <span class="s">[claude-opus-5, gpt-6-1-sol]</span>           <span class="c"># model aliases enabled for this project</span>
+    <span class="in">model</span>:   <span class="s">claude-opus-5</span>                          <span class="c"># the alias the agent uses (one of models)</span>
     <span class="in">budget</span>:  <span class="s">{usd: 5, period: 7d, tpm: 200000, rpm: 200}</span>
   <span class="k">decisions</span>:
     <span class="k">tenancy</span>:    {<span class="k">workshop</span>: <span class="s">templates</span>}
     <span class="k">governance</span>: {<span class="k">workshop</span>: <span class="s">layered</span>}
     <span class="k">registry</span>:   {<span class="k">workshop</span>: <span class="s">one-registry</span>}            <span class="c"># AWS Agent Registry; every persona reads; the admin approves</span></code></pre>
-          <p class="caption"><strong>Bold keys are apply inputs.</strong> Finance's domain and project are fixed: module 4 uses them to test isolation. The platform configures ten aliases from three vendors (see <code>MODEL_CATALOG.md</code> in the repository); this project may use two, <code>claude-sonnet-5</code>, the model its agent runs on, and <code>gpt-6-1-sol</code>, while <code>claude-opus-5</code> and <code>nova-2-lite</code> stay approved platform-wide but outside the project's list. Approval is the platform's decision; which approved models a project may use is the project's.</p>
+          <p class="caption"><strong>Bold keys are apply inputs.</strong> Finance's domain and project are fixed: module 4 uses them to test isolation. The platform configures ten aliases from three vendors (see <code>MODEL_CATALOG.md</code> in the repository); this project may use two, <code>claude-opus-5</code>, the model its agent runs on, and <code>gpt-6-1-sol</code>, while other platform-approved models remain outside the project's allow-list. Approval is the platform's decision; which approved models a project may use is the project's.</p>
         </section>
 
         <section id="hands-on">
@@ -351,7 +351,7 @@
               <li><div><span class="pill tag screen">screen</span>In IAM, open the two Dev roles the platform stamped: <code>agent-platform-proj-hr-assistant-dev-agent</code> (the command's last <code>look</code> line prints its console link) and <code>agent-platform-proj-hr-assistant-dev-gateway</code>. The agent role has no <code>bedrock:InvokeModel</code> and no <code>lambda:InvokeFunction</code>; its only path to a tool is <code>bedrock-agentcore:InvokeGateway</code> on gateways named <code>hr-assistant-dev-gw*</code>. The gateway role is the one allowed to invoke the HR tools Lambda and query the knowledge base. Both trust the account root: the first shortcut from decision 3.1. The command already proved the Lambda half: both direct calls from the agent role ended in <code>AccessDeniedException</code>.</div></li>
               <li><div><span class="pill tag record">record</span>Read the module 3 record entries in <code>design-record.yaml</code> and compare each with the option marked <span class="opt-tag rec">Recommended</span> on this page.</div></li>
             </ol>
-<pre class="code-dark"><code><span class="c"># workshop apply 3, first run (lines shortened; a re-run says "exists" where this says "created")</span>
+<pre class="code-dark"><code><span class="c"># workshop apply 3, first run: illustrative output (lines shortened; a re-run says "exists" where this says "created")</span>
 == workshop apply 3: Control plane and governance: onboard the domains and projects
 record .../design-record.yaml
 == domains
@@ -361,7 +361,7 @@ record .../design-record.yaml
   created project hr-assistant in 3.1 s: a model-gateway team and 4 IAM roles
   created project invoice-helper in 2.9 s: a model-gateway team and 4 IAM roles
 == what the platform stamped for the HR project
-  model-gateway team hr-assistant: models ['claude-sonnet-5', 'gpt-6-1-sol'], budget 5 USD per 7d
+  model-gateway team hr-assistant: models ['claude-opus-5', 'gpt-6-1-sol'], budget 5 USD per 7d
   dev   agent role   agent-platform-proj-hr-assistant-dev-agent
         gateway role agent-platform-proj-hr-assistant-dev-gateway
   prod  agent role   agent-platform-proj-hr-assistant-prod-agent

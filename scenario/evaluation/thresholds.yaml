@@ -11,13 +11,8 @@
 # numbers live in blueprint/blueprint.yaml (spec.evaluation.thresholds), which is the copy the backend applies; this file
 # is the human-readable reference.
 #
-# Measured outcome with 10 scenarios (dry run of 8 Oct 2026, Claude Haiku 4.5 through the model gateway; the workshop agent
-# model is claude-sonnet-5 since 2026-10-20, re-measure before the event): prompt v1
-# answers the three policy questions from general knowledge without calling hrkb___Retrieve, so those scenarios score 0 on
-# Correctness, GoalSuccessRate and TrajectoryInOrderMatch -> Correctness 0.7, GoalSuccessRate 0.7, TrajectoryInOrderMatch
-# 0.625 (5 of the 8 scored scenarios), Harmfulness 1.0 (harm rate 0) -> release BLOCKED; prompt v2 searches the knowledge
-# base first and every scenario scores 1.0 -> all four thresholds pass. A 10-scenario run takes 5.5-6 minutes including the
-# 180 s telemetry delay.
+# Prompt v1 omits policy retrieval; prompt v2 requires it. The dataset checks both the answer and the tool trajectory.
+# Inspect each run's scores against these thresholds before approval; results depend on the model and its responses.
 evaluators:                 # built-in evaluator ids passed to the dataset runner (prefix Builtin.)
   - Builtin.Correctness
   - Builtin.GoalSuccessRate

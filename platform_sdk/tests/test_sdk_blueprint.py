@@ -2,20 +2,21 @@ import copy
 import json
 
 import pytest
+import yaml
 
 from platform_sdk import blueprint, names
 
 ACCOUNT = "123456789012"
 GATEWAY_ARN = f"arn:aws:bedrock-agentcore:us-east-1:{ACCOUNT}:gateway/hr-assistant-dev-gw-abc123"
 MEMORY_ARN = f"arn:aws:bedrock-agentcore:us-east-1:{ACCOUNT}:memory/hr_assistant_dev_memory-xyz789"
-PROVIDER_ARN = f"arn:aws:bedrock-agentcore:us-east-1:{ACCOUNT}:token-vault/default/apikeycredentialprovider/litellm-hr-assistant-dev-claude-sonnet-5"
+PROVIDER_ARN = f"arn:aws:bedrock-agentcore:us-east-1:{ACCOUNT}:token-vault/default/apikeycredentialprovider/litellm-hr-assistant-dev-claude-opus-5"
 
 
 def project(**overrides):
     base = {
         "projectId": "hr-assistant",
         "domainId": "people-ops",
-        "litellm": {"teamId": "hr-assistant", "models": ["claude-sonnet-5", "gpt-6-1-sol"]},
+        "litellm": {"teamId": "hr-assistant", "models": ["claude-opus-5", "gpt-6-1-sol"]},
         "roles": {
             "dev": {
                 "agentRoleArn": f"arn:aws:iam::{ACCOUNT}:role/agent-platform-proj-hr-assistant-dev-agent",
@@ -71,7 +72,7 @@ def test_load_resolves_the_prompt_file_and_exposes_the_metadata(hr_blueprint, sc
     bp = hr_blueprint
     assert bp.api_version == "platform/v1" and bp.kind == "AgentBlueprint"
     assert bp.project_id == "hr-assistant" and bp.domain == "people-ops" and bp.version == 1
-    assert bp.model_alias == "claude-sonnet-5"
+    assert bp.model_alias == "claude-opus-5"
     assert bp.system_prompt == (scenario_dir / "blueprint" / "prompts" / "hr-assistant-v1.md").read_text()
     assert bp.memory_strategies() == ["SUMMARIZATION", "USER_PREFERENCE"]
     assert bp.thresholds == {
@@ -100,7 +101,7 @@ def test_render_golden_create_harness_payload(hr_blueprint, cfg):
         "executionRoleArn": f"arn:aws:iam::{ACCOUNT}:role/agent-platform-proj-hr-assistant-dev-agent",
         "model": {
             "liteLlmModelConfig": {
-                "modelId": "openai/claude-sonnet-5",
+                "modelId": "openai/claude-opus-5",
                 "apiBase": "https://llm.example.test/v1",
                 "apiKeyArn": PROVIDER_ARN,
                 "maxTokens": 2048,
@@ -188,7 +189,7 @@ def test_render_unresolved_key_and_roles(hr_blueprint, cfg):
     with pytest.raises(blueprint.BlueprintError) as excinfo:
         blueprint.render(hr_blueprint, "dev", project(), resources(), cfg, None)
     assert excinfo.value.code == "BLUEPRINT_UNRESOLVED" and "module 5" in str(excinfo.value)
-    assert "litellm-hr-assistant-dev-claude-sonnet-5" in str(excinfo.value)
+    assert "litellm-hr-assistant-dev-claude-opus-5" in str(excinfo.value)
     with pytest.raises(blueprint.BlueprintError) as excinfo:
         blueprint.render(hr_blueprint, "dev", project(roles={}), resources(), cfg, PROVIDER_ARN)
     assert excinfo.value.code == "BLUEPRINT_UNRESOLVED" and "project creation" in str(excinfo.value)
@@ -254,9 +255,9 @@ def test_render_takes_the_key_from_the_registered_credential_provider(hr_bluepri
             "projectId": "hr-assistant",
             "env": "dev",
             "type": "credential_provider",
-            "name": "litellm-hr-assistant-dev-claude-sonnet-5",
+            "name": "litellm-hr-assistant-dev-claude-opus-5",
             "arn": PROVIDER_ARN,
-            "attributes": {"model": "claude-sonnet-5"},
+            "attributes": {"model": "claude-opus-5"},
         }
     ]
     spec = blueprint.render(hr_blueprint, "dev", project(), rows, cfg)
@@ -264,6 +265,21 @@ def test_render_takes_the_key_from_the_registered_credential_provider(hr_bluepri
     with pytest.raises(blueprint.BlueprintError, match="module 5"):  # a provider for another model does not count
         rows[-1]["attributes"] = {"model": "gpt-6-1-sol"}
         blueprint.render(hr_blueprint, "dev", project(), rows, cfg)
+
+
+def test_render_an_explicit_model_selection(scenario_dir, cfg):
+    """A blueprint naming a configured model renders with its own key when the project enables it
+    (the way `workshop apply 6` sets spec.model from the design record)."""
+    document = yaml.safe_load((scenario_dir / "blueprint" / "blueprint.yaml").read_text())
+    document["spec"]["model"] = {"ref": "model/claude-sonnet-5"}
+    sonnet = blueprint.load(document, base_dir=scenario_dir / "blueprint")
+    provider_arn = PROVIDER_ARN.replace("claude-opus-5", "claude-sonnet-5")
+    enabled = project(litellm={"teamId": "hr-assistant", "models": ["claude-sonnet-5", "gpt-6-1-sol"]})
+    spec = blueprint.render(sonnet, "dev", enabled, resources(), cfg, provider_arn)
+    assert spec["model"]["liteLlmModelConfig"]["modelId"] == "openai/claude-sonnet-5"
+    assert spec["model"]["liteLlmModelConfig"]["apiKeyArn"] == provider_arn
+    with pytest.raises(blueprint.BlueprintError, match="not enabled for project"):  # the reference project lists Opus 5
+        blueprint.render(sonnet, "dev", project(), resources(), cfg, provider_arn)
 
 
 def test_for_update_sends_empty_tool_and_hook_lists(hr_blueprint, cfg):

@@ -85,7 +85,7 @@ RELAY_FUNCTION_NAME = f"{PREFIX}-model-gateway-relay"
 RELAY_TIMEOUT_SECONDS = 120
 
 # Model aliases installed during bootstrap. Access varies by account and Region;
-# configuration alone does not prove provider invocation access. Sonnet 5 remains the HR default.
+# configuration alone does not prove provider invocation access. Projects select models from these configured aliases.
 # Keep these mappings/prices aligned with litellm/config.yaml.tpl (synthesis tests check parity).
 MODELS = [
     {
@@ -93,7 +93,7 @@ MODELS = [
         "modelId": "us.anthropic.claude-opus-5",
         "provider": "bedrock",
         "tier": "premium",
-        "description": "Claude Opus 5: strongest reasoning and tool use; for the hardest production agents",
+        "description": "Claude Opus 5: strongest reasoning and tool use; the default for this workshop's agents",
         "inputCostPerToken": 5.5e-06,
         "outputCostPerToken": 2.75e-05,
     },
@@ -102,7 +102,7 @@ MODELS = [
         "modelId": "us.anthropic.claude-sonnet-5",
         "provider": "bedrock",
         "tier": "standard",
-        "description": "Claude Sonnet 5: strong reasoning and tool use at a lower price; the default for this workshop's agents",
+        "description": "Claude Sonnet 5: reasoning and tool use",
         "inputCostPerToken": 2.2e-06,
         "outputCostPerToken": 1.1e-05,
     },
